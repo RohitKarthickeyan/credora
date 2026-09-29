@@ -1,0 +1,1509 @@
+{
+  "_comment": "Task DAG for Credora V1. Edited by the orchestrator only. scripts/dag.mjs reads this to compute the ready frontier and regenerate docs/PROGRESS.md. status: pending | planning | implementing | checking | done | blocked. Revision 2: applied the DAG review (see docs/dag/REVIEW.md).",
+  "phases": {
+    "0": "Foundation",
+    "1": "Core data and platform",
+    "2": "Auth and users",
+    "3": "Integration layer",
+    "4": "Requirements engine",
+    "5": "Caregiver intake",
+    "6": "Forms and e-signature",
+    "7": "Document capture and review",
+    "8": "Verification workflows",
+    "9": "Training hours",
+    "10": "Clearance and sign-off",
+    "11": "AlayaCare sync",
+    "12": "Coordinator dashboard",
+    "13": "Cross-cutting and acceptance"
+  },
+  "tasks": [
+    {
+      "id": "T-001",
+      "slug": "repo-scaffold",
+      "title": "Repo scaffold, strict TS, Vitest, layering lint, env schema",
+      "phase": 0,
+      "module": "platform",
+      "prd": "Technical architecture",
+      "priority": "P0",
+      "deps": [],
+      "status": "done"
+    },
+    {
+      "id": "T-002",
+      "slug": "docker-postgres-prisma",
+      "title": "Docker Postgres 16, Prisma multiSchema init (core/medical/eeoc)",
+      "phase": 0,
+      "module": "platform",
+      "prd": "Technical architecture",
+      "priority": "P0",
+      "deps": [
+        "T-001"
+      ],
+      "status": "done"
+    },
+    {
+      "id": "T-003",
+      "slug": "ui-primitives",
+      "title": "Tailwind v4 tokens and design-system primitives, phone-first shell",
+      "phase": 0,
+      "module": "platform",
+      "prd": "Technical architecture",
+      "priority": "P0",
+      "deps": [
+        "T-001"
+      ],
+      "status": "done"
+    },
+    {
+      "id": "T-004",
+      "slug": "shared-validation",
+      "title": "Zod primitives: SSN, phone, DOB, address and name normalisation, ABA routing checksum",
+      "phase": 0,
+      "module": "1",
+      "prd": "1. Caregiver intake",
+      "priority": "P0",
+      "deps": [
+        "T-001"
+      ],
+      "status": "done"
+    },
+    {
+      "id": "T-005",
+      "slug": "dev-tooling",
+      "title": "Database test harness, fixture loader, dev tools page",
+      "phase": 0,
+      "module": "platform",
+      "prd": "Technical architecture",
+      "priority": "P0",
+      "deps": [
+        "T-002"
+      ],
+      "status": "done"
+    },
+    {
+      "id": "T-005b",
+      "slug": "model-factories",
+      "title": "Model factories for the core record",
+      "phase": 1,
+      "module": "platform",
+      "prd": "Technical architecture",
+      "priority": "P0",
+      "deps": [
+        "T-005",
+        "T-010"
+      ],
+      "status": "done",
+      "notes": "Split from T-005 on its planner's recommendation: a Caregiver factory cannot exist before T-010 defines Caregiver. T-005 keeps the model-agnostic harness so T-010/T-011/T-013 do not each improvise one. T-005 REVIEW.md: the harness is ready and model-agnostic (truncation reads information_schema). Use describeDatabase from src/db/testing.ts and name DB-touching files *.db.test.ts."
+    },
+    {
+      "id": "T-010",
+      "slug": "schema-core",
+      "title": "Prisma core schema: Agency, User, Caregiver and the canonical record groups",
+      "phase": 1,
+      "module": "data",
+      "prd": "Data model",
+      "priority": "P0",
+      "deps": [
+        "T-002",
+        "T-004"
+      ],
+      "status": "done",
+      "notes": "T-002 REVIEW.md: Caregiver gets NO relation to MedicalFile/EeocRecord — schema-boundary.test.ts fails if one is added. So there is no ON DELETE CASCADE: DATA-MODEL invariant 3 must be met by the caregiver-delete use case calling both delete accessors in one transaction. Import model types as @/db/generated/models/<Model>, never the barrel or the client. @default(uuid(7)) is a placeholder for T-010 to settle. Diff will be large because src/db/generated/ is committed."
+    },
+    {
+      "id": "T-010b",
+      "slug": "record-mapping",
+      "title": "Record mapping at the db boundary: date-only, address, tier-aware selects",
+      "phase": 1,
+      "module": "data",
+      "prd": "Data model",
+      "priority": "P0",
+      "deps": [
+        "T-010"
+      ],
+      "status": "done",
+      "notes": "Added on T-010 PLAN.md flag 7: no task owned the YYYY-MM-DD <-> @db.Date conversion, the Address value-object mapping, or the last mile of tenancy scoping, yet T-046, T-047 and T-061 all need them. Unowned, that is three implementations of the same date conversion — the same failure mode the DAG review caught for binary storage (ADR-005). Does NOT own encryption (T-012) or query construction for a specific use case. T-010 REVIEW.md: you own three boundary conversions — agencyId-first scoping, YYYY-MM-DD <-> @db.Date on the five date columns, and Address <-> the embedded columns on BOTH ContactRecord and EmploymentEntry. T-012 depends on the same layer. T-012 PLAN.md flag 8: you MUST explicitly claim the four *Enc columns and the two *Last4 columns as your call sites — nothing in lint stops a use case calling encryptField directly, so if your plan does not claim them the boundary is unowned. Use encryptFieldWithLast4 for ssn and bankAccountNumber (one result, two columns) and encryptField for bankRoutingNumber and workAuthorizationNumber. The ordinary read path must NOT decrypt."
+    },
+    {
+      "id": "T-011",
+      "slug": "schema-restricted",
+      "title": "medical and eeoc schemas with audited, gated accessors",
+      "phase": 1,
+      "module": "data",
+      "prd": "Data model",
+      "priority": "P0",
+      "deps": [
+        "T-010",
+        "T-013"
+      ],
+      "status": "done",
+      "notes": "T-002 REVIEW.md: nothing under prisma/ or run by tsx may import from src/ (server-only is unresolvable under tsx). Restricted model types come from @/db/generated/models/<Model>, never the barrel."
+    },
+    {
+      "id": "T-012",
+      "slug": "field-encryption",
+      "title": "AES-256-GCM field encryption for SSN, bank, work authorisation",
+      "phase": 1,
+      "module": "data",
+      "prd": "Security, privacy, and regulatory requirements",
+      "priority": "P0",
+      "deps": [
+        "T-010"
+      ],
+      "status": "done",
+      "notes": "T-002 REVIEW.md: nothing under prisma/ or run by tsx may import from src/ (server-only is unresolvable under tsx). T-010 PLAN.md flag 8: T-010 puts the key id INSIDE the ciphertext envelope rather than in a sibling *KeyId column. That is a column-shape decision you inherit; the plan states the escape hatch if you need it separate."
+    },
+    {
+      "id": "T-013",
+      "slug": "audit-log",
+      "title": "Transactional append-only audit log",
+      "phase": 1,
+      "module": "data",
+      "prd": "Security, privacy, and regulatory requirements",
+      "priority": "P0",
+      "deps": [
+        "T-010"
+      ],
+      "status": "done",
+      "notes": "T-002 REVIEW.md: the four restricted accessors in src/db/restricted/{medical,eeoc}.ts ship UNAUDITED. SECURITY.md requires an audit entry on every restricted read; add it inside those files, in the same transaction, without changing their signatures."
+    },
+    {
+      "id": "T-014",
+      "slug": "rbac-policy",
+      "title": "Role policy module and use-case coverage test",
+      "phase": 1,
+      "module": "data",
+      "prd": "Users and roles",
+      "priority": "P0",
+      "deps": [
+        "T-012",
+        "T-013"
+      ],
+      "status": "done",
+      "notes": "T-010 PLAN.md flag 6: UserRole has no domain union (there is no roles/ directory in the architecture map). Add one here, and key the policy module off it rather than off the generated Prisma enum — lint forbids src/domain and src/ui importing src/db. T-010 REVIEW.md: UserRole is still a literal five-string list in the schema awaiting your domain union. T-013 REVIEW.md: you and T-024 MUST wrap every Server Action, route handler and queue job in runWithAuditContext — until you do, all four restricted accessors throw for every caller. Open risks you inherit: tx.auditEntry.create is still reachable on an AuditedTx, so an entry can skip zod fieldName validation and the ambient actor (a third branded type would close it); the audit context is trusted, not parsed; AsyncLocalStorage across Next 16 Server Actions is UNPROVEN — verify it before relying on it; and every restricted read now costs a transaction against Prisma 5s default timeout."
+    },
+    {
+      "id": "T-015",
+      "slug": "pipeline-state-machine",
+      "title": "Pipeline stage machine and PipelineEvent history",
+      "phase": 1,
+      "module": "9",
+      "prd": "Target workflow",
+      "priority": "P0",
+      "deps": [
+        "T-010"
+      ],
+      "status": "done"
+    },
+    {
+      "id": "T-016",
+      "slug": "job-queue",
+      "title": "Job queue: retries, backoff, idempotency keys, persisted log",
+      "phase": 1,
+      "module": "platform",
+      "prd": "Technical architecture",
+      "priority": "P0",
+      "deps": [
+        "T-010"
+      ],
+      "status": "done",
+      "notes": "T-014 PLAN.md flag 1 / OPEN-QUESTIONS 21: a SYSTEM actor cannot call a guarded use case — runAsSystem establishes no principal. Your queue jobs have no human actor, so either they call unguarded repository functions directly or policy.ts needs an optional system?: true. Raise it; do not add the field as a judgement call."
+    },
+    {
+      "id": "T-017",
+      "slug": "storage-port",
+      "title": "File storage port, local-disk adapter, and the key convention every binary uses",
+      "phase": 1,
+      "module": "platform",
+      "prd": "Data model",
+      "priority": "P0",
+      "deps": [
+        "T-010"
+      ],
+      "status": "done"
+    },
+    {
+      "id": "T-018",
+      "slug": "scheduler",
+      "title": "Scheduled and delayed job execution (due-at jobs and recurring ticks)",
+      "phase": 1,
+      "module": "platform",
+      "prd": "Technical architecture",
+      "priority": "P0",
+      "deps": [
+        "T-016"
+      ],
+      "status": "done",
+      "notes": "T-016 PLAN.md: due-at is already free via runAt. Recurrence is YOUR model calling enqueueJob per occurrence — it must NOT become a column on Job, because a self-rescheduling job makes attempts and the attempt log ambiguous. cancelJob and a CANCELLED state land with you (a state with no writer is dead schema). No priority column. T-014 PLAN.md: route handlers are deliberately NOT covered by T-014 AsyncLocalStorage probe (a plain async call with no React render is strictly weaker than a Server Action). If you add one, probe it. CORRECTED: T-016 REVIEW.md asked for a claimJobs predicate change to exclude CANCELLED. That is WRONG and T-018 planner caught it — the shipped SQL is an ALLOWLIST (WHERE state IN (PENDING, RUNNING)), so a new enum value is excluded by construction. Leave the raw statement byte-unmodified and assert that as a success criterion. Also: the \"escalate after two misses\" requirement is PRD line 140 in module 5 (references), NOT module 3, and its consumer is T-082 — an earlier brief cited it wrongly."
+    },
+    {
+      "id": "T-019",
+      "slug": "sensitive-field-masking",
+      "title": "Masked rendering of sensitive fields and reveal with a logged reason",
+      "phase": 1,
+      "module": "data",
+      "prd": "Security, privacy, and regulatory requirements",
+      "priority": "P0",
+      "deps": [
+        "T-014",
+        "T-003"
+      ],
+      "status": "done",
+      "notes": "T-003 REVIEW.md: a green Dialog suite is NOT evidence of focus trapping — jsdom implements neither containment nor backdrop. Verify the first real modal in a browser. T-012 PLAN.md: revealSensitiveField is the ONLY decrypt door on the read path — it reaches plaintext through a repository in the same transaction as T-013 audit entry. T-010b REVIEW.md + ADR-022: you are the only legitimate future decryptField call sites. Your decrypt must sit in src/db/mapping/ or add your directory to the eslint ignores list — there is now NO precedent exception to copy. T-019 must keep the decrypt inside the AuditedTx transaction (ADR-015). T-014 REVIEW.md: can() is NOT an agency check — it compares role, selfOnly identity and reason only. A coordinator of agency A passing agency B caregiver id is permitted by the registry and stopped only by DATA-MODEL invariant 5. Pass principal.agencyId into your repositories. T-021: a CAREGIVER principal must carry caregiverId or principalSchema rejects it."
+    },
+    {
+      "id": "T-020",
+      "slug": "staff-auth",
+      "title": "Staff sessions, password auth, login UI",
+      "phase": 2,
+      "module": "platform",
+      "prd": "Security, privacy, and regulatory requirements",
+      "priority": "P0",
+      "deps": [
+        "T-014"
+      ],
+      "status": "done",
+      "notes": "T-003 REVIEW.md: PageHeader.back width is label-driven; pass a real phrase. Route groups (caregiver)/(staff) are deliberately unbuilt — T-003 ships the root shell only, and the root layout renders no <main>, so each group must render exactly one <main id=\"main\"> for the skip link. T-014 PLAN.md: the Principal must be built from the User ROW, not the cookie — read the cookie for a user id, then load User { role, agencyId, isActive }. That way a role changed by T-024 takes effect next request with no cookie invalidation. T-014 states the contract in a doc comment but cannot enforce it; your review must. T-014 REVIEW.md: you will need a FOURTH UNGUARDED_MODULES entry for src/server/auth/session.ts — add it as a named line with a reason, NOT as a directory exclusion (that would silently exempt everything ever written in src/server/auth/). The allowlist is per-module, not per-export, so your review must also confirm no data-touching export has been smuggled into policy.ts or context.ts. Honour User.isActive when building the principal."
+    },
+    {
+      "id": "T-021",
+      "slug": "caregiver-auth",
+      "title": "Caregiver phone OTP and email verification session",
+      "phase": 2,
+      "module": "1",
+      "prd": "1. Caregiver intake",
+      "priority": "P0",
+      "deps": [
+        "T-014",
+        "T-051"
+      ],
+      "status": "done",
+      "notes": "T-014 REVIEW.md: can() is NOT an agency check — it compares role, selfOnly identity and reason only. A coordinator of agency A passing agency B caregiver id is permitted by the registry and stopped only by DATA-MODEL invariant 5. Pass principal.agencyId into your repositories. T-021: a CAREGIVER principal must carry caregiverId or principalSchema rejects it. T-051 (ADR-042): a job payload may hold ids only, so a one-time code cannot sit in a send job. Either send synchronously (needs an ADR) or have your handler create the code. Own your send job handler; build keys with buildIdempotencyKey; treat `rejected` as permanent; check SMS consent yourself. T-040: the (caregiver) layout wraps <main id=\"main\"> (T-003 § Design 6); T-040 created src/app/(caregiver)/intake/_components/ with no layout above it."
+    },
+    {
+      "id": "T-022",
+      "slug": "tokenised-links",
+      "title": "Single-use signed tokens for invites and reference forms",
+      "phase": 2,
+      "module": "5",
+      "prd": "5. Verification workflows",
+      "priority": "P0",
+      "deps": [
+        "T-014"
+      ],
+      "status": "done"
+    },
+    {
+      "id": "T-023",
+      "slug": "mfa-totp",
+      "title": "TOTP enrolment, verification at login, recovery codes, per-agency enforcement",
+      "phase": 2,
+      "module": "platform",
+      "prd": "Security, privacy, and regulatory requirements",
+      "priority": "P0",
+      "deps": [
+        "T-020"
+      ],
+      "status": "done",
+      "notes": "T-024 (ADR-131): accepting a staff invite signs the user in from the set-password action (src/app/r/staff-invite/[token]/actions.ts, its redirect to /login) — divert to MFA enrolment there too. Every writer of User.role/isActive goes through applyAccessChange (ADR-132)."
+    },
+    {
+      "id": "T-024",
+      "slug": "agency-user-management",
+      "title": "Invite staff, assign roles, deactivate users",
+      "phase": 2,
+      "module": "platform",
+      "prd": "Users and roles",
+      "priority": "P0",
+      "deps": [
+        "T-020",
+        "T-014"
+      ],
+      "status": "done",
+      "notes": "T-013 REVIEW.md: must wrap boundaries in runWithAuditContext or all four restricted accessors throw. T-014 REVIEW.md: can() is NOT an agency check — it compares role, selfOnly identity and reason only. A coordinator of agency A passing agency B caregiver id is permitted by the registry and stopped only by DATA-MODEL invariant 5. Pass principal.agencyId into your repositories. T-021: a CAREGIVER principal must carry caregiverId or principalSchema rejects it. Batch-1 report: lower-case emails on invite/lookup, and reject passwords over bcrypt's 72-byte limit (T-020 hashes with bcrypt cost 12)."
+    },
+    {
+      "status": "done",
+      "id": "T-025",
+      "slug": "caregiver-signin-enumeration",
+      "title": "Caregiver sign-in reveals nothing about whether a phone number is registered",
+      "phase": 2,
+      "module": "1",
+      "prd": "Security, privacy, and regulatory requirements",
+      "priority": "P0",
+      "deps": [
+        "T-021"
+      ],
+      "notes": "Security defect from T-021 REVIEW.md § Follow-ups and OPEN-QUESTIONS 85 (not a product preference). Make every sign-in response indistinguishable for registered, unknown, withdrawn and shared numbers: always issue the pending-code cookie on the request step; one copy for NO_CODE and WRONG_CODE, no attempts-remaining count; remove the timing difference of the synchronous SMS send (ADR-057), e.g. by not awaiting it in the response path or padding to a fixed floor — pick one, record it as an ADR draft in the plan. Keep ADR-058/059 limits (5 tries per code, 5 codes per caregiver per hour). Update the T-021 tests that asserted the old copy. Close OPEN-QUESTIONS 85 when done."
+    },
+    {
+      "id": "T-050",
+      "slug": "integration-core",
+      "title": "Port interfaces, adapter registry with all port slots and env vars pre-declared, port test kit",
+      "phase": 3,
+      "module": "integration",
+      "prd": "Technical architecture",
+      "priority": "P0",
+      "deps": [
+        "T-016",
+        "T-017"
+      ],
+      "status": "done",
+      "notes": "T-017 REVIEW.md + ADR-016: the storage port is already written — register it, do not design it. Write storage: createLocalDiskStorage(), add STORAGE_ADAPTER=local to BOTH .env.example and INTEGRATIONS.md in the same change (they intentionally disagree by one line until you land), and add the eslint src/integrations/** override that stops later tasks importing adapters/storage/local.ts directly. ALSO: storage keys are not case-normalised — z.uuid() accepts an upper-case RFC UUID, and local disk on Windows/macOS is case-insensitive while Linux and S3 are not, so a case-variant key resolves on a dev machine and 404s in production. Lower-casing the UUID segments in parseStorageKey would close it; that is an ADR."
+    },
+    {
+      "id": "T-051",
+      "slug": "messaging-adapter",
+      "title": "SMS and email port with deterministic mock and dev outbox",
+      "phase": 3,
+      "module": "integration",
+      "prd": "Technical architecture",
+      "priority": "P0",
+      "deps": [
+        "T-050"
+      ],
+      "status": "done"
+    },
+    {
+      "id": "T-052",
+      "slug": "esign-adapter",
+      "title": "E-signature port, mock envelopes, local signing page, signed webhook",
+      "phase": 3,
+      "module": "2",
+      "prd": "2. Form generation and e-signature",
+      "priority": "P0",
+      "deps": [
+        "T-050"
+      ],
+      "status": "done"
+    },
+    {
+      "id": "T-053",
+      "slug": "extraction-adapter",
+      "title": "OCR extraction port with fixture-driven deterministic mock keyed by storage key",
+      "phase": 3,
+      "module": "3",
+      "prd": "3. Document capture and review",
+      "priority": "P0",
+      "deps": [
+        "T-050"
+      ],
+      "status": "done",
+      "notes": "T-005 REVIEW.md: no fixture loader exists — T-005 built one, then deleted it because INTEGRATIONS.md § Rules item 4 already fixes the location (src/integrations/adapters/<port>/fixtures/) and T-005 had invented a conflicting root. Follow INTEGRATIONS.md, and include the path-confinement check that ADR-001 filename-derived lookup needs. A repo-wide fixture store instead needs an ADR plus an INTEGRATIONS.md edit. Note a JSON-only signature cannot serve the training port CSV fixture. T-050 PLAN.md flag 2 + INTEGRATIONS.md correction: the mock CANNOT key fixtures by filename — under ADR-005 that segment is a fresh ULID. Read the bytes through the injected StoragePort and select by SHA-256 of the content. Do NOT add a fixtureHint field to the port."
+    },
+    {
+      "id": "T-054",
+      "slug": "judge-adapter",
+      "title": "LLM judge port, deterministic mock, Claude adapter [AGENTIC]",
+      "phase": 3,
+      "module": "3",
+      "prd": "3. Document capture and review",
+      "priority": "P0",
+      "deps": [
+        "T-050"
+      ],
+      "status": "done"
+    },
+    {
+      "id": "T-055",
+      "slug": "bgcheck-adapter",
+      "title": "Background check port and mock vendor state machine",
+      "phase": 3,
+      "module": "5",
+      "prd": "5. Verification workflows",
+      "priority": "P0",
+      "deps": [
+        "T-050"
+      ],
+      "status": "done",
+      "notes": "T-050 PLAN.md flag 3: packageCode is an opaque string in the port contract. Narrow it against DOMAIN.md NY check set, or record why not."
+    },
+    {
+      "id": "T-056",
+      "slug": "alayacare-mock-server",
+      "title": "Standalone AlayaCare mock HTTP server with custom fields, conflicts, rate limits",
+      "phase": 3,
+      "module": "8",
+      "prd": "8. AlayaCare sync",
+      "priority": "P0",
+      "deps": [
+        "T-050"
+      ],
+      "status": "done"
+    },
+    {
+      "id": "T-057",
+      "slug": "training-adapter",
+      "title": "Training platform port with CSV and API fixture mock",
+      "phase": 3,
+      "module": "6",
+      "prd": "6. Training hours tracking",
+      "priority": "P1",
+      "deps": [
+        "T-050"
+      ],
+      "status": "done",
+      "notes": "Batch-2: you are the last adapter (with T-056) to fill a registry slot — T-005: a JSON-only fixture signature cannot serve your CSV fixture."
+    },
+    {
+      "id": "T-058",
+      "slug": "inbound-webhooks",
+      "title": "Signed inbound webhook route: verify, persist, enqueue",
+      "phase": 3,
+      "module": "integration",
+      "prd": "Technical architecture",
+      "priority": "P0",
+      "deps": [
+        "T-052",
+        "T-055"
+      ],
+      "status": "done",
+      "notes": "T-052/T-055: provider segments `esign` and `backgroundCheck`; both mocks sign with header x-credora-mock-signature (lower-case); pass request.text() as rawBody, never re-serialised JSON. Neither event carries agencyId — persist first, the downstream job resolves the agency from its own envelope/order row."
+    },
+    {
+      "status": "done",
+      "id": "T-059",
+      "slug": "port-boot-check",
+      "title": "assertEveryPortResolves() at startup so an adapter-name typo fails the boot",
+      "phase": 3,
+      "module": "integration",
+      "prd": "Technical architecture",
+      "priority": "P1",
+      "deps": [
+        "T-050",
+        "T-051",
+        "T-052",
+        "T-053",
+        "T-054",
+        "T-055",
+        "T-056",
+        "T-057",
+        "T-058"
+      ],
+      "notes": "T-050 PLAN § Risks 10 / REVIEW.md, T-057 PLAN § Risks 6, T-058 REVIEW.md: every registry slot is now filled, so add assertEveryPortResolves() to the boot path (instrumentation.ts or equivalent — check docs/context/NEXTJS-16.md) and delete resolveAdapter's now-unreachable not-implemented branch if nothing reaches it. Registry.test.ts assertion 6 was the stand-in. Touches src/integrations/registry.ts (shared file)."
+    },
+    {
+      "id": "T-030",
+      "slug": "requirement-template-schema",
+      "title": "RequirementTemplate model: type, evidence, validity, renewal, blocking, manualOnly",
+      "phase": 4,
+      "module": "4",
+      "prd": "4. Requirements engine",
+      "priority": "P0",
+      "deps": [
+        "T-010"
+      ],
+      "status": "done",
+      "notes": "T-010b REVIEW.md: the screening-result date is a NINTH @db.Date column and must be routed through @/db/mapping/date-only — do not hand-roll a conversion."
+    },
+    {
+      "id": "T-031",
+      "slug": "template-resolver",
+      "title": "Pure layered resolution: state, service type, payer, agency, caregiver role",
+      "phase": 4,
+      "module": "4",
+      "prd": "4. Requirements engine",
+      "priority": "P0",
+      "deps": [
+        "T-030",
+        "T-004"
+      ],
+      "status": "done",
+      "notes": "T-030 PLAN.md: precedence is axis-set inclusion and is deliberately PARTIAL — compareScopeSpecificity returns null for incomparable sets (state=NY vs serviceType=HHA). You must raise an ambiguity error, not pick. LAYER_PRECEDENCE is for T-034 display ordering only and is NOT the override rule. T-030 REVIEW.md: invariant 2 (scopeKey equals scopeKeyOf of the four axis columns) has NO enforcement, and its db test computes the expected value with the same function it inserted — so it cannot catch a repository writing a wrong key. YOUR repository must be the single derivation site. Insert parent + AcceptedEvidence children in one transaction."
+    },
+    {
+      "id": "T-032",
+      "slug": "requirement-instances",
+      "title": "Materialise instances per caregiver, status transitions, evidence linking",
+      "phase": 4,
+      "module": "4",
+      "prd": "4. Requirements engine",
+      "priority": "P0",
+      "deps": [
+        "T-031",
+        "T-015"
+      ],
+      "status": "done",
+      "notes": "ADR-012 governs: move src/ui/status.ts to src/app/_lib/status.ts and key both status maps off the domain unions (Record<PipelineStage,...>), delete the hand-written stage list in src/ui/status.test.ts, and keep StatusBadge generic in src/ui. src/ui may import neither @/domain nor @/db, which is why the file has to move. You also own InstanceStatus — T-010 deliberately did not create it. T-030 PLAN.md: RequirementInstance CANNOT use the composite tenancy FK to reach a template — a platform template has agencyId null, so there is nothing to match. Use a plain templateId and get tenancy from the Caregiver FK. templateId points at a specific VERSION, so an already-materialised instance is frozen; re-pointing in-flight instances at a new template version is your call with a product owner."
+    },
+    {
+      "id": "T-033",
+      "slug": "ny-template-library",
+      "title": "New York private-duty templates as seed data, including PHI acknowledgement and training minimums",
+      "phase": 4,
+      "module": "4",
+      "prd": "4. Requirements engine",
+      "priority": "P0",
+      "deps": [
+        "T-031"
+      ],
+      "status": "done",
+      "notes": "T-030 PLAN.md flags 3 and 7: state/serviceType/payer are free text, so a 'ny' typo produces a template that applies to nobody — you own the vocabularies. Also, no effectiveFrom/future-dating exists; raise it if the NY library has dated changes. T-030 REVIEW.md: same single-derivation-site rule for scopeKey as T-031. A whitespace-only manualOnlyReason passes the SQL CHECK (zod catches it) — one btrim(...) <> '' would close it. Batch-1 report: service-type and payer templates must also carry the state axis (state=NY), or they become incomparable with state-only rules and T-031 raises ambiguity. Batch-2: (1) T-040/ADR-034: seed a SCREAMING_SNAKE_CASE requirement key for EVERY intake section, or that section never shows; T-042/43/45/46 now depend on you for those key names. An always-asked section (e.g. emergency contacts) is an agency-wide FORM template (OPEN-QUESTIONS 42). (2) T-060/ADR-037: every signable document must be a SIGNED_DOCUMENT accepted-evidence option with a stable evidenceKey; model \"Hep B consent OR declination\" as one document (OPEN-QUESTIONS 48); attestation-only documents use SIGNED_DOCUMENT, not ATTESTATION."
+    },
+    {
+      "id": "T-034",
+      "slug": "template-admin-ui",
+      "title": "Admin UI to edit requirement templates without code, with resolver preview",
+      "phase": 4,
+      "module": "4",
+      "prd": "4. Requirements engine",
+      "priority": "P0",
+      "deps": [
+        "T-031",
+        "T-020"
+      ],
+      "status": "done",
+      "notes": "T-030 PLAN.md flag 2: the key namespace is global, so an agency reusing a platform key silently overrides it. Make \"override\" and \"add\" distinct actions in the UI. T-030 REVIEW.md: a whitespace-but-not-null manualOnlyReason passes the CHECK, so the exception queue could show a blank regulation. Batch-1 report: an agency override must copy the scope axes of the rule it overrides, else T-031 precedence (partial order) treats them as incomparable. T-033 (ADR-054/055/056): build pickers from STATES/SERVICE_TYPES/PAYERS (vocabulary.ts); expose minimumMinutes for TRAINING only; write through requirement-template-writer.ts; own retiring a template (removing a rule from the seed list does not retire it). T-036 (ADR-137): add a role picker and show the ROLE layer; a role override of a NY rule must copy {state, serviceType} into its scope or it is an ambiguity."
+    },
+    {
+      "id": "T-040",
+      "slug": "form-engine",
+      "title": "Declarative intake form engine: sections, conditional visibility, phone-first rendering, live validation",
+      "phase": 5,
+      "module": "1",
+      "prd": "1. Caregiver intake",
+      "priority": "P0",
+      "deps": [
+        "T-032",
+        "T-003",
+        "T-004"
+      ],
+      "status": "done",
+      "notes": "T-010 REVIEW.md: history bounds (how many employment/education/reference entries) are deliberately not in the schema — they are yours or T-047 s."
+    },
+    {
+      "id": "T-047",
+      "slug": "canonical-field-binding",
+      "title": "Capture-once binding between form fields and canonical record columns",
+      "phase": 5,
+      "module": "1",
+      "prd": "1. Caregiver intake",
+      "priority": "P0",
+      "deps": [
+        "T-040",
+        "T-010",
+        "T-010b"
+      ],
+      "status": "done",
+      "notes": "T-010b REVIEW.md: use caregiverKey/satelliteKey and the sealed selects from @/db/mapping. PayrollInputsSealedRow is exported with no reference today and was kept deliberately for you. T-040 REVIEW.md: supply saved answers as RawAnswers (canonical -> raw: true->\"yes\", 3->\"3\", E.164 phone as stored); re-run validateSection server-side before any write; decide whether a stored column for a now-hidden field is cleared (omission is not deletion); add no count check. Re-export SectionValues if you need it (checker un-exported it)."
+    },
+    {
+      "status": "done",
+      "id": "T-048",
+      "slug": "intake-contact-section",
+      "title": "Intake Contact section: address, phones, email, preferred language, SMS consent",
+      "phase": 5,
+      "module": "1",
+      "prd": "Data model",
+      "priority": "P0",
+      "deps": [
+        "T-047",
+        "T-033",
+        "T-021"
+      ],
+      "notes": "Unowned since T-033/T-047 (T-047 PLAN § Risks 6). Declare the Contact section per ADR-034/052 against the canonical ContactRecord columns (PRD Data model row \"Contact\"). mobilePhone goes through phoneSchema (E.164) and stays the sign-in key (ADR-058): changing it must not silently orphan sign-in. Email change goes through T-021 address-bound verification (ADR-060), not a plain save. Show the SMS consent that T-044/T-021 recorded and let the caregiver withdraw it; do not create a second consent field. T-046: put the section constant in src/domain/forms/sections/; personName is available. T-043: if preferredLanguage is a select, reuse the language options from home-care-profile.ts. T-044 (ADR-074): display ContactRecord.smsConsent/smsConsentAt written by the invite (staff-attested; T-021 checkbox does not overwrite the timestamp). Revoking consent before the send makes the invite job cancel with NO_SMS_CONSENT."
+    },
+    {
+      "id": "T-041",
+      "slug": "intake-save-resume",
+      "title": "Save and resume, progress bar, list of what is still missing",
+      "phase": 5,
+      "module": "1",
+      "prd": "1. Caregiver intake",
+      "priority": "P0",
+      "deps": [
+        "T-047"
+      ],
+      "status": "done",
+      "notes": "T-040 REVIEW.md: you own the ordered readonly FormSection[] for the whole flow, the intake/[step] route, and a NEW repository read of a caregiver's instances (T-032 shipped none). Save a draft when `invalid` is empty; the missing list comes from `missing`; \"section has missing => its instance is not SATISFIED\" closes T-010's one-reference risk. T-047 (ADR-052): use loadIntakeSection/saveIntakeSection from src/server/intake/section.ts. Test captureOnceIssues(ALL_SECTIONS) is empty; render loaded.section, not the section constant (a stored SSN makes the SSN field optional); build the missing list from validateSection(loaded.section, loaded.answers); pick the section server-side from visibleSections before saving. T-033: an ATTESTATION evidence arm (<KEY>_SUBMITTED) is needed, or no intake FORM instance can ever be satisfied. T-021: change the CAREGIVER_HOME redirect from /email to the intake entry. Every caregiver page/action: requireCaregiverSession() then runAsPrincipal(principal, {}, () => useCase({ caregiverId: principal.caregiverId })) behind a selfOnly CAREGIVER action. T-084: add HEPATITIS_B_SECTION and FLU_VACCINATION_SECTION (src/domain/forms/vaccination.ts) to the section list and to captureOnceIssues(ALL_SECTIONS); their requiredBy keys are not intake keys (no <KEY>_SUBMITTED evidence). T-043: splice HOME_CARE_PROFILE_SECTIONS into ALL_SECTIONS; duplicate care-setting feedback arrives as server invalid on careSettingExperience.<i>.setting. T-046: add IDENTITY_SECTION, GOVERNMENT_ID_SECTION, CHRC_DESCRIPTORS_SECTION, PAYROLL_W4_SECTION, PAYROLL_IT2104_SECTION, PAYROLL_DIRECT_DEPOSIT_SECTION to the ordered flow and captureOnceIssues(ALL_SECTIONS). The three payroll screens share INTAKE_PAYROLL: complete only when all three have no missing. A blank sealed field with a value on file is optional on load. T-044 (ADR-073): on the caregiver's first saved intake step call applyPipelineTransition(tx, agencyId, { caregiverId, event: \"INTAKE_STARTED\", actorUserId: null }) — a caregiver who signed in at /verify without returning to the invite link is still INVITED. Repoint INVITE_START_PATH in src/app/r/invite/[token]/actions.ts together with T-021 CAREGIVER_HOME. Also own (unassigned after T-025): an invite-page entry that texts the code for grant.caregiverId (no retyping the number) and returns to /r/invite/[token], so the INVITE token is consumed in the common path."
+    },
+    {
+      "id": "T-042",
+      "slug": "repeating-blocks",
+      "title": "Employment, education, references, emergency contacts with bounds",
+      "phase": 5,
+      "module": "1",
+      "prd": "1. Caregiver intake",
+      "priority": "P0",
+      "deps": [
+        "T-047",
+        "T-033"
+      ],
+      "status": "done",
+      "notes": "T-040/ADR-034: declare the history bounds as data on your groups (the four numbers 5/3/min 2/2 in T-040 PLAN.md § Design 4); max => invalid, min => missing. No reference maximum (OPEN-QUESTIONS 43). Test each section with formSectionSchema.parse. Use T-033's requirement keys in requiredBy. T-047 (ADR-052/053): field ids must be catalogue names (src/domain/forms/canonical-record.ts); group ids must be employment | education | references | emergencyContacts; every field controlling another field's visibility must itself be a catalogue field; test bindingIssues(SECTION) is empty. T-033: cite INTAKE_REQUIREMENT_KEYS in requiredBy. T-033 (ADR-056): requirement keys for intake sections are INTAKE_REQUIREMENT_KEYS in src/db/seeds/ny-requirement-templates.ts (see T-033 PLAN); no task owns INTAKE_CONTACT yet. T-046: section constants in src/domain/forms/sections/; personName for reference and emergency-contact names."
+    },
+    {
+      "id": "T-043",
+      "slug": "homecare-profile-section",
+      "title": "Home-care profile: certifications, experience, skills, shifts, tolerances, vehicle, COVID",
+      "phase": 5,
+      "module": "1",
+      "prd": "1. Caregiver intake",
+      "priority": "P0",
+      "deps": [
+        "T-047",
+        "T-033"
+      ],
+      "status": "done",
+      "notes": "T-040: test each section with formSectionSchema.parse; use T-033's requirement keys in requiredBy. T-047 (ADR-052/053): field ids must be catalogue names (src/domain/forms/canonical-record.ts); group ids must be employment | education | references | emergencyContacts; every field controlling another field's visibility must itself be a catalogue field; test bindingIssues(SECTION) is empty. T-033: cite INTAKE_REQUIREMENT_KEYS in requiredBy. T-047: CareSettingExperience is not in the catalogue because each setting may appear only once; it needs a duplicate-setting rule. T-033 (ADR-056): requirement keys for intake sections are INTAKE_REQUIREMENT_KEYS in src/db/seeds/ny-requirement-templates.ts (see T-033 PLAN); no task owns INTAKE_CONTACT yet."
+    },
+    {
+      "id": "T-046",
+      "slug": "sensitive-intake-sections",
+      "title": "Identity, government ID, CHRC descriptors and payroll input sections",
+      "phase": 5,
+      "module": "1",
+      "prd": "Data model",
+      "priority": "P0",
+      "deps": [
+        "T-047",
+        "T-012",
+        "T-033"
+      ],
+      "status": "done",
+      "notes": "T-004 REVIEW.md risk 1: zod .refine() chains do NOT abort — ssnSchema.safeParse('abc') yields 2 issues and an unparseable DOB yields 4, including a misleading minimum-age message. Render issues[0] only, or give date-of-birth.ts an abort form. Risk 3: personNameSchema has an undocumented 100-char cap per part (name.ts:24) — test it or drop it. T-010b REVIEW.md: fromAddressColumns returns THREE states (absent/partial/complete). Do not collapse it to Address|null — that forces either save-and-resume drafts or city/state-only employer addresses to be wrong. T-040: SSN cannot be pre-filled (ordinary read path does not decrypt, ADR-022): show it blank with an \"on file ending 1234\" hint, and a blank SSN with one on file must NOT count as missing (binding-level rule, with T-047). Add any name/routing-number field kinds you need. Test sections with formSectionSchema.parse. T-047 (ADR-052/053): field ids must be catalogue names (src/domain/forms/canonical-record.ts); group ids must be employment | education | references | emergencyContacts; every field controlling another field's visibility must itself be a catalogue field; test bindingIssues(SECTION) is empty. T-033: cite INTAKE_REQUIREMENT_KEYS in requiredBy. T-047: needs a money kind for the *Cents columns, sealed kinds for the work-authorisation and bank numbers, and a free-text list kind for otherNames; decide how to show 'on file' for encrypted values with no last-4 column. T-033 (ADR-056): requirement keys for intake sections are INTAKE_REQUIREMENT_KEYS in src/db/seeds/ny-requirement-templates.ts (see T-033 PLAN); no task owns INTAKE_CONTACT yet."
+    },
+    {
+      "id": "T-045",
+      "slug": "restricted-intake-forms",
+      "title": "Voluntary EEOC form and medical questionnaire writing to restricted stores",
+      "phase": 5,
+      "module": "1",
+      "prd": "Data model",
+      "priority": "P0",
+      "deps": [
+        "T-047",
+        "T-011",
+        "T-033"
+      ],
+      "status": "done",
+      "notes": "T-040: test each section with formSectionSchema.parse; use T-033's requirement keys in requiredBy. T-047: the restricted medical and EEOC stores are not bound by the capture-once catalogue; T-033: cite INTAKE_REQUIREMENT_KEYS in requiredBy. T-033 (ADR-056): requirement keys for intake sections are INTAKE_REQUIREMENT_KEYS in src/db/seeds/ny-requirement-templates.ts (see T-033 PLAN); no task owns INTAKE_CONTACT yet."
+    },
+    {
+      "id": "T-036",
+      "slug": "role-axis-rematerialisation",
+      "title": "Caregiver role axis in resolution, and re-materialise instances when the profile changes",
+      "phase": 5,
+      "module": "4",
+      "prd": "1. Caregiver intake",
+      "priority": "P0",
+      "deps": [
+        "T-031",
+        "T-032",
+        "T-043"
+      ],
+      "status": "done",
+      "notes": "T-030 REVIEW.md: candidateScopeKeys goes 15 -> 31, NOT the plan's 16 -> 32 (2^4-1 non-empty subsets, not 2^4). You must also drop and replace the RequirementTemplate_layer_matches_scope CHECK to include the role axis. T-033 (ADR-056): a role template must include {state, serviceType} to override the NY rules."
+    },
+    {
+      "id": "T-044",
+      "slug": "invite-flow",
+      "title": "Offer accepted triggers SMS invite and a tracked record",
+      "phase": 5,
+      "module": "1",
+      "prd": "1. Caregiver intake",
+      "priority": "P0",
+      "deps": [
+        "T-021",
+        "T-022",
+        "T-032",
+        "T-051"
+      ],
+      "status": "done",
+      "notes": "Batch-1 report: nothing stores a caregiver's state, service type or payer yet, so T-031 resolver inputs have no owner. Take it here (the invite/tracked record is where they enter). T-051 (ADR-042): own your SMS/email send job handler with ids-only payload; buildIdempotencyKey; `rejected` is permanent; check SMS consent yourself. Messages land in SentMessage and show at /dev/outbox under the mock. T-033 (ADR-056): store the caregiver's context from STATES, SERVICE_TYPES and PAYERS in src/domain/requirements/vocabulary.ts; a service type (HHA|PCA) is required. T-021 (ADR-058/059): link the invite page to /verify or add a start-by-caregiver-id entry; consume the INVITE token after verifyCaregiverCode succeeds and move INVITED->INTAKE; store mobilePhone via phoneSchema (E.164, indexed for sign-in); decide how SMS consent exists before the invite text. Get the caregiver with requireCaregiverSession() from @/server/auth/caregiver-session. Step 0 (SMS consent before the invite): the invite text is itself an SMS, so consent must exist before it is sent. Staff record the caregiver's SMS consent (from the offer conversation) when marking the offer accepted; the invite is refused without it. Store it in the same ContactRecord consent column/timestamp that T-021's phone-screen checkbox writes (OPEN-QUESTIONS 83) — one consent, two capture points; the T-021 checkbox then only re-affirms. T-048 displays and lets the caregiver withdraw it."
+    },
+    {
+      "id": "T-060",
+      "slug": "document-set-engine",
+      "title": "Select the required document set by state, service type, agency policy",
+      "phase": 6,
+      "module": "2",
+      "prd": "2. Form generation and e-signature",
+      "priority": "P0",
+      "deps": [
+        "T-032"
+      ],
+      "status": "done"
+    },
+    {
+      "id": "T-061",
+      "slug": "pdf-form-filling",
+      "title": "Fill official PDFs: W-4, IT-2104, I-9 s1, CHRC-102 and fingerprint questionnaire, wage notice, direct deposit",
+      "phase": 6,
+      "module": "2",
+      "prd": "2. Form generation and e-signature",
+      "priority": "P0",
+      "deps": [
+        "T-060",
+        "T-046",
+        "T-017"
+      ],
+      "status": "done",
+      "notes": "T-004 REVIEW.md risk 2: formatSsn/ssnLast4/formatPhone have no production caller yet — verify the canonical-to-printed direction against the real W-4 boxes before relying on them. T-010b REVIEW.md: fromAddressColumns returns THREE states (absent/partial/complete). Do not collapse it to Address|null — that forces either save-and-resume drafts or city/state-only employer addresses to be wrong. T-060/ADR-037: key your generators by documentKey (the SIGNED_DOCUMENT option's evidenceKey). T-062 (ADR-050): return the same GeneratedDocument shape {documentKey, templateVersion, name, unsignedPdfKey}. Names outside Latin-1 (e.g. 'Nguyễn') make pdf-lib standard fonts throw; fixing needs an embedded Unicode font (new dependency + ADR). T-033: key generators by DOCUMENT_KEYS from the NY seed. T-046 (ADR-066/067; REVIEW.md § Follow-ups): read columns, never a form model. W-4 money and it2104ExtraWithholdingNyCents are cents (W-4 prints whole dollars). IT-2104 line 1 is it2104AllowancesNy; ignore it2104AllowancesYonkers. Switch over WORK_AUTHORIZATION_TYPES, SEX_MARKERS, EYE_COLORS/HAIR_COLORS, W4_FILING_STATUSES, IT2104_FILING_STATUSES, BANK_ACCOUNT_TYPES from src/domain/forms/canonical-record.ts. heightInches is inches. SSN, routing, account and work-auth numbers are sealed: printing them needs a system-actor decrypt door — an ADR, an entry in ADR-022 lint ignores and T-019 sensitive-field.test.ts allowlist, audited in the same transaction. Do not quietly import decryptField."
+    },
+    {
+      "id": "T-062",
+      "slug": "agency-and-attestation-documents",
+      "title": "Generate agency documents and the sign-only attestation set from templates",
+      "phase": 6,
+      "module": "2",
+      "prd": "2. Form generation and e-signature",
+      "priority": "P0",
+      "deps": [
+        "T-060",
+        "T-017"
+      ],
+      "status": "done",
+      "notes": "T-060/ADR-037: key generators by documentKey; treat requirementType === \"ATTESTATION\" as sign-only."
+    },
+    {
+      "id": "T-064",
+      "slug": "envelope-send-and-store",
+      "title": "One envelope for the whole set, signed copies stored with template version and timestamp",
+      "phase": 6,
+      "module": "2",
+      "prd": "2. Form generation and e-signature",
+      "priority": "P0",
+      "deps": [
+        "T-061",
+        "T-062",
+        "T-052",
+        "T-058",
+        "T-017",
+        "T-033",
+        "T-084"
+      ],
+      "status": "done",
+      "notes": "Batch-2 (ADR-037/038/039): materialise, then findDocumentSet(agencyId, caregiverId); refuse an empty set; fail closed when a document has no generator; one createEnvelope per set with documentRef set; write every PDF before createEnvelope (it throws on a missing one); SignedDocument.templateKey = documentKey; linkEvidence for every instance in `satisfies`. Treat an esign webhook as a notification only — re-read getEnvelope(agencyId, envelopeId) and record from documents[].signedPdfKey and signedAt (the mock HMAC secret is public). Handle `declined` though the mock never produces it. You decide which signers (agency countersign, OPEN-QUESTIONS 51). Deployments must set APP_URL. T-058 (ADR-044/045): call registerWebhookSubject(tx, agencyId, {provider:'esign', externalId: envelopeId}) in the same transaction that records the envelope, else every callback gets 409. Own defineJobHandler({type: WEBHOOK_JOB_TYPES.esign /* 'webhook.esign' */, schema: esignWebhookJobPayloadSchema /* {inboundWebhookId, envelopeId} */}); re-read getEnvelope rather than trusting the event; stay idempotent. Until you land the mock signing page shows HTTP 409. T-062 (ADR-050): send keys where hasAgencyTemplate(key) to generateAgencyDocuments(agencyId, caregiverId, entries, issuedOn, storage) and the rest to T-061; refuse to send on 'unknown-caregiver' or 'refused'; store templateVersion on each signed copy; write the EXPORT/CAREGIVER audit entry; call generateAgencyDocuments only from inside a guarded use case (its module is in UNGUARDED_MODULES on that condition). Add a coverage test that every seeded SIGNED_DOCUMENT key has a generator. If T-033 seeds Hep B/flu before T-084 lands, those envelopes are refused. T-084 (ADR-064/065): hasAgencyTemplate now covers every seeded non-official document; widen src/db/seeds/ny-document-coverage.test.ts so every OFFICIAL_FORM_KEYS entry has a T-061 generator. Surface missing-fields naming the three vaccination fields as \"the caregiver has not answered the vaccination questions\". HEPATITIS_B_VACCINATION and FLU_VACCINATION are now FORM instances: linkEvidence of the signed copies satisfies them. T-061 (ADR-069/070; REVIEW.md § Handoffs): route entries with hasOfficialForm(documentKey) to generateOfficialForms(agencyId, caregiverId, entries, getPort(\"storage\")) (no issuedOn), the rest by hasAgencyTemplate to T-062. Call it only inside the guarded send use case and add that use case path to OFFICIAL_FORMS_IMPORTERS in sensitive-field.test.ts. unknown-caregiver/refused = refuse to send; surface each OfficialFormRefusal by record field name (unprintable = staff must intervene). Store templateVersion as returned; write the EXPORT audit entry. Signature anchors for a real provider: W-4 p1 Step 5; IT-2104 p1 above Date; I-9 p1 Signature of Employee; LS 54 employee signature; composed forms last page bottom margin. The mock stamp overlapping official-form content is harmless in dev."
+    },
+    {
+      "id": "T-070",
+      "slug": "document-upload",
+      "title": "Phone camera upload with glare and cropping guidance, UploadedDocument model",
+      "phase": 7,
+      "module": "3",
+      "prd": "3. Document capture and review",
+      "priority": "P0",
+      "deps": [
+        "T-021",
+        "T-003",
+        "T-017",
+        "T-032"
+      ],
+      "status": "done",
+      "notes": "T-017 REVIEW.md: storageKeySchema validates SHAPE, not membership. A Server Action must look the key up on UploadedDocument and authorise via policy.ts — never act on a key merely because it parsed. Also: extensions are a closed allowlist of pdf/jpg/png/heic (widening is your explicit decision), write() takes no filename, and EXIF/GPS on camera uploads is open question 20. T-011 PLAN.md / OPEN-QUESTIONS 22: the medical-personnel separation LEAKS through evidence files. A TB result PDF uploaded as evidence becomes an UploadedDocument in core with an ordinary ADR-005 storage key — clinical content in the personnel file, which DATA-MODEL forbids. T-011 cannot close this from inside the restricted store. Closing it needs a restricted storage prefix plus an ADR, and one of you owns it. Batch-1 report: evidence FKs reachable from a caregiver delete must be DEFERRABLE, set in raw SQL in the migration — Prisma drops DEFERRABLE from schema.prisma. T-021: get the caregiver with requireCaregiverSession() from @/server/auth/caregiver-session in every page and action, then runAsPrincipal(principal, {}, () => useCase({ caregiverId: principal.caregiverId })) behind a selfOnly CAREGIVER action."
+    },
+    {
+      "id": "T-071",
+      "slug": "extraction-pipeline",
+      "title": "Run extraction, normalise fields and confidences onto the document",
+      "phase": 7,
+      "module": "3",
+      "prd": "3. Document capture and review",
+      "priority": "P0",
+      "deps": [
+        "T-070",
+        "T-053"
+      ],
+      "status": "done",
+      "notes": "T-053: decide whether OCR `text` from clinic documents belongs in the medical store (OPEN-QUESTIONS 22 leak). You normalise as-printed values (dates, names) (OPEN-QUESTIONS 45). Tests load the committed fixture PDFs (src/integrations/adapters/extraction/fixtures/*.pdf) with fs and write them through the storage port; lint blocks importing the fixture table. Unknown content returns confidence 0. T-070 (T-070 REVIEW.md § Follow-ups): nothing enqueues extraction yet — trigger it from uploadOwnDocument (src/server/documents/uploads.ts) after its transaction commits, through the queue. Extraction references UploadedDocument.id; add @@unique([agencyId, id]) if you want a composite FK. OCR text of a clinical key is clinical detail (ADR-068) — do not store it in core without a decision. HEIC is accepted. createUploadedDocument returns only {id, storageKey}."
+    },
+    {
+      "id": "T-072",
+      "slug": "identity-matching",
+      "title": "Rule-based identity matching across documents and intake data",
+      "phase": 7,
+      "module": "3",
+      "prd": "3. Document capture and review",
+      "priority": "P0",
+      "deps": [
+        "T-071",
+        "T-004"
+      ],
+      "status": "done",
+      "notes": "T-070: OPEN-QUESTIONS 103 — no requirement accepts an identity-document upload; decide. T-071 (ADR-082/083): import findCaregiverDocumentExtractions / findDocumentExtraction (src/db/repositories/extractions.ts) and the types DocumentExtraction, NormalisedFields, NormalisedField<T> from @/domain/documents/extraction; each field has asPrinted and value (dates YYYY-MM-DD, names PersonName, training in minutes)."
+    },
+    {
+      "id": "T-077",
+      "slug": "issuer-allowlist",
+      "title": "Agency-maintained list of accepted training programs and clinics, with admin CRUD and NY seed",
+      "phase": 7,
+      "module": "3",
+      "prd": "3. Document capture and review",
+      "priority": "P0",
+      "deps": [
+        "T-030",
+        "T-020"
+      ],
+      "status": "done"
+    },
+    {
+      "id": "T-073",
+      "slug": "judge-orchestration",
+      "title": "Redaction, issuer allowlist short-circuit, judge call, decision log [AGENTIC]",
+      "phase": 7,
+      "module": "3",
+      "prd": "3. Document capture and review",
+      "priority": "P0",
+      "deps": [
+        "T-071",
+        "T-054",
+        "T-030",
+        "T-077",
+        "T-134"
+      ],
+      "status": "done",
+      "notes": "Batch-2 (ADR-035/036/041): redact document text before judging; check the allowlist FIRST via findLiveAcceptedIssuers(document agencyId) + matchAcceptedIssuer(issuerText, issuers), only on a confident extraction; a hit skips only the issuer-legitimacy question. Call the judge from a queue job only. Log JudgeDecision with input hash, full output, result.modelVersion (never the JUDGE_MODEL constant), and the matched issuer id+name. Route UNCERTAIN, low confidence and manualOnly to staff; the verdict never accepts alone; expiry/date checks are deterministic (judge ignores them). A mock VALID must never stand in for an allowlist hit: on allowlist miss + mock verdict, route to staff (test it). Known weak spot: mock treats \"health\"/\"training\"/\"program\" as issuer terms, so an issuer-less HHA certificate can come back VALID. Add a lint rule so only src/integrations/adapters/judge/claude.ts may import @anthropic-ai/sdk. T-071 (ADR-082): read document text only through readExtractionText (clinic text lives in medical.ClinicalDocumentText); enqueue the judge job inside the extraction job's save transaction (src/server/documents/extraction-job.ts). T-134 (ADR-089): register your job handler(s) in the worker's handler list src/server/jobs/handlers.ts (T-134 PLAN.md names the export) and add a test there; nothing else runs jobs."
+    },
+    {
+      "id": "T-074",
+      "slug": "auto-accept-rules",
+      "title": "Auto-accept only when extraction, matching and judge all pass and not manualOnly",
+      "phase": 7,
+      "module": "3",
+      "prd": "3. Document capture and review",
+      "priority": "P0",
+      "deps": [
+        "T-072",
+        "T-073",
+        "T-032",
+        "T-134"
+      ],
+      "status": "done",
+      "notes": "T-030 PLAN.md flag 9: RequirementTemplate.description is sent to the judge — your redaction test must cover it, not just extracted text. T-071: you own the confidence threshold and moving the requirement instance off PENDING after extraction; the extraction job leaves it PENDING. Enqueue follow-on work inside the extraction job's transaction. T-134 (ADR-089): register your job handler(s) in the worker's handler list src/server/jobs/handlers.ts (T-134 PLAN.md names the export) and add a test there; nothing else runs jobs. T-072 (ADR-090/091/092): import matchIdentity and types IntakeIdentity/IdentityMatch from @/domain/identity/match and findIntakeIdentity from @/db/repositories/intake-identity; it writes no audit entry, so your job writes the caregiver audit entry. Name+DOB only; ID numbers not compared (OPEN-QUESTIONS 103)."
+    },
+    {
+      "id": "T-075",
+      "slug": "judge-sampling-review",
+      "title": "Weekly sampling view over auto-accepted records with judge reasoning",
+      "phase": 7,
+      "module": "3",
+      "prd": "3. Document capture and review",
+      "priority": "P0",
+      "deps": [
+        "T-074",
+        "T-020",
+        "T-018",
+        "T-134",
+        "T-121"
+      ],
+      "status": "done",
+      "notes": "T-134 (ADR-089): register your job handler(s) in the worker's handler list src/server/jobs/handlers.ts (T-134 PLAN.md names the export) and add a test there; nothing else runs jobs. T-074 (ADR-101/102): read findAutoAcceptDecision (src/db/repositories/auto-accept-decisions.ts) for the per-document outcome, reason codes and identity findings; the instance goes to EXCEPTION for staff when any check fails."
+    },
+    {
+      "id": "T-076",
+      "slug": "manual-only-tasks",
+      "title": "I-9 section 2 examination and NY Home Care Registry lookup as staff tasks",
+      "phase": 7,
+      "module": "3",
+      "prd": "3. Document capture and review",
+      "priority": "P0",
+      "deps": [
+        "T-032",
+        "T-020"
+      ],
+      "status": "done"
+    },
+    {
+      "id": "T-080",
+      "slug": "chrc-tracking",
+      "title": "DOH fingerprint process tracked from submission to result",
+      "phase": 8,
+      "module": "5",
+      "prd": "5. Verification workflows",
+      "priority": "P0",
+      "deps": [
+        "T-032",
+        "T-020",
+        "T-061"
+      ],
+      "status": "done",
+      "notes": "T-047 (ADR-053): treat a link token whose Reference row has been deleted as expired. T-061: the signed CHRC_102 is a SAMPLE consent until OPEN-QUESTIONS 105 is answered; tracking submission/result does not depend on its wording. T-076 (ADR-093): reuse createCheckResult and the CHECK_RESULT evidence arm (src/db/repositories/check-results.ts) for the DOH result; recordManualCheck in src/server/review/manual-checks.ts is the manual-only writer."
+    },
+    {
+      "id": "T-081",
+      "slug": "background-check-flow",
+      "title": "Standalone FCRA disclosure and consent gate, then order and poll the vendor",
+      "phase": 8,
+      "module": "5",
+      "prd": "5. Verification workflows",
+      "priority": "P0",
+      "deps": [
+        "T-055",
+        "T-058",
+        "T-062",
+        "T-052",
+        "T-032",
+        "T-134"
+      ],
+      "status": "done",
+      "notes": "T-055 (ADR-032/033/040): packageCode is opaque agency config passed through verbatim. Drive the in-memory mock's `advance` dev control from a src/app/dev/**/*.dev.tsx page (ADR-040 lint exemption), and PROVE under next dev that the dev page, T-058's route and the polling job reach the same mock instance (ADR-033). You own orderId->caregiver mapping, the FCRA gate and CONSIDER adjudication. T-058 (ADR-044/045): call registerWebhookSubject(tx, agencyId, {provider:'backgroundCheck', externalId: orderId}) in the transaction that records the order. Own defineJobHandler for WEBHOOK_JOB_TYPES.backgroundCheck ('webhook.backgroundCheck') with backgroundCheckWebhookJobPayloadSchema; re-read getOrder; stay idempotent. T-062: the FCRA gate is a SignedDocument with templateKey FCRA_DISCLOSURE (not FCRA_DISCLOSURE_AUTHORIZATION). T-064: read the FCRA SignedDocument through findSignedDocuments(agencyId, caregiverId) in src/db/repositories/signed-documents.ts. T-124 (ADR-079): the background-check order/poll workers re-read the caregiver's stage at run time and end with no side effects on WITHDRAWN. T-134 (ADR-089): register your job handler(s) in the worker's handler list src/server/jobs/handlers.ts (T-134 PLAN.md names the export) and add a test there; nothing else runs jobs. T-076: CheckResult evidence has a required recordedByUserId; a vendor background-check result needs it made optional or its own column (decide, ADR). T-101 (ADR-113): any write that sets a requirement instance SATISFIED must call applyVerificationCompleted(tx, agencyId, caregiverId, actorUserId) from src/db/repositories/verification.ts in the same transaction (DOCUMENT instances: call applyDocumentReviewCleared, which calls it)."
+    },
+    {
+      "id": "T-081b",
+      "slug": "background-check-adjudication",
+      "title": "Staff clear or fail a CONSIDER background-check result after review",
+      "phase": 8,
+      "module": "5",
+      "prd": "5. Verification workflows",
+      "priority": "P0",
+      "deps": [
+        "T-081"
+      ],
+      "status": "done",
+      "notes": "Split from T-081 (see docs/tasks/T-081-background-check-flow/PLAN.md § Risks 1): the \"clear after review\" use case, a backgroundCheck.adjudicate policy row (policy.ts is shared: serialise) and a button on /checks. Setting the instance SATISFIED must call applyVerificationCompleted in the same transaction (ADR-113). T-081 (ADR-122..127): CONSIDER moves the instance to IN_REVIEW via RESULT_INSTANCE_STATUS (src/domain/requirements/background-check.ts); your staff clear writes a CheckResult WITH recordedByUserId (null means vendor-reported) and calls applyVerificationCompleted. FCRA adverse-action notices are not modelled (OPEN-QUESTIONS 204). Render a null CheckResult recorder as \"Reported by the vendor\"."
+    },
+    {
+      "id": "T-082",
+      "slug": "reference-requests",
+      "title": "Tokenised reference form, attempt log, escalate after two misses",
+      "phase": 8,
+      "module": "5",
+      "prd": "5. Verification workflows",
+      "priority": "P0",
+      "deps": [
+        "T-022",
+        "T-051",
+        "T-042",
+        "T-018",
+        "T-032",
+        "T-134"
+      ],
+      "status": "done",
+      "notes": "T-051 (ADR-042): own your send job handler with ids-only payload; buildIdempotencyKey; `rejected` is permanent; check SMS consent yourself. T-042: reference and employment rows live in src/domain/forms/sections/{references,employment-history}.ts; the reference check must respect the employment 'may we contact' answer. No end-before-start date validation exists (OPEN-QUESTIONS 133). T-134 (ADR-089): register your job handler(s) in the worker's handler list src/server/jobs/handlers.ts (T-134 PLAN.md names the export) and add a test there; nothing else runs jobs. T-101 (ADR-113): any write that sets a requirement instance SATISFIED must call applyVerificationCompleted(tx, agencyId, caregiverId, actorUserId) from src/db/repositories/verification.ts in the same transaction (DOCUMENT instances: call applyDocumentReviewCleared, which calls it)."
+    },
+    {
+      "id": "T-082b",
+      "slug": "reference-check-decision",
+      "title": "Staff satisfy or fail a reference check that is in review",
+      "phase": 8,
+      "module": "5",
+      "prd": "5. Verification workflows",
+      "priority": "P1",
+      "deps": [
+        "T-082"
+      ],
+      "status": "done",
+      "notes": "Split from T-082 (OPEN-QUESTIONS 243, ADR-141): a reference answering No (or not confirming) puts REFERENCE_CHECK IN_REVIEW for a person, and today only a waiver clears it. Add the staff decision on /checks (policy.ts is shared: serialise), mirroring T-081b (ADR-134): satisfying must call applyVerificationCompleted in the same transaction (ADR-113); a fail goes to EXCEPTION. Read docs/tasks/T-082-reference-requests/PLAN.md and REVIEW.md, and T-081b PLAN.md for the pattern."
+    },
+    {
+      "id": "T-083",
+      "slug": "health-screening",
+      "title": "Physical, TB test or chest X-ray, immunisations as structured requirements",
+      "phase": 8,
+      "module": "5",
+      "prd": "5. Verification workflows",
+      "priority": "P0",
+      "deps": [
+        "T-032",
+        "T-011"
+      ],
+      "status": "done",
+      "notes": "T-011 PLAN.md / OPEN-QUESTIONS 22: the medical-personnel separation LEAKS through evidence files. A TB result PDF uploaded as evidence becomes an UploadedDocument in core with an ordinary ADR-005 storage key — clinical content in the personnel file, which DATA-MODEL forbids. T-011 cannot close this from inside the restricted store. Closing it needs a restricted storage prefix plus an ADR, and one of you owns it. T-011 PLAN.md: readMedicalClearanceResults exists for exactly one job — letting you TRANSCRIBE an outcome into a requirement instance, once. Clearance itself never reads the medical schema. Batch-1 report: decide whether recording a medical result creates the MedicalFile root (T-011 accessors; MedicalFile.caregiverId is globally unique). T-070 (ADR-068): the storage half of OPEN-QUESTIONS 22 is closed; do not build a second restricted-document mechanism. T-045 (ADR-084): the intake medical questionnaire (src/domain/forms/sections/medical-questionnaire.ts) writes to the medical store via src/server/intake/restricted-sections.ts; screening details and pass/fail results are yours, also medical-store only. T-123 (ADR-111): any write that sets a DOCUMENT requirement instance SATISFIED must call applyDocumentReviewCleared(tx, agencyId, caregiverId, actor) from src/db/repositories/document-review.ts in the same transaction. T-101 (ADR-113): any write that sets a requirement instance SATISFIED must call applyVerificationCompleted(tx, agencyId, caregiverId, actorUserId) from src/db/repositories/verification.ts in the same transaction (DOCUMENT instances: call applyDocumentReviewCleared, which calls it)."
+    },
+    {
+      "id": "T-084",
+      "slug": "vaccination-consents",
+      "title": "Hep B consent or declination, flu declination with reason, COVID status",
+      "phase": 8,
+      "module": "5",
+      "prd": "5. Verification workflows",
+      "priority": "P0",
+      "deps": [
+        "T-032",
+        "T-062"
+      ],
+      "status": "done",
+      "notes": "T-014 PLAN.md: route handlers are not covered by T-014 ALS probe — probe before relying on ambient context in one. T-062 (ADR-050): add the Hep B, flu and COVID templates to AGENCY_TEMPLATES (they carry a choice, so not signOnly) and extend DOCUMENT_FIELDS and AgencyDocumentContext with the recorded choice; bump versions per the hash test. T-033: the NY seed includes Hep B and flu SIGNED_DOCUMENT options — add their generators or T-064 refuses every NY envelope. COVID status is a profile field, not a requirement. Step 0: T-064 now depends on this task; the Hep B and flu generators are required, not optional. T-041: vaccination answers can still be changed after signing (OPEN-QUESTIONS 128)."
+    },
+    {
+      "id": "T-090",
+      "slug": "training-hours",
+      "title": "Import orientation and in-service hours, compare against state minimums",
+      "phase": 9,
+      "module": "6",
+      "prd": "6. Training hours tracking",
+      "priority": "P1",
+      "deps": [
+        "T-057",
+        "T-032",
+        "T-033",
+        "T-018",
+        "T-134"
+      ],
+      "status": "done",
+      "notes": "T-050 PLAN.md flag 4: TrainingPort.sourceRef stays a string until you decide whether the scheduled file lands in our storage first. T-057 (ADR-046): reach the port only via getPort('training'); listCompletions 'since' is inclusive. A missing export file throws ENOENT and retries until dead-letter — decide transient vs permanent and whether sourceRef becomes a storageKey. You must de-duplicate rows (agency + caregiver id + course + date), map externalCaregiverId to a caregiver, and show rejected rows to staff. Courses have no category field: classify by courseCode (OPEN-QUESTIONS 60). T-033 (ADR-055): read minimumMinutes from the caregiver's pinned TRAINING template (defaults HHA 720, PCA 360 — OPEN-QUESTIONS). T-134 (ADR-089): register your job handler(s) in the worker's handler list src/server/jobs/handlers.ts (T-134 PLAN.md names the export) and add a test there; nothing else runs jobs. T-101 (ADR-113): any write that sets a requirement instance SATISFIED must call applyVerificationCompleted(tx, agencyId, caregiverId, actorUserId) from src/db/repositories/verification.ts in the same transaction (DOCUMENT instances: call applyDocumentReviewCleared, which calls it)."
+    },
+    {
+      "id": "T-100",
+      "slug": "clearance-view",
+      "title": "One screen per caregiver with every requirement, its evidence and status",
+      "phase": 10,
+      "module": "7",
+      "prd": "7. Clearance and sign-off",
+      "priority": "P0",
+      "deps": [
+        "T-032",
+        "T-074",
+        "T-020",
+        "T-064",
+        "T-011"
+      ],
+      "status": "done",
+      "notes": "T-120: export and reuse the blocker predicate from src/domain/requirements/blocker.ts rather than restating it. T-044 (ADR-073): stage moves only via applyPipelineTransition; enqueue the sync with enqueueJobInTransaction in the sign-off transaction. T-064: read signed copies through findSignedDocuments(agencyId, caregiverId) in src/db/repositories/signed-documents.ts. T-074 planner: no task yet fires the pipeline event DOCUMENT_REVIEW_CLEARED (moving a caregiver out of document review once every document requirement is satisfied, via applyPipelineTransition). T-123 owns it unless its planner names a better owner; T-100 must not assume it exists."
+    },
+    {
+      "id": "T-101",
+      "slug": "supervisor-signoff",
+      "title": "Supervisor sign-off logged with identity and time, triggers the sync",
+      "phase": 10,
+      "module": "7",
+      "prd": "7. Clearance and sign-off",
+      "priority": "P0",
+      "deps": [
+        "T-100",
+        "T-014",
+        "T-102"
+      ],
+      "status": "done",
+      "notes": "T-014 REVIEW.md: can() is NOT an agency check — it compares role, selfOnly identity and reason only. A coordinator of agency A passing agency B caregiver id is permitted by the registry and stopped only by DATA-MODEL invariant 5. Pass principal.agencyId into your repositories. T-021: a CAREGIVER principal must carry caregiverId or principalSchema rejects it. T-120 (ADR-051): link caregiver names from the /pipeline board to the record page, and write the VIEW audit entry when the record page opens. T-124: reuse WithdrawCaregiver (src/app/(staff)/pipeline/withdraw-caregiver.tsx) and its action on the caregiver record page. T-102 (ADR-108): call recordCaregiverCredentials(agencyId, caregiverId, signedOffAt) inside the sign-off transaction; it is a direct call, not a job. T-100 (ADR-103/104): reuse clearanceReadiness and findClearanceSheet(tx, agencyId, caregiverId) re-read inside the sign-off transaction; put the sign-off section on /clearance/[id]; do not call getClearanceSheet (nests use cases, second VIEW). T-123 planner: nothing fires the pipeline event VERIFICATION_COMPLETED (VERIFICATION -> CLEARANCE), so caregivers stop at VERIFICATION. T-101 owns it unless its planner names a better owner: mirror T-123 applyDocumentReviewCleared (src/db/repositories/document-review.ts) — one function, via applyPipelineTransition only (ADR-073), called from every place a verification requirement becomes satisfied (check results, CHRC result, auto-accept, staff accept, waive)."
+    },
+    {
+      "id": "T-102",
+      "slug": "credential-registry",
+      "title": "Credential model and projection of issuer and expiry from satisfied instances",
+      "phase": 10,
+      "module": "9",
+      "prd": "9. Coordinator dashboard",
+      "priority": "P0",
+      "deps": [
+        "T-074",
+        "T-032",
+        "T-134"
+      ],
+      "status": "done",
+      "notes": "T-084: nothing yet re-asks the flu statement each season. When FLU_VACCINATION (FIXED_PERIOD 12 / ANNUAL) expires, the caregiver must re-answer and re-sign; own the expiry trigger here or hand it to a named task. T-134 (ADR-089): register your job handler(s) in the worker's handler list src/server/jobs/handlers.ts (T-134 PLAN.md names the export) and add a test there; nothing else runs jobs."
+    },
+    {
+      "id": "T-110",
+      "slug": "alayacare-mapping-config",
+      "title": "Per-agency field mapping including custom fields, editable without a deploy",
+      "phase": 11,
+      "module": "8",
+      "prd": "8. AlayaCare sync",
+      "priority": "P0",
+      "deps": [
+        "T-056",
+        "T-020"
+      ],
+      "status": "done",
+      "notes": "T-012 PLAN.md: the payroll sync is the one legitimate consumer of decrypted bank fields besides T-019. T-010b REVIEW.md + ADR-022: you are the only legitimate future decryptField call sites. Your decrypt must sit in src/db/mapping/ or add your directory to the eslint ignores list — there is now NO precedent exception to copy. T-019 must keep the decrypt inside the AuditedTx transaction (ADR-015). T-056 (ADR-047/048): the adapter is createHttpAlayaCare({baseUrl, storage}); tests use startAlayaCareMockServer({port, faults}). Map only to the custom-field keys and credential codes in mock-servers/alayacare/seed.ts; listing AlayaCare custom fields would need a new port method (listCustomFields) and an ADR. Local dev sync needs 'npm run mock:alayacare' running. T-046: it2104FilingStatus is a new column; money columns are cents."
+    },
+    {
+      "id": "T-111",
+      "slug": "sync-profiles",
+      "title": "Idempotent create and update of caregiver profiles, with retries and a sync log",
+      "phase": 11,
+      "module": "8",
+      "prd": "8. AlayaCare sync",
+      "priority": "P0",
+      "deps": [
+        "T-110",
+        "T-016",
+        "T-101",
+        "T-134"
+      ],
+      "status": "done",
+      "notes": "T-016 PLAN.md: job payloads carry IDENTIFIERS, never values — a sync job carries {caregiverId} and the handler re-reads through a repository at run time. payload is plaintext jsonb and schema-core.test.ts cannot catch a violation, so this is on your checker. Also: question 18 (what process runs jobs) MUST be answered before this task. T-014 PLAN.md flag 1 / OPEN-QUESTIONS 21: a SYSTEM actor cannot call a guarded use case — runAsSystem establishes no principal. Your queue jobs have no human actor, so either they call unguarded repository functions directly or policy.ts needs an optional system?: true. Raise it; do not add the field as a judgement call. T-016 REVIEW.md: ClaimedJob no longer carries idempotencyKey — use JobContext.jobId as the vendor idempotency token (stable across attempts); add it to JobContext in your task rather than re-adding an unread column. Your checker must verify job payloads are IDENTIFIER-shaped, never values. FinishAttemptInput now requires workerId, which must be the same value passed to claimJobs. finishAttempt returns lost-lease rather than writing when the lease was overrun; drainQueue counts it in none of succeeded/retried/deadLettered, so claimed exceeding their sum is the signal. T-014 REVIEW.md, HIGHEST VALUE: ADR-015 queue-job half is NOT wired up and T-016 is already done. drainQueue in src/integrations/queue/drain.ts calls neither runAsSystem nor runWithAuditContext, so the FIRST real handler that writes an audit entry or touches a restricted accessor throws at runtime. T-014 could not fix it — src/integrations/** was outside its writes:. Whoever gives drainQueue a real handler must wrap the handler call. T-058: add both webhook.* handlers (webhook.esign, webhook.backgroundCheck) to createJobRegistry (OPEN-QUESTIONS 18); until then those jobs stay PENDING. T-056 (ADR-049): pass retryAfterMs from the adapter's retryable error into the job retry delay; one idempotency key per distinct write (a reused key with a different body is refused); finding a profile by name+DOB throws when more than one employee matches. T-044 (ADR-071/073): stage moves only via applyPipelineTransition. Nothing runs the job queue in production (OPEN-QUESTIONS 18): whoever builds the runner must register inviteSmsJob beside the sync handler; until then no invite text leaves outside tests. T-110 (ADR-075/076; REVIEW.md § Follow-ups): read the mapping with findAlayaCareMapping(agencyId) (unguarded by design; throws if the stored row no longer parses — let it fail the job). Build AlayaCareSyncSource: recordFields hold only MappableRecordField keys (12, no vaccination answers); credentials from Credential rows, dates YYYY-MM-DD. Call projectAlayaCareFields; send each credentials entry through writeCredential with its own idempotency key; customFields through one writeCustomFields (skip when empty). You own the fixed profile projection; consider recording mapping version in the sync log. No decrypt. T-124 (ADR-079): the AlayaCare sync worker re-reads the caregiver's stage at run time and ends with no side effects on WITHDRAWN. T-134 (ADR-089): register your job handler(s) in the worker's handler list src/server/jobs/handlers.ts (T-134 PLAN.md names the export) and add a test there; nothing else runs jobs. T-101 (ADR-115): sign-off enqueues job type sync.alayacare (constant and payload type in src/server/sync/alayacare-sync-job.ts, payload { caregiverId }, idempotency key [caregiverId, CLEARANCE_GRANTED]); add your handler there and register it in jobRegistry. Correction: until your handler is registered, a running worker dead-letters these jobs (drain.ts), it does not leave them pending; requeue any from dev/demo runs."
+    },
+    {
+      "id": "T-115",
+      "slug": "sync-credentials-documents",
+      "title": "Sync credentials with expiry dates and attach signed and uploaded documents",
+      "phase": 11,
+      "module": "8",
+      "prd": "8. AlayaCare sync",
+      "priority": "P0",
+      "deps": [
+        "T-111",
+        "T-102",
+        "T-064",
+        "T-017",
+        "T-134"
+      ],
+      "status": "done",
+      "notes": "T-016 PLAN.md: job payloads carry identifiers, never values. payload is plaintext jsonb. T-017 REVIEW.md: content type is derived from the key extension, never stored beside the file — that is what keeps local disk and S3 symmetric. T-016 REVIEW.md: your checker must verify job payloads are identifier-shaped, never values — payload is plaintext jsonb and no schema test can catch it. T-056 (ADR-049): pass retryAfterMs from the adapter's retryable error into the job retry delay; one idempotency key per distinct write. T-070: do not attach clinical uploads to AlayaCare until OPEN-QUESTIONS 102 is answered; personnel uploads are parseStorageKey(storageKey)?.kind === \"upload\". T-110: MappedCredential.documentKey is passed through from SyncSourceCredential; filling it from the evidence file storage key is yours. T-064: read signed copies through findSignedDocuments(agencyId, caregiverId) in src/db/repositories/signed-documents.ts. T-134 (ADR-089): register your job handler(s) in the worker's handler list src/server/jobs/handlers.ts (T-134 PLAN.md names the export) and add a test there; nothing else runs jobs. T-102 (ADR-107/108): read credentials with findCaregiverCredentials(agencyId, caregiverId) (src/db/repositories/credentials.ts, StoredCredential includes issuer); widen SyncSourceCredential / MappedCredential with issuer — T-110 sync types have no issuer field but PRD 9 syncs issuer. T-111 (ADR-117): widen SyncSourceCredential / MappedCredential / the port credential with issuer; fill documentKey; add document uploads in writeToAlayaCare between credentials and custom fields with keys [jobId, <document id>]; read the AlayaCare id from startAlayaCareSync. Once the body carries issuer, a pre-T-115 credential key is refused (422): requeue dev jobs from scratch."
+    },
+    {
+      "id": "T-112",
+      "slug": "sync-preview",
+      "title": "Preview of changes before the first sync for each agency",
+      "phase": 11,
+      "module": "8",
+      "prd": "8. AlayaCare sync",
+      "priority": "P0",
+      "deps": [
+        "T-111",
+        "T-115"
+      ],
+      "status": "done",
+      "notes": "T-110: the preview shows unmappedCredentialTypes and unresolvedCustomFields (NO_VALUE / AMBIGUOUS_CREDENTIAL) from projectAlayaCareFields; link to /admin/mapping. T-111 (ADR-116): decide first sync for an agency from AlayaCareSync rows with status SYNCED (add a per-agency read beside listAlayaCareSyncs in src/db/repositories/alayacare-sync.ts); preview projection = projectAlayaCareProfile + projectAlayaCareFields. T-115 (ADR-119/120): build the preview documents with signedDocumentsForAlayaCare (src/domain/sync/alayacare-sync.ts); move personnelDocumentKey from src/server/sync/alayacare-sync-job.ts into a shared server module rather than copying it; show issuer. A document key not in ALAYACARE_SIGNED_DOCUMENTS is never sent: label it \"not sent\"."
+    },
+    {
+      "id": "T-113",
+      "slug": "sync-conflicts",
+      "title": "Surface conflicts where AlayaCare differs instead of overwriting silently",
+      "phase": 11,
+      "module": "8",
+      "prd": "8. AlayaCare sync",
+      "priority": "P0",
+      "deps": [
+        "T-111"
+      ],
+      "status": "done",
+      "notes": "T-056: the mock only reports a DOB conflict; any other difference must be found by comparing the fetched profile with ours. T-110: custom-field divergence cannot be detected — the port has no custom-field read (same port change as OPEN-QUESTIONS 116). T-111 (ADR-116/117, OPEN-QUESTIONS 191): CONFLICT rows carry conflictFields only; re-read AlayaCare values with findProfile (throws on multiple matches). Re-run a resolved conflict by requeueJob on the dead sync.alayacare job (same jobId, same keys). Linking to an existing employee is yours to design."
+    },
+    {
+      "id": "T-114",
+      "slug": "alayacare-export-fallback",
+      "title": "Structured export adapter against the same port, for agencies without API access",
+      "phase": 11,
+      "module": "8",
+      "prd": "Risks and open questions",
+      "priority": "P1",
+      "deps": [
+        "T-110",
+        "T-115"
+      ],
+      "status": "done",
+      "notes": "T-110: the export adapter implements the same port and receives the projection unchanged, custom-field keys as column names. T-115 (ADR-119/120): the export adapter receives issuer, a documentKey only for personnel uploads, and one uploadDocument per allowlisted signed document, before the custom fields."
+    },
+    {
+      "id": "T-120",
+      "slug": "pipeline-dashboard",
+      "title": "Pipeline view by stage with days in stage and current blocker",
+      "phase": 12,
+      "module": "9",
+      "prd": "9. Coordinator dashboard",
+      "priority": "P0",
+      "deps": [
+        "T-015",
+        "T-020",
+        "T-032"
+      ],
+      "status": "done",
+      "notes": "T-003 REVIEW.md: PageHeader.back is 44px tall but its width is label-driven (33.6px with a 4-char label) — pass a real phrase, not an icon or one word."
+    },
+    {
+      "status": "done",
+      "id": "T-124",
+      "slug": "caregiver-withdrawal",
+      "title": "Staff withdraw a caregiver from the pipeline with a reason",
+      "phase": 12,
+      "module": "9",
+      "prd": "9. Coordinator dashboard",
+      "priority": "P0",
+      "deps": [
+        "T-015",
+        "T-014",
+        "T-020",
+        "T-120"
+      ],
+      "notes": "Unowned since T-120 REVIEW.md: nothing records WITHDRAWAL_RECORDED. A guarded use case that applies the T-015 transition (ADR-021) from any non-terminal stage, with a reason and the acting user, audited; an action on the pipeline board or caregiver row. A WITHDRAWN caregiver can no longer sign in (caregiver-principal.ts already refuses). Board hides WITHDRAWN (OPEN-QUESTIONS 67). Decide whether pending jobs/outbox for the caregiver are cancelled; default to leaving them and log a question. T-044 (ADR-073): move the stage only through applyPipelineTransition, passing actorUserId and reason. A pending invite job cancels itself (WITHDRAWN); no job cancellation needed."
+    },
+    {
+      "id": "T-121",
+      "slug": "exception-queue",
+      "title": "Exception queue showing what failed and the judge reasoning",
+      "phase": 12,
+      "module": "9",
+      "prd": "9. Coordinator dashboard",
+      "priority": "P0",
+      "deps": [
+        "T-074",
+        "T-020",
+        "T-032",
+        "T-073"
+      ],
+      "status": "done",
+      "notes": "T-003 REVIEW.md: same Dialog/jsdom caveat as T-019. Also FileField ships with no test file and its maxBytes check is client-side courtesy only; its too-large message has role=alert but no id in aria-describedby. T-070: no staff read path for upload bytes exists; adding one needs a policy action, and for a clinical key a medical data class (OPEN-QUESTIONS 102). T-123: a caregiver can already re-upload to an EXCEPTION instance (EXCEPTION -> PENDING); request re-upload only needs to leave it in EXCEPTION and notify. T-074: a judge or auto-accept job that dead-letters leaves the requirement PENDING forever; surface DEAD review jobs in the exception queue or say who does. T-074 (ADR-101/102): read findAutoAcceptDecision (src/db/repositories/auto-accept-decisions.ts) for the per-document outcome, reason codes and identity findings; the instance goes to EXCEPTION for staff when any check fails."
+    },
+    {
+      "id": "T-123",
+      "slug": "exception-resolution",
+      "title": "Accept over the judge, reject, waive, or request re-upload and notify the caregiver",
+      "phase": 12,
+      "module": "9",
+      "prd": "Target workflow",
+      "priority": "P0",
+      "deps": [
+        "T-121",
+        "T-032",
+        "T-051",
+        "T-070",
+        "T-134"
+      ],
+      "status": "done",
+      "notes": "T-016 PLAN.md: the coordinator-facing surface for DEAD jobs is not owned by T-016. listJobs/requeueJob ship as the data layer. If your plan does not cover queue failures, say so — that is an orchestrator gap. T-051 (ADR-042): own your notify job handler with ids-only payload; buildIdempotencyKey; `rejected` is permanent; check SMS consent yourself. T-070: no staff read path for upload bytes exists; adding one needs a policy action, and for a clinical key a medical data class (OPEN-QUESTIONS 102). T-123: a caregiver can already re-upload to an EXCEPTION instance (EXCEPTION -> PENDING); request re-upload only needs to leave it in EXCEPTION and notify. T-064: failed webhook.esign / esign.sendEnvelope jobs (provider documents mismatch returns fail) need a place on the exception screen. T-134 (ADR-089): register your job handler(s) in the worker's handler list src/server/jobs/handlers.ts (T-134 PLAN.md names the export) and add a test there; nothing else runs jobs. T-074 planner: no task yet fires the pipeline event DOCUMENT_REVIEW_CLEARED (moving a caregiver out of document review once every document requirement is satisfied, via applyPipelineTransition). T-123 owns it unless its planner names a better owner; T-100 must not assume it exists. T-102 (OPEN-QUESTIONS 169): projectCredential takes the latest upload on an instance; if accept-over-judge records which document was accepted, feed that to the projection rather than adding a second rule."
+    },
+    {
+      "id": "T-122",
+      "slug": "caregiver-detail-view",
+      "title": "Staff view of one caregiver record with masking and audit",
+      "phase": 12,
+      "module": "9",
+      "prd": "9. Coordinator dashboard",
+      "priority": "P0",
+      "deps": [
+        "T-019",
+        "T-032",
+        "T-070"
+      ],
+      "status": "done",
+      "notes": "Batch-1 report: the production reveal Server Action for sensitive fields does not exist yet (T-019 shipped the audited door + a dev page). Write it here by copying the dev page's revealDevSsn pattern. T-120: the REPORT data class still has no action in policy.ts. T-070: no staff read path for upload bytes exists; adding one needs a policy action, and for a clinical key a medical data class (OPEN-QUESTIONS 102). T-123: a caregiver can already re-upload to an EXCEPTION instance (EXCEPTION -> PENDING); request re-upload only needs to leave it in EXCEPTION and notify. T-044: show the latest Invite status and reason; own \"resend invite\" (a new Invite row + job; issueLinkToken supersedes the old link) and mobile-number correction. T-064 (ADR-078): own staff resend/void of an envelope and a notification on decline (OPEN-QUESTIONS 125); a declined/voided envelope lets the caregiver prepare a new one from /sign. T-048 (ADR-087): the caregiver cannot change their mobile number (the sign-in key); your staff mobile-number correction is the only path (OPEN-QUESTIONS 144). T-076: call recordManualCheck (src/server/review/manual-checks.ts) rather than rebuild it; src/app/(staff)/layout.tsx now has a /checks nav link."
+    },
+    {
+      "id": "T-130",
+      "slug": "retention-jobs",
+      "title": "Per document type retention rules with audited deletion",
+      "phase": 13,
+      "module": "platform",
+      "prd": "Security, privacy, and regulatory requirements",
+      "priority": "P0",
+      "deps": [
+        "T-018",
+        "T-013",
+        "T-011",
+        "T-017",
+        "T-070",
+        "T-064",
+        "T-044",
+        "T-134"
+      ],
+      "status": "done",
+      "notes": "T-010 PLAN.md: no cascade into the medical/eeoc schemas is possible, so DATA-MODEL invariant 3 is YOUR obligation — call both restricted delete accessors in the same transaction as the caregiver delete. T-017 REVIEW.md: storageKeySchema validates shape, not membership — look the key up on SignedDocument/UploadedDocument and authorise before deleting. delete() returns a truthful boolean. T-013 REVIEW.md + ADR-015: deleting a caregiver deletes NO audit rows (no FK in either direction, deliberately). The deletion itself must be audited by your use case. Deleting audit rows requires ALTER TABLE core.\"AuditEntry\" DISABLE TRIGGER audit_entry_append_only inside the sweep transaction — that trigger name is part of T-013 contract. No retention period for the audit log exists anywhere in the PRD or SECURITY.md. T-014 PLAN.md flag 1 / OPEN-QUESTIONS 21: a SYSTEM actor cannot call a guarded use case — runAsSystem establishes no principal. Your queue jobs have no human actor, so either they call unguarded repository functions directly or policy.ts needs an optional system?: true. Raise it; do not add the field as a judgement call. T-014 REVIEW.md: drainQueue wraps handlers in no audit context — see the note on T-111. Your retention sweep runs as a job. Batch-1 report: deleting a caregiver must call stopSchedule (T-018) for that caregiver's recurring schedules. T-058: add a retention rule for InboundWebhook rows. If a real vendor payload carries personal data, that adapter's task must re-tier the table or store a reduced body. T-070: delete an UploadedDocument and its Evidence rows in one transaction (FK deferred); delete bytes with storage.delete by the key read from the row, under both upload and clinical prefixes; never act on a parsed key alone. Orphaned bytes from a failed upload transaction have no row — a sweep is yours if wanted. T-061 (ADR-069): unsigned generated official PDFs hold SSN and bank numbers in the clear; delete them once the signed copy is stored, and include them in the retention schedule. T-044: \"applicants who never start intake: deleted 30 days after invite expiry\" — the expiry is the INVITE LinkToken.expiresAt; a caregiver still INVITED with no live INVITE token is the candidate. Invite rows cascade with the caregiver. T-064: delete the unsigned PDFs (EnvelopeDocument unsigned keys) after signing, and set retention for WebhookSubject rows. T-071 (ADR-082): per-document retention must delete medical.ClinicalDocumentText rows in code (no cross-schema cascade). T-134 (ADR-089): register your job handler(s) in the worker's handler list src/server/jobs/handlers.ts (T-134 PLAN.md names the export) and add a test there; nothing else runs jobs. T-135: a withdrawn caregiver's PREPARING envelope and its unsigned generated PDFs (which carry SSNs) stay in storage; cover them in retention. T-081 (ADR-124/126): add retention for BackgroundCheckOrder rows and webhook.backgroundCheck InboundWebhook rows (SECURITY default 7 years); deleting a caregiver must stopSchedule backgroundCheck.poll:<orderId>. Mock vendor state lives under STORAGE_ROOT/_mock-background-check/."
+    },
+    {
+      "id": "T-131",
+      "slug": "caregiver-self-view",
+      "title": "Caregivers see their own record and what the agency holds",
+      "phase": 13,
+      "module": "1",
+      "prd": "Security, privacy, and regulatory requirements",
+      "priority": "P0",
+      "deps": [
+        "T-041",
+        "T-021",
+        "T-070",
+        "T-064"
+      ],
+      "status": "done",
+      "notes": "T-021: get the caregiver with requireCaregiverSession() from @/server/auth/caregiver-session in every page and action, then runAsPrincipal(principal, {}, () => useCase({ caregiverId: principal.caregiverId })) behind a selfOnly CAREGIVER action. T-070: listing a caregiver's own uploads needs a new repository read by caregiverId; T-070 ships only findDocumentRequests. Also: nothing links to /documents yet — add it from the caregiver home/status page. T-064: link /sign (src/app/(caregiver)/sign/) from the caregiver home page; T-041's /intake overview already links it when every section is done. T-041 deferred: the invite page could text the sign-in code to the invited caregiver so they don't retype their number; touches the anti-enumeration sign-in (ADR-058/061) and needs a safe return path — own it here or split a security-reviewed task. Sign-in and invite acceptance now land on /intake. T-045 review: every view of the /intake overview writes medical-file VIEW audit entries (it loads restricted sections to compute completeness); consider a completeness read that does not audit as a view. T-048 (ADR-088): any task that texts a caregiver (reminders, chasers) must re-check ContactRecord.smsConsent at send time. The contact panel duplicates the /email page's status wording; export it from src/app/(caregiver)/email/page.tsx if you touch it."
+    },
+    {
+      "id": "T-137",
+      "slug": "seed-idempotent",
+      "title": "Re-running the seed leaves the demo data unchanged instead of duplicating caregivers",
+      "phase": 13,
+      "module": "platform",
+      "prd": "V1 scope decisions",
+      "priority": "P0",
+      "deps": [
+        "T-132"
+      ],
+      "status": "done",
+      "notes": "T-100 checker: re-running npm run db:seed created a second \"Andre Joseph\" demo caregiver. Make re-seeding safe (idempotent) without bypassing ADR-086 (demo caregivers produced only through the product use cases). Seed code: src/server/dev/demo-seed.ts and the prisma seed entry."
+    },
+    {
+      "id": "T-138",
+      "slug": "record-page-withdraw",
+      "title": "Withdraw a caregiver from the /caregivers/[id] record page",
+      "phase": 12,
+      "module": "9",
+      "prd": "9. Coordinator dashboard",
+      "priority": "P0",
+      "deps": [
+        "T-124",
+        "T-122"
+      ],
+      "status": "done",
+      "notes": "T-101 planner: the WithdrawCaregiver button (src/app/(staff)/pipeline/withdraw-caregiver.tsx) is on /pipeline only. Reuse the T-124 withdrawal use case and component on /caregivers/[id]; no new use case. See docs/tasks/T-124-caregiver-withdrawal/{PLAN,REVIEW}.md and docs/tasks/T-122-caregiver-detail-view/PLAN.md."
+    },
+    {
+      "id": "T-139",
+      "slug": "test-db-host",
+      "title": "Test database host from the environment, defaulting to 127.0.0.1",
+      "phase": 0,
+      "module": "platform",
+      "prd": "Technical architecture",
+      "priority": "P0",
+      "deps": [
+        "T-001"
+      ],
+      "status": "done",
+      "notes": "The test database URL is hard-coded to localhost:5433, which sometimes hangs on this machine (wslrelay also listens on localhost:5433). Take the host from the environment or default to 127.0.0.1, in whichever of vitest.config.mts / scripts/db-test-setup.mjs holds it, so both stay in sync. Update ORCHESTRATION.md § Concurrent agents if the variable name is new."
+    },
+    {
+      "id": "T-140",
+      "slug": "eeoc-aggregate-report",
+      "title": "EEOC aggregate report with small-cell suppression below five",
+      "phase": 13,
+      "module": "data",
+      "prd": "Data model",
+      "priority": "P0",
+      "deps": [
+        "T-045",
+        "T-011",
+        "T-020"
+      ],
+      "status": "done",
+      "notes": "T-011 PLAN.md: your counting accessor inherits a contract — counts keyed by enum member, NEVER a caregiverId; suppression applied as a src/domain rule BEFORE return; audited with entityId = agencyId. There is deliberately no function anywhere returning one caregiver gender or race, and accessor-surface.test.ts fails if you add one. T-045 (ADR-084): a blank EEOC submission writes nothing, so the report counts only caregivers who answered at least one question; the form asks no veteran/disability questions (OPEN-QUESTIONS 139)."
+    },
+    {
+      "id": "T-141",
+      "slug": "metrics-and-reports",
+      "title": "Instrument the success metrics and an agency report over them",
+      "phase": 13,
+      "module": "9",
+      "prd": "Success metrics",
+      "priority": "P0",
+      "deps": [
+        "T-015",
+        "T-074",
+        "T-115",
+        "T-020"
+      ],
+      "status": "done"
+    },
+    {
+      "id": "T-132",
+      "slug": "seed-demo-data",
+      "title": "Alvita agency, staff users, NY templates, demo caregivers with fixture documents",
+      "phase": 13,
+      "module": "platform",
+      "prd": "V1 scope decisions",
+      "priority": "P0",
+      "deps": [
+        "T-033",
+        "T-053",
+        "T-005b",
+        "T-070",
+        "T-032",
+        "T-020",
+        "T-017"
+      ],
+      "status": "done",
+      "notes": "T-002 REVIEW.md: prisma/seed.ts does not exist yet, so prisma.config.ts migrations.seed and scripts.db:seed are both dangling until this task. Nothing under prisma/ or run by tsx may import from src/ — @/lib/env pulls in server-only, which tsx cannot resolve. Use prisma/database-url.ts. T-012 PLAN.md flag 5: prisma/seed.ts runs under tsx and cannot import src/, so seeds must leave all four *Enc columns null. Do NOT hand-roll a second envelope implementation. T-005b REVIEW.md + ADR-018: factories are loadable under tsx because src/db/factories.ts has ZERO runtime imports — every import is import type and the client is a parameter. A guard test now enforces it. Build your own PrismaClient from src/db/generated/client plus prisma/database-url.ts (which is server-only-free); a full PrismaClient is structurally assignable to CorePrismaClient. Factories write no *Enc or *Last4 column — seal at your own call site if you need one. bankRoutingNumber has no sealing demonstration the way ssn does. Batch-2: call seedNyAcceptedIssuers(db, alvita.id) (src/db/seeds/, tsx-loadable). Demo documents: load src/integrations/adapters/extraction/fixtures/*.pdf with fs and write through the storage port so the extraction mock recognises them by SHA-256. T-033 (ADR-054): call seedNyPlatformRequirementTemplates(db, now), then seedNyAgencyRequirementTemplates(db, alvita.id, now). Seed modules may value-import @/domain (the old 'may not import from src/' note is superseded for src/domain). T-070: demo uploads must use kind from isClinicalUpload(evidenceKey) and get an UploadedDocument + Evidence row each. T-110: call seedAlvitaAlayaCareMapping(db, alvita.id) from prisma/seed.ts (idempotent: writes version 1 once)."
+    },
+    {
+      "id": "T-134",
+      "slug": "job-worker",
+      "title": "Job worker process that drains the queue and ticks schedules, with every existing handler registered",
+      "phase": 3,
+      "module": "platform",
+      "prd": "Technical architecture",
+      "priority": "P0",
+      "deps": [
+        "T-016",
+        "T-018",
+        "T-044",
+        "T-064",
+        "T-071"
+      ],
+      "status": "done",
+      "notes": "Step 0 of batch after 61a09e5; closes OPEN-QUESTIONS 18 with a default (ADR-089 allocated). Nothing drains the Postgres job queue in dev or production: invites never send, /sign stays preparing, extraction jobs sit queued. Build a long-running worker (e.g. `npm run worker` via tsx, like db:seed with prisma/tsconfig.seed.json and ADR-085) that loops drainQueue (src/integrations/queue/drain.ts) and materialises due JobSchedule rows (src/integrations/queue/schedule.ts), with graceful SIGINT/SIGTERM shutdown. One handler list, src/server/jobs/handlers.ts, registering every handler that exists today: inviteSmsJob (src/server/caregivers/invite-sms-job.ts), extractDocumentJob (documents.extract, src/server/documents/extraction-job.ts), sendEnvelopeJob (esign.sendEnvelope) and esignWebhookJob (webhook.esign) in src/server/forms/. Test: every handler type is registered exactly once. Document running it alongside `npm run dev` (and as a separate production process) in the README/dev docs the plan names; optionally an `npm run dev:all`. Must not require restarting credora-postgres."
+    },
+    {
+      "id": "T-135",
+      "slug": "withdrawn-job-guard",
+      "title": "Job handlers refuse a withdrawn caregiver at run time",
+      "phase": 6,
+      "module": "6",
+      "prd": "Target workflow",
+      "priority": "P0",
+      "deps": [
+        "T-064",
+        "T-124"
+      ],
+      "status": "done",
+      "notes": "Step 0 of batch after 61a09e5. ADR-079: withdrawal cancels no job; workers re-check stage at run time. src/server/forms/send-envelope-job.ts checks only that the envelope is PREPARING, not the caregiver stage; add the WITHDRAWN refusal (a permanent outcome, no vendor call). Audit the other caregiver-scoped handlers for the same gap — src/server/caregivers/invite-sms-job.ts, src/server/documents/extraction-job.ts, src/server/forms/esign-webhook-job.ts — and fix any that act on a withdrawn caregiver (a webhook recording a vendor fact may legitimately still record; decide per handler and say why). Read T-124 PLAN.md/REVIEW.md for how withdrawal is represented. Use-case layer only; no schema change expected."
+    },
+    {
+      "id": "T-136",
+      "slug": "restricted-db-llm-lint",
+      "title": "Lint forbids the Anthropic SDK in src/db/restricted and src/db/prisma.ts",
+      "phase": 6,
+      "module": "6",
+      "prd": "Security, privacy, and regulatory requirements",
+      "priority": "P0",
+      "deps": [
+        "T-073"
+      ],
+      "status": "done",
+      "notes": "Step 0 of batch after 4df1f12. T-073 REVIEW.md (line 34): src/db/restricted/** and src/db/prisma.ts have no no-restricted-imports block, so @anthropic-ai/sdk imported there is not flagged and AGENTIC-TASKS Invariant 7 holds only where blocks exist. Add a block in eslint.config.mjs covering those files with the anthropicSdk pattern (and whichever existing patterns genuinely apply there without breaking current imports; do not widen scope beyond that). Prove it with a lint probe in both locations and a clean npm run lint. No src/ code change expected."
+    },
+    {
+      "id": "T-142",
+      "slug": "dev-db-host",
+      "title": "Dev DATABASE_URL uses 127.0.0.1 instead of localhost",
+      "phase": 13,
+      "module": "platform",
+      "prd": "Target workflow",
+      "priority": "P0",
+      "deps": [
+        "T-139"
+      ],
+      "status": "done",
+      "notes": "Step 0 of batch after 2e2a3eb. .env.example points DATABASE_URL at localhost:5433, which hangs on this machine because wslrelay also listens there (T-139 REVIEW.md, T-137 REVIEW.md). Switch the host to 127.0.0.1 in .env.example and in any live doc that repeats the URL (README, docs/context/INTEGRATIONS.md, etc.; not historical task PLAN/REVIEW files). Also edit the gitignored local .env the same way (host only). No code change expected."
+    },
+    {
+      "id": "T-143",
+      "slug": "test-suite-diet",
+      "title": "Fast, lean test suite: parallel db tests and a one-time prune",
+      "phase": 13,
+      "module": "platform",
+      "prd": "Technical architecture",
+      "priority": "P0",
+      "deps": [
+        "T-023",
+        "T-034",
+        "T-036",
+        "T-082b",
+        "T-090",
+        "T-113",
+        "T-114",
+        "T-130",
+        "T-141"
+      ],
+      "status": "implementing",
+      "notes": "From the master (2026-09-25). Measure first: time the unit and db suites and find where db time goes. Current state: 303 test files (186 unit, 117 db); test LOC 43.8k vs source 30.3k. vitest db project runs with fileParallelism:false and src/db/maintenance.ts TRUNCATEs every core/medical/eeoc table before each test. (a) Speed: either per-test transaction rollback (savepoints for code that opens its own audited transactions) or per-worker databases cloned from a migrated template (CREATE DATABASE ... TEMPLATE) with fileParallelism on. Pick by measurement; keep CREDORA_TEST_DB semantics. (b) One-time prune under the rules in docs/tasks/_TEMPLATE.md § Tests to write: delete framework and schema-shape tests (e.g. src/db/schema-core.test.ts), exact-copy asserts, and db tests re-proving rules already unit-tested; move pure-rule tests out of *.db.test.ts. No behaviour coverage may be lost: every PRD bullet covered before is still covered after, and dropping a DB constraint or trigger must still redden a test. Report before and after: file counts, test counts, wall-clock for each suite."
+    },
+    {
+      "id": "T-133",
+      "slug": "e2e-happy-path",
+      "title": "End to end: offer accepted through to active in AlayaCare, against mocks",
+      "phase": 13,
+      "module": "platform",
+      "prd": "Target workflow",
+      "priority": "P0",
+      "deps": [
+        "T-064",
+        "T-074",
+        "T-101",
+        "T-115",
+        "T-120",
+        "T-123",
+        "T-132",
+        "T-124",
+        "T-048",
+        "T-134",
+        "T-135",
+        "T-137",
+        "T-138",
+        "T-143"
+      ],
+      "status": "pending",
+      "notes": "T-052: APP_URL defaults to http://localhost:3000; make it required in production (deployment checklist). T-120: assert on the stage <h2> '{Stage} (n)', the table caption '{Stage} caregivers', and the 'Days in stage' and 'Current blocker' columns. Tab order, focus ring and 1280/375px layouts of /pipeline were not browser-verified (no driver installed) — cover them. Step 0: exercise T-124 withdrawal and T-048 Contact section in the end-to-end run. T-064 (ADR-077): /sign needs the worker (T-134, `npm run worker`) running to leave preparing. T-132 (ADR-085/086): npm run db:seed builds Alvita + 4 staff (@alvita.test, password alvita-demo-2026, OPEN-QUESTIONS 141) + 3 demo caregivers (2 INTAKE, 1 INVITED) through real use cases; extend DEMO_CAREGIVERS in src/server/dev/demo-seed.ts via each later use case (signing, extraction drain). Seeded uploads' documents.extract jobs stay queued until the T-134 worker runs; run it in the e2e. T-123: assert /queue by headings \"Needs a decision (n)\", \"Waiting on the caregiver (n)\", \"Automatic review stopped (n)\", \"E-signature stopped (n)\"; the Decide/Waive dialogs (aria-label \"<Decide|Waive> <requirement> for <name>\"); /pipeline shows Verification after the last accept. Browser-verify what T-121/T-123/T-075 checkers did not: accept, reject then drain the notice (npm run worker), waive, retry an envelope, supervisor 404 on /queue and /sample. T-075: check /sample by its <h2> \"Week of ...: n of m accepted\" and caption \"Sampled documents\". T-138: withdrawal is also on /caregivers/[id]; exercise it there. T-111: the e2e run needs npm run mock:alayacare and npm run worker; assert the caregiver reaches Active and a SYNCED AlayaCareSync row exists. T-101: assert the /clearance/[id] Sign-off heading, \"Sign off <name>\" button and \"Sign off clearance\" dialog, coordinators see no section, keyboard/focus in the dialog, 375px. T-115: expect the allowlisted <templateKey>.pdf files in the AlayaCare mock and no W_4.pdf; restart the mock before re-running a job queued before T-115. T-081: sign the FCRA disclosure, order the check from /checks (coordinator), then advance the mock to CLEAR from /dev/background-check (exists only under next dev; ADR-122) with npm run worker running; the background-check requirement must be SATISFIED before Clearance. T-083 (ADR-129): each health screening (physical, TB, immunisation) waits In review after its document is accepted; a caregiver leaves DOCUMENT_REVIEW only after supervisor@alvita.test records a PASS for each via \"Record result\" on /clearance/[id]; coordinators have no button. T-081b (ADR-134): clear one CONSIDER check and fail another on /checks; a failed check leaves the list only when the caregiver is withdrawn. T-082 (ADR-139..141): REFERENCE_CHECK is now a blocking NY requirement for newly invited caregivers (existing ones have no instance): enter two references with phones the mock accepts, none at a do-not-contact employer; press Send request for each on /checks; run npm run worker; read the links from /dev/outbox or SentMessage; answer Yes/Yes on each /r/reference/<token> form. Any No blocks clearance (waive it) until T-082b. T-112: /caregivers/[id]/alayacare preview; confirm the clearance-page preview alert disappears after the agency's first SYNCED sync. T-131: sign in as a caregiver by real SMS code and check /record (ending digits only, EEOC shown only as submitted) and the nav links. T-023 (ADR-142..144): the dev DB's Alvita now requires staff MFA (Agency.mfaRequired default true); every seeded staff user enrols at first sign-in on /login/mfa/setup. Compute codes from the shown key with node:crypto TOTP (RFC 6238, SHA-1, 30s, 6 digits; the one-liner is in docs/tasks/T-023-mfa-totp/REVIEW.md); a code is accepted once, so use a recovery code for a repeat sign-in within 30s; a lockout clears by admin reset. Also exercise staff-invite acceptance landing on MFA setup. T-036 (ADR-137/138): change a caregiver's certification on the intake certifications step and confirm untouched requirements re-point while started ones stay. T-113 (ADR-145..147): run the conflict flow from a real clearance sign-off: /sync lists the conflict, choose keep ours/theirs, retry, reach SYNCED. From the master (user tried the caregiver flow by hand): texted links are built from APP_URL, so set APP_URL to the port you serve on for next start AND the worker, then open the invite link from /dev/outbox exactly as a caregiver would (not /verify directly); a texted link that cannot be followed to intake as-is is a finding. The invite link lands on a sign-in step rather than continuing the invite (OPEN-QUESTIONS 242): record in REVIEW.md whether a caregiver gets from invite link to code to intake without guessing. Run against credora_e2e, never credora. T-114: the export adapter (ALAYACARE_ADAPTER=export) exists; the e2e uses the HTTP mock. T-082b: a reference answering No can now be satisfied or failed on /checks. T-034: /admin/requirements; T-090: /training; T-141: /reports/metrics."
+    }
+  ]
+}

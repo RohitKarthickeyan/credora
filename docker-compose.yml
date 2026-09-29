@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: credora-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: credora
+      POSTGRES_PASSWORD: credora
+      POSTGRES_DB: credora
+    ports:
+      - "5433:5432"
+    volumes:
+      - credora-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U credora -d credora"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+      start_period: 5s
+
+volumes:
+  credora-pgdata:

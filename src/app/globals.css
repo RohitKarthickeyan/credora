@@ -1,0 +1,82 @@
+@import "tailwindcss";
+
+@theme {
+  --color-canvas: oklch(0.985 0.002 250);
+  --color-surface: oklch(1 0 0);
+  --color-surface-sunken: oklch(0.968 0.003 250);
+  --color-border: oklch(0.9 0.006 250);
+  --color-border-strong: oklch(0.62 0.018 250);
+  --color-ink: oklch(0.22 0.012 250);
+  --color-ink-muted: oklch(0.45 0.014 250);
+  --color-ink-inverse: oklch(1 0 0);
+
+  --color-brand-50: oklch(0.968 0.014 255);
+  --color-brand-100: oklch(0.925 0.035 255);
+  --color-brand-600: oklch(0.5 0.165 255);
+  --color-brand-700: oklch(0.42 0.14 255);
+  --color-focus: oklch(0.5 0.23 300);
+
+  --color-status-neutral-bg: oklch(0.962 0.004 250);
+  --color-status-neutral-border: oklch(0.62 0.014 250);
+  --color-status-neutral-fg: oklch(0.38 0.012 250);
+
+  --color-status-progress-bg: oklch(0.96 0.018 285);
+  --color-status-progress-border: oklch(0.6 0.13 285);
+  --color-status-progress-fg: oklch(0.42 0.15 285);
+
+  --color-status-info-bg: oklch(0.958 0.022 240);
+  --color-status-info-border: oklch(0.6 0.12 240);
+  --color-status-info-fg: oklch(0.42 0.096 240);
+
+  --color-status-success-bg: oklch(0.96 0.042 155);
+  --color-status-success-border: oklch(0.58 0.11 155);
+  --color-status-success-fg: oklch(0.4 0.09 155);
+
+  --color-status-warning-bg: oklch(0.962 0.039 85);
+  --color-status-warning-border: oklch(0.62 0.12 75);
+  --color-status-warning-fg: oklch(0.42 0.1 60);
+
+  --color-status-danger-bg: oklch(0.96 0.018 25);
+  --color-status-danger-border: oklch(0.6 0.16 25);
+  --color-status-danger-fg: oklch(0.44 0.17 25);
+
+  --color-status-muted-bg: oklch(0.968 0.003 250);
+  --color-status-muted-border: oklch(0.64 0.01 250);
+  --color-status-muted-fg: oklch(0.45 0.01 250);
+
+  --spacing-touch: 2.75rem;
+
+  --radius-control: 0.5rem;
+  --radius-card: 0.75rem;
+  --radius-pill: 9999px;
+
+  --text-field: 1rem;
+}
+
+@theme inline {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@layer base {
+  :root {
+    /* Single light theme: the OS must not re-tint native date pickers and checkboxes. */
+    color-scheme: light;
+  }
+
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background-color: var(--color-brand-100);
+    color: var(--color-ink);
+  }
+}

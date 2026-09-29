@@ -1,0 +1,7 @@
+external_caregiver_id,course_code,course_name,completed_on,minutes
+TP-1001,ORIENT-HHA,HHA Orientation,2026-01-12,480
+TP-1001,INSVC-INFECT,"Infection Control, Standard Precautions",2026-03-04,120
+TP-1001,INSVC-DEMENTIA,Dementia Care,2026-06-18,90
+TP-1002,ORIENT-HHA,HHA Orientation,2026-02-02,480
+TP-1002,INSVC-INFECT,"Infection Control, Standard Precautions",2026-04-15,120
+TP-1003,INSVC-BODYMECH,"Body Mechanics ""Safe Lifting""",2025-12-01,60

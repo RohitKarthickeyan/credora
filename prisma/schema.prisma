@@ -1,0 +1,1908 @@
+datasource db {
+  provider = "postgresql"
+  schemas  = ["core", "medical", "eeoc"]
+}
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/db/generated"
+}
+
+/// @tier restricted
+model MedicalFile {
+  id          String   @id @default(uuid(7))
+  agencyId    String
+  caregiverId String   @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([agencyId])
+  @@schema("medical")
+}
+
+/// @tier restricted
+model EeocRecord {
+  id          String   @id @default(uuid(7))
+  agencyId    String
+  caregiverId String   @unique
+  /// Null means the voluntary form was submitted with this question left blank. The explicit
+  /// refusal is DECLINE_TO_SELF_IDENTIFY. A caregiver who was never asked has no row at all.
+  gender        EeocGender?
+  raceEthnicity EeocRaceEthnicity?
+  /// NOT NULL: the row exists only because the voluntary form was submitted.
+  submittedAt   DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([agencyId])
+  @@schema("eeoc")
+}
+
+enum PipelineStage {
+  INVITED
+  INTAKE
+  SIGNING
+  DOCUMENT_REVIEW
+  VERIFICATION
+  CLEARANCE
+  SYNCING
+  ACTIVE
+  WITHDRAWN
+
+  @@schema("core")
+}
+
+enum UserRole {
+  CAREGIVER
+  COORDINATOR
+  SUPERVISOR
+  AGENCY_ADMIN
+  IMPLEMENTATION
+
+  @@schema("core")
+}
+
+enum CertificationLevel {
+  PCA
+  HHA
+  CNA
+
+  @@schema("core")
+}
+
+enum CredentialType {
+  PCA
+  HHA
+  CNA
+  CPR
+  TB_CLEARANCE
+  PHYSICAL
+
+  @@schema("core")
+}
+
+enum CredentialVerificationStatus {
+  UNVERIFIED
+  VERIFIED
+  REJECTED
+
+  @@schema("core")
+}
+
+/// @tier standard
+model Agency {
+  id        String   @id @default(uuid(7))
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  /// The agency's own package code with its background-check vendor, passed through verbatim. Null
+  /// means ordering is refused.
+  backgroundCheckPackageCode String?
+  /// Staff must pass a TOTP second factor at sign-in (SECURITY.md § Sessions). On by default;
+  /// no screen turns it off (ADR-144).
+  mfaRequired Boolean @default(true)
+
+  users                User[]
+  caregivers           Caregiver[]
+  jobs                 Job[]
+  requirementTemplates RequirementTemplate[]
+  schedules            JobSchedule[]
+  sentMessages         SentMessage[]
+  acceptedIssuers      AcceptedIssuer[]
+  webhookSubjects      WebhookSubject[]
+  inboundWebhooks      InboundWebhook[]
+  alayaCareMapping     AlayaCareMapping?
+  staffMfas            StaffMfa[]
+  staffRecoveryCodes   StaffRecoveryCode[]
+
+  @@schema("core")
+}
+
+/// @tier standard
+model User {
+  id        String   @id @default(uuid(7))
+  agencyId  String
+  // Globally unique: staff log in with email + password and no tenant selector
+  // (SECURITY.md § Sessions), so the user row is what resolves the agency.
+  email     String   @unique
+  fullName  String
+  role      UserRole
+  // T-024 deactivates rather than deletes, so the audit log can still resolve the actor.
+  isActive  Boolean  @default(true)
+  // bcrypt hash (src/lib/password.ts). Null: no password set, so the user cannot sign in.
+  // Selected only by findUserForSignIn in src/db/repositories/users.ts.
+  passwordHash String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  agency   Agency    @relation(fields: [agencyId], references: [id], onDelete: Restrict)
+  staffMfa StaffMfa?
+
+  @@index([agencyId])
+  @@schema("core")
+}
+
+/// @tier sensitive
+model StaffMfa {
+  id            String    @id @default(uuid(7))
+  agencyId      String
+  userId        String    @unique
+  /// @tier sensitive @encrypted
+  totpSecretEnc Bytes?
+  // Null until the first code is confirmed; the secret is then fixed until an admin resets it.
+  enrolledAt    DateTime?
+  // RFC 6238 § 5.2: the time step of the last accepted code; a step at or below it is refused.
+  lastUsedStep  Int?
+  // Attempts since the last success, counted before comparing. MFA_MAX_ATTEMPTS locks.
+  attempts      Int       @default(0)
+  createdAt     DateTime  @default(now())
+
+  agency        Agency              @relation(fields: [agencyId], references: [id], onDelete: Restrict)
+  user          User                @relation(fields: [userId], references: [id], onDelete: Restrict)
+  recoveryCodes StaffRecoveryCode[]
+
+  @@index([agencyId])
+  @@schema("core")
+}
+
+/// @tier standard
+model StaffRecoveryCode {
+  id        String    @id @default(uuid(7))
+  agencyId  String
+  userId    String
+  // sha256 hex of the normalised code (src/lib/recovery-code.ts). The code itself is never stored.
+  codeHash  String
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  agency   Agency   @relation(fields: [agencyId], references: [id], onDelete: Restrict)
+  staffMfa StaffMfa @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@unique([userId, codeHash])
+  @@index([agencyId])
+  @@schema("core")
+}
+
+/// @tier standard
+model Caregiver {
+  id        String        @id @default(uuid(7))
+  agencyId  String
+  // Explicit state, never derived at read time (ARCHITECTURE.md § State, not inference).
+  // Moved only by domain/pipeline (T-015).
+  stage     PipelineStage @default(INVITED)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  /// The resolution context (DOMAIN.md), set at invite from src/domain/requirements/vocabulary.ts.
+  /// workState is the state whose rules govern the work — not ContactRecord.state, the address.
+  /// Nullable only because rows predate T-044; every invited caregiver has workState and
+  /// serviceType.
+  workState   String?
+  serviceType String?
+  payer       String?
+
+  /// The caregiver's id on the agency's training platform, set by staff from an unmatched import
+  /// row (T-090).
+  trainingPlatformId String?
+
+  agency Agency @relation(fields: [agencyId], references: [id], onDelete: Restrict)
+
+  // No name, email or phone here: they are captured exactly once, on IdentityRecord and
+  // ContactRecord (DATA-MODEL.md invariant 1). The pipeline list view joins for the name.
+  // No field of type MedicalFile or EeocRecord, in either direction: the absence of a relation
+  // is what makes an accidental include: impossible (ADR-002, T-002 § Design 3a).
+  identity              IdentityRecord?
+  contact               ContactRecord?
+  homeCareProfile       HomeCareProfile?
+  payrollInputs         PayrollInputs?
+  employment            EmploymentEntry[]
+  education             EducationEntry[]
+  references            Reference[]
+  emergencyContacts     EmergencyContact[]
+  careSettingExperience CareSettingExperience[]
+  credentials           Credential[]
+  signedDocuments       SignedDocument[]
+  pipelineEvents        PipelineEvent[]
+  linkTokens            LinkToken[]
+  requirementInstances  RequirementInstance[]
+  oneTimeCodes          OneTimeCode[]
+  invites               Invite[]
+  uploadedDocuments     UploadedDocument[]
+  envelopes             Envelope[]
+  attestations          Attestation[]
+  checkResults          CheckResult[]
+  chrcSubmission        ChrcSubmission?
+  backgroundCheckOrder  BackgroundCheckOrder?
+  alayaCareSyncs        AlayaCareSync[]
+  trainingCompletions   TrainingCompletion[]
+
+  @@unique([agencyId, id])
+  @@unique([agencyId, trainingPlatformId])
+  @@index([agencyId, stage])
+  @@schema("core")
+}
+
+/// @tier sensitive
+model IdentityRecord {
+  id          String @id @default(uuid(7))
+  agencyId    String
+  caregiverId String
+
+  // The legal name, stored exactly as written — never the comparison-normalised form.
+  legalFirstName  String?
+  legalMiddleName String?
+  legalLastName   String?
+  nameSuffix      String?
+  otherNames      String[]
+  dateOfBirth     DateTime? @db.Date
+
+  /// @tier sensitive @encrypted
+  ssnEnc   Bytes?
+  ssnLast4 String?
+
+  /// The marker printed on a licence and required by CHRC-102. Deliberately not `gender`: the
+  /// voluntary EEOC self-identification is a different fact, lives in the eeoc schema, and is
+  /// visible to no role. Never populate one from the other.
+  sex            String?
+  maritalStatus  String?
+  countryOfBirth String?
+
+  heightInches Int?
+  weightPounds Int?
+  eyeColor     String?
+  hairColor    String?
+
+  // Government IDs: columns here, not a fifth satellite. They are identity documents and share
+  // the Identity group's tier; I-9 §1, CHRC-102 and identity matching read them with the name.
+  hasDriversLicense       Boolean?
+  driversLicenseNumber    String?
+  driversLicenseState     String?
+  driversLicenseExpiresAt DateTime? @db.Date
+
+  workAuthorizationType String?
+  /// @tier sensitive @encrypted
+  workAuthorizationNumberEnc Bytes?
+  workAuthorizationExpiresAt DateTime? @db.Date
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  caregiver Caregiver @relation(fields: [agencyId, caregiverId], references: [agencyId, id], onDelete: Cascade)
+
+  @@unique([agencyId, caregiverId])
+  @@schema("core")
+}
+
+/// @tier standard
+model ContactRecord {
+  id          String @id @default(uuid(7))
+  agencyId    String
+  caregiverId String
+
+  // Embedded address columns, named exactly as `Address` in src/domain/validation/address.ts
+  // so the repository mapping cannot transpose two fields.
+  line1 String?
+  line2 String?
+  city  String?
+  state String?
+  zip   String?
+
+  mobilePhone       String?
+  alternatePhone    String?
+  email             String?
+  preferredLanguage String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  caregiver Caregiver @relation(fields: [agencyId, caregiverId], references: [agencyId, id], onDelete: Cascade)
+
+  @@unique([agencyId, caregiverId])
+  @@index([agencyId, email])
+  // findCaregiversByEmail, the declared unscoped sign-in read (ADR-058).
+  @@index([email])
+  @@schema("core")
+}
+
+/// @tier standard
+model HomeCareProfile {
+  id          String @id @default(uuid(7))
+  agencyId    String
+  caregiverId String
+
+  /// Self-asserted at intake. The verified record is Credential — a different fact, not a
+  /// duplicate of this one.
+  certificationsHeld CertificationLevel[]
+  clinicalSkills     String[]
+  shiftTypes         String[]
+  serviceAreas       String[]
+  languages          String[]
+
+  // Nullable on purpose: "not asked yet" and "no" are different answers.
+  worksWithPets          Boolean?
+  worksWithSmokers       Boolean?
+  hasVehicle             Boolean?
+  covidVaccinationStatus String?
+  /// Vaccination statements (T-084). Allowed values are CHECKed in SQL; printed on the signed Hep B and flu documents.
+  hepatitisBChoice     String?
+  fluVaccinationChoice String?
+  fluDeclinationReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  caregiver Caregiver @relation(fields: [agencyId, caregiverId], references: [agencyId, id], onDelete: Cascade)
+
+  @@unique([agencyId, caregiverId])
+  @@schema("core")
+}
+
+/// @tier standard
+model CareSettingExperience {
+  id          String @id @default(uuid(7))
+  agencyId    String
+  caregiverId String
+
+  setting String
+  /// Null until the caregiver enters it; a draft may name a setting first.
+  years   Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  caregiver Caregiver @relation(fields: [agencyId, caregiverId], references: [agencyId, id], onDelete: Cascade)
+
+  @@unique([agencyId, caregiverId, setting])
+  @@schema("core")
+}
+
+/// @tier sensitive
+model PayrollInputs {
+  id          String @id @default(uuid(7))
+  agencyId    String
+  caregiverId String
+
+  hourlyRateCents   Int?
+  overtimeRateCents Int?
+  payFrequency      String?
+
+  w4FilingStatus          String?
+  w4MultipleJobs          Boolean?
+  w4DependentsAmountCents Int?
+  w4OtherIncomeCents      Int?
+  w4DeductionsCents       Int?
+  w4ExtraWithholdingCents Int?
+
+  it2104FilingStatus            String?
+  it2104AllowancesNy            Int?
+  it2104AllowancesNyc           Int?
+  it2104AllowancesYonkers       Int?
+  it2104ExtraWithholdingNyCents Int?
+  it2104ResidentNyc             Boolean?
+  it2104ResidentYonkers         Boolean?
+
+  bankName        String?
+  bankAccountType String?
+  /// @tier sensitive @encrypted
+  bankRoutingNumberEnc Bytes?
+  /// @tier sensitive @encrypted
+  bankAccountNumberEnc Bytes?
+  bankAccountLast4     String?
+
+  directDepositAuthorizedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  caregiver Caregiver @relation(fields: [agencyId, caregiverId], references: [agencyId, id], onDelete: Cascade)
+
+  @@unique([agencyId, caregiverId])
+  @@schema("core")
+}
+
+/// @tier standard
+model EmploymentEntry {
+  id          String @id @default(uuid(7))
+  agencyId    String
+  caregiverId String
+
+  employerName    String
+  positionTitle   String?
+  supervisorName  String?
+  supervisorPhone String?
+
+  line1 String?
+  line2 String?
+  city  String?
+  state String?
+  zip   String?
+
+  startedOn DateTime? @db.Date
+  endedOn   DateTime? @db.Date
+  // Explicit rather than `endedOn == null`, which cannot tell "still there" from "did not answer".
+  isCurrent Boolean   @default(false)
+
+  reasonForLeaving String?
+  // The reference flow (T-022) must not call an employer the caregiver asked it not to.
+  mayContact       Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  caregiver Caregiver @relation(fields: [agencyId, caregiverId], references: [agencyId, id], onDelete: Cascade)
+
+  @@index([agencyId, caregiverId])
+  @@schema("core")
+}
+
+/// @tier standard
+model EducationEntry {
+  id          String @id @default(uuid(7))
+  agencyId    String
+  caregiverId String
+
+  schoolName      String
+  city            String?
+  state           String?
+  programOrDegree String?
+  completedOn     DateTime? @db.Date
+  graduated       Boolean?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  caregiver Caregiver @relation(fields: [agencyId, caregiverId], references: [agencyId, id], onDelete: Cascade)
+
+  @@index([agencyId, caregiverId])
+  @@schema("core")
+}
+
+/// @tier standard
+model Reference {
+  id          String @id @default(uuid(7))
+  agencyId    String
+  caregiverId String
+
+  fullName     String
+  relationship String?
+  employerName String?
+  phone        String?
+  email        String?
+
+  // ── T-082: the reference check. Written only by src/db/repositories/reference-checks.ts;
+  // intake saves write only the columns above.
+  requestStatus            ReferenceRequestStatus @default(NOT_REQUESTED)
+  escalatedAt              DateTime?
+  respondedAt              DateTime?
+  workedWith               Boolean?
+  wouldRecommend           Boolean?
+  responseComments         String?
+  /// The staff User who recorded answers taken by phone; null when the reference used the form.
+  /// Not a foreign key, like CheckResult.recordedByUserId.
+  responseRecordedByUserId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  caregiver Caregiver          @relation(fields: [agencyId, caregiverId], references: [agencyId, id], onDelete: Cascade)
+  attempts  ReferenceAttempt[]
+
+  @@unique([agencyId, id])
+  @@index([agencyId, caregiverId])
+  @@schema("core")
+}
+
+/// @tier standard
+model EmergencyContact {
+  id          String @id @default(uuid(7))
+  agencyId    String
+  caregiverId String
+
+  fullName       String
+  relationship   String?
+  phone          String?
+  alternatePhone String?
+  email          String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  caregiver Caregiver @relation(fields: [agencyId, caregiverId], references: [agencyId, id], onDelete: Cascade)
+
+  @@index([agencyId, caregiverId])
+  @@schema("core")
+}
+
+/// @tier standard
+/// A credential recorded at supervisor sign-off from a SATISFIED requirement instance and its
+/// accepted upload (ADR-107). instanceId and uploadedDocumentId are set on every row this
+/// projection writes.
+model Credential {
+  id          String @id @default(uuid(7))
+  agencyId    String
+  caregiverId String
+
+  type      CredentialType
+  number    String?
+  issuer    String?
+  issuedOn  DateTime?      @db.Date
+  // A credential expiry is a date, not an instant (CONVENTIONS.md § Code).
+  expiresAt DateTime?      @db.Date
+
+  verificationStatus CredentialVerificationStatus @default(UNVERIFIED)
+  verifiedAt         DateTime?
+
+  instanceId         String?
+  uploadedDocumentId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  caregiver        Caregiver            @relation(fields: [agencyId, caregiverId], references: [agencyId, id], onDelete: Cascade)
+  instance         RequirementInstance? @relation(fields: [agencyId, instanceId], references: [agencyId, id], onDelete: Cascade)
+  uploadedDocument UploadedDocument?    @relation(fields: [agencyId, uploadedDocumentId], references: [agencyId, id], onDelete: Cascade)
+
+  @@unique([agencyId, instanceId])
+  @@index([agencyId, caregiverId])
+  @@index([agencyId, expiresAt])
+  @@schema("core")
+}
+
+/// @tier standard
+model SignedDocument {
+  id          String @id @default(uuid(7))
+  agencyId    String
+  caregiverId String
+
+  templateKey     String
+  templateVersion String
+  envelopeId      String
+  // An ADR-005 storage key, not a relation: the storage port owns the bytes.
+  signedPdfKey    String
+  signedAt        DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  caregiver Caregiver  @relation(fields: [agencyId, caregiverId], references: [agencyId, id], onDelete: Cascade)
+  evidence  Evidence[]
+
+  // One envelope carries the whole document set, so rows share an envelopeId. This key is what
+  // makes a re-delivered e-sign webhook idempotent instead of duplicating the set.
+  @@unique([agencyId, envelopeId, templateKey])
+  @@index([agencyId, caregiverId])
+  @@schema("core")
+}
+
+/// @tier standard
+model AuditEntry {
+  id       String @id @default(uuid(7))
+  agencyId String
+
+  /// Null exactly when actorRole is SYSTEM. Resolves against core."Caregiver" when actorRole
+  /// is CAREGIVER and against core."User" otherwise. Deliberately not a foreign key.
+  actorId    String?
+  actorRole  AuditActorRole
+  action     AuditAction
+  entityType AuditEntityType
+  entityId   String
+
+  /// A column name, never a value (SECURITY.md § Audit log). Shape-enforced in
+  /// src/domain/audit/audit-entry.ts.
+  fieldName String?
+  /// Free text supplied by the actor when a reveal or an override required a justification.
+  reason    String?
+  /// Absent for a system actor and for anything run off the job queue: there is no request.
+  ip        String?
+
+  // No updatedAt: an append-only row is never updated, so the column could only ever lie. No
+  // foreign key in any direction either: a Cascade would delete the record of a deletion and a
+  // Restrict would make the record undeletable (SECURITY.md § Retention).
+  at DateTime @default(now())
+
+  @@index([agencyId, entityType, entityId, at])
+  @@index([agencyId, actorId, at])
+  @@index([agencyId, at])
+  @@schema("core")
+}
+
+enum AuditActorRole {
+  CAREGIVER
+  COORDINATOR
+  SUPERVISOR
+  AGENCY_ADMIN
+  IMPLEMENTATION
+  SYSTEM
+
+  @@schema("core")
+}
+
+enum AuditAction {
+  VIEW
+  EDIT
+  EXPORT
+  SIGN_OFF
+  DELETE
+
+  @@schema("core")
+}
+
+enum AuditEntityType {
+  CAREGIVER
+  MEDICAL_FILE
+  EEOC_RECORD
+  ACCEPTED_ISSUER
+  ALAYACARE_MAPPING
+  USER
+  REQUIREMENT_TEMPLATE
+  INBOUND_WEBHOOK
+  AUDIT_LOG
+
+  @@schema("core")
+}
+
+enum PipelineEventType {
+  INTAKE_STARTED
+  INTAKE_SUBMITTED
+  ENVELOPE_COMPLETED
+  DOCUMENT_REVIEW_CLEARED
+  VERIFICATION_COMPLETED
+  CLEARANCE_GRANTED
+  SYNC_COMPLETED
+  WITHDRAWAL_RECORDED
+
+  @@schema("core")
+}
+
+/// @tier standard
+model PipelineEvent {
+  id          String @id @default(uuid(7))
+  agencyId    String
+  caregiverId String
+
+  // Both stages are stored although fromStage is recoverable from the previous row: a report
+  // reading one row must not have to order the whole history to know what the row means, and a
+  // self-consistent pair is what makes a gap in the history detectable.
+  fromStage PipelineStage
+  toStage   PipelineStage
+  event     PipelineEventType
+
+  /// Null when a webhook or a queue worker moved the stage: no User is responsible for it.
+  actorUserId String?
+  /// Staff free text. Required for WITHDRAWAL_RECORDED, enforced by the use case rather than by
+  /// the column, because the other seven events legitimately have no reason to give.
+  reason      String?
+
+  // The only timestamp: the row is written in the same transaction as the fact it records, so
+  // "when it happened" and "when we stored it" cannot differ. No updatedAt — append-only.
+  occurredAt DateTime @default(now())
+
+  caregiver Caregiver @relation(fields: [agencyId, caregiverId], references: [agencyId, id], onDelete: Cascade)
+
+  // One index, serving both reads that exist: a caregiver's ordered history, and the latest
+  // event for "days in stage" (ARCHITECTURE.md § State, not inference).
+  @@index([agencyId, caregiverId, occurredAt])
+  @@schema("core")
+}
+
+enum JobState {
+  PENDING
+  RUNNING
+  SUCCEEDED
+  DEAD
+  CANCELLED
+
+  @@schema("core")
+}
+
+/// @tier standard
+model Job {
+  id       String @id @default(uuid(7))
+  agencyId String
+
+  /// The handler key, e.g. "sync.alayacare". A String rather than an enum: every consumer task
+  /// would otherwise have to edit one shared enum concurrently, and the registry in
+  /// src/integrations/queue/handler.ts is already the closed list.
+  type String
+
+  /// Identifiers only — never a field value. This column is plaintext jsonb and is read by
+  /// anyone with a database connection, so an SSN, a bank number or a work-authorisation
+  /// number in here would defeat DATA-MODEL.md § Field-level encryption. A sync job carries
+  /// { caregiverId }, and the handler reads the record through a repository at run time.
+  payload Json
+
+  idempotencyKey String
+
+  state       JobState @default(PENDING)
+  /// Attempts that have finished. Incremented when an attempt completes, not when it starts.
+  attempts    Int      @default(0)
+  maxAttempts Int      @default(8)
+
+  /// The row is invisible to a claimer until this instant. While PENDING it is the next-attempt
+  /// time; while RUNNING it is the lease expiry. One column, one meaning: "not before this".
+  /// That is what makes a worker that dies mid-job self-healing rather than a stuck queue.
+  nextAttemptAt DateTime @default(now())
+
+  claimedAt DateTime?
+  claimedBy String?
+
+  /// The most recent failure reason, truncated to MAX_ERROR_LENGTH. Derived: the JobAttempt
+  /// rows are the authority. It exists so the dead-letter list renders without a correlated
+  /// subquery, and it is written in the same transaction as the attempt row it copies.
+  lastError String?
+
+  /// Set when the job reaches SUCCEEDED or DEAD. Null for PENDING and RUNNING.
+  finishedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  agency     Agency       @relation(fields: [agencyId], references: [id], onDelete: Restrict)
+  attemptLog JobAttempt[]
+
+  @@unique([agencyId, id])
+  @@unique([agencyId, idempotencyKey])
+  @@index([state, nextAttemptAt])
+  @@index([agencyId, state, createdAt])
+  @@schema("core")
+}
+
+/// @tier standard
+model JobAttempt {
+  id       String @id @default(uuid(7))
+  agencyId String
+  jobId    String
+
+  /// 1-based. Equals the Job.attempts value this attempt produced.
+  attempt    Int
+  startedAt  DateTime
+  finishedAt DateTime
+  succeeded  Boolean
+  error      String?
+
+  createdAt DateTime @default(now())
+
+  job Job @relation(fields: [agencyId, jobId], references: [agencyId, id], onDelete: Cascade)
+
+  // Not @@unique: requeueJob starts a fresh run with attempts back to 0, so a job that has
+  // been revived legitimately has a second attempt 1. startedAt orders the log across runs.
+  @@index([agencyId, jobId, attempt])
+  @@schema("core")
+}
+
+enum RequirementLayer {
+  STATE
+  SERVICE_TYPE
+  ROLE
+  PAYER
+  AGENCY
+
+  @@schema("core")
+}
+
+enum RequirementType {
+  FORM
+  DOCUMENT
+  CHECK
+  TRAINING
+  ATTESTATION
+
+  @@schema("core")
+}
+
+/// The five members of `RequirementInstance 1─n Evidence → UploadedDocument | SignedDocument |
+/// CheckResult | TrainingRecord | Attestation` (DATA-MODEL.md § Core entities), member for
+/// member. A sixth value here means a sixth arm on that union.
+enum EvidenceKind {
+  UPLOADED_DOCUMENT
+  SIGNED_DOCUMENT
+  CHECK_RESULT
+  TRAINING_RECORD
+  ATTESTATION
+
+  @@schema("core")
+}
+
+enum ValidityRule {
+  NEVER_EXPIRES
+  FROM_EVIDENCE
+  FIXED_PERIOD
+
+  @@schema("core")
+}
+
+enum RenewalRule {
+  NONE
+  ON_EXPIRY
+  ANNUAL
+
+  @@schema("core")
+}
+
+/// @tier standard
+model RequirementTemplate {
+  id String @id @default(uuid(7))
+
+  // Null means platform-owned: a STATE, SERVICE_TYPE or PAYER rule that Credora ships and
+  // every agency reads. This is a declared exception to DATA-MODEL.md invariant 5, recorded in
+  // ADR-014; the repository still takes agencyId first and still reads
+  // `agencyId IS NULL OR agencyId = :agencyId`. There is no unscoped read.
+  agencyId String?
+
+  // The five scope axes (agencyId above is the fifth). Null on an axis means "applies to every
+  // value of this axis". `layer` is the narrowest non-null axis and is checked against them by a
+  // CHECK constraint.
+  state       String?
+  serviceType String?
+  payer       String?
+  role        String?
+  layer       RequirementLayer
+
+  // The canonical serialisation of state, serviceType, payer, agencyId and role, produced by
+  // scopeKeyOf() in src/domain/requirements/scope.ts. It exists because Postgres treats NULLs as distinct in a
+  // unique index, so a unique key over the nullable axes would not stop a duplicate
+  // (NULL, 'NY', NULL, NULL) row. It is also the single indexed column T-031 resolves against.
+  scopeKey String
+
+  // Identity: `key` is stable across versions and across layers — a narrower template with the
+  // same key overrides a broader one. `version` is per (scopeKey, key) and rows are never
+  // updated in place; editing publishes version n+1 and retires version n.
+  key     String
+  version Int    @default(1)
+
+  name        String
+  /// Sent verbatim to the judge (SECURITY.md § LLM provider constraints). It must describe the
+  /// requirement, never a caregiver: no name, no DOB, no identifier ever belongs in this column.
+  description String
+
+  type            RequirementType
+  validityRule    ValidityRule
+  validityMonths  Int?
+  renewalRule     RenewalRule
+  blocksClearance Boolean         @default(true)
+
+  /// The single mechanism that keeps a legally person-assigned step away from automation
+  /// (SECURITY.md § Regulatory constraints that shape code). Read only through
+  /// satisfactionPath() in src/domain/requirements/manual-only.ts.
+  manualOnly       Boolean @default(false)
+  /// The regulation, named. A CHECK constraint makes it NOT NULL whenever manualOnly is true:
+  /// a step kept away from automation must say which rule keeps it there.
+  manualOnlyReason String?
+  /// The annual minimum in whole minutes (CONVENTIONS: hours are integer minutes). Set only on
+  /// TRAINING templates, enforced by a CHECK; T-090 compares imported hours against it.
+  minimumMinutes   Int?
+
+  // Set when a newer version is published, or when the rule is withdrawn. Never deleted:
+  // materialised instances still point here (DATA-MODEL.md `RequirementInstance n─1
+  // RequirementTemplate`), and deleting the row would erase what a caregiver was asked for.
+  retiredAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Optional on both sides because agencyId is nullable: a platform-owned template belongs to
+  // no tenant. Restrict, matching Caregiver — an agency that still owns a template cannot be
+  // deleted out from under it.
+  agency           Agency?               @relation(fields: [agencyId], references: [id], onDelete: Restrict)
+  acceptedEvidence AcceptedEvidence[]
+  instances        RequirementInstance[]
+
+  @@unique([scopeKey, key, version])
+  @@unique([id, key])
+  @@index([agencyId, key])
+  @@schema("core")
+}
+
+/// @tier standard
+model AcceptedEvidence {
+  id         String  @id @default(uuid(7))
+  // A denormalised copy of the parent's, nullable for the same reason (T-030 § Risks 10).
+  // Nothing keeps the two in step; the template is the authority.
+  agencyId   String?
+  templateId String
+
+  kind        EvidenceKind
+  /// Stable slug for this one way of satisfying the requirement, e.g. TB_PPD_RESULT or
+  /// TB_CHEST_XRAY. T-060 emits a document per option; T-074 judges against one.
+  evidenceKey String
+  /// What the caregiver is asked for, in their words. "PPD skin test result."
+  label       String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  template RequirementTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@unique([templateId, evidenceKey])
+  @@schema("core")
+}
+
+// Mirrors LINK_TOKEN_PURPOSES in src/domain/auth/link-token.ts.
+enum LinkTokenPurpose {
+  INVITE
+  REFERENCE_FORM
+  STAFF_INVITE
+
+  @@schema("core")
+}
+
+/// @tier standard
+/// A single-use URL credential for a person with no login (ADR-027). Only the token's SHA-256 is
+/// stored, so a database reader cannot mint a working link.
+model LinkToken {
+  id          String           @id @default(uuid(7))
+  agencyId    String
+  /// Null exactly for STAFF_INVITE (CHECK in the migration).
+  caregiverId String?
+  purpose     LinkTokenPurpose
+  /// The one row this token authorizes: the Caregiver for INVITE, the
+  /// Reference for REFERENCE_FORM, the User for STAFF_INVITE (no FK: users are never deleted, only
+  /// deactivated). No foreign key: subjectId names a different table per purpose, so no one FK
+  /// can target it, and the tenancy guarantee already comes from the Caregiver relation
+  /// (T-022 § Design 2).
+  subjectId   String
+  tokenHash   String           @unique
+  /// Superseding a token sets this to the moment of supersession; there is no revokedAt.
+  expiresAt   DateTime
+  consumedAt  DateTime?
+  createdAt   DateTime         @default(now())
+
+  caregiver Caregiver? @relation(fields: [agencyId, caregiverId], references: [agencyId, id], onDelete: Cascade)
+
+  @@index([agencyId, purpose, subjectId])
+  @@schema("core")
+}
+
+/// @tier standard
+/// A sign-in code emailed to a caregiver (T-021). Only a keyed hash of the code is stored.
+model OneTimeCode {
+  id          String    @id @default(uuid(7))
+  agencyId    String
+  caregiverId String
+  /// HMAC-SHA256 (src/lib/otp.ts), never the code.
+  codeHash    String
+  /// Verification attempts made against this code, right or wrong.
+  attempts    Int       @default(0)
+  /// Superseding a code sets this to the moment of supersession, as LinkToken does.
+  expiresAt   DateTime
+  consumedAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  caregiver Caregiver @relation(fields: [agencyId, caregiverId], references: [agencyId, id], onDelete: Cascade)
+
+  @@index([agencyId, caregiverId, createdAt])
+  @@schema("core")
+}
+
+// ── T-011: the medical and EEOC store content ───────────────────────────────────────────────
+// Appended. No model below declares a relation to anything: integrity between the three medical
+// tables is src/db/restricted/'s job, and there is no foreign key in `medical` or `eeoc` at all.
+
+/// @tier restricted
+/// The medical history questionnaire and the physical capability answers, one row per question,
+/// plus the clinical detail of a screening. Nothing in this table ever leaves the medical store
+/// (PRD § Data model: "only the pass or fail status needed for clearance is visible outside it").
+model MedicalAnswer {
+  id          String @id @default(uuid(7))
+  agencyId    String
+  caregiverId String
+
+  section     MedicalSection
+  /// A stable key from the form definition T-045 owns, e.g. `historyDiabetes`,
+  /// `capabilityLift50lb`. Never a question's prose: the wording changes, the key must not.
+  questionKey String
+  response    MedicalResponse
+  /// The "if yes, explain" free text. Clinical content; never projected, never logged.
+  detail      String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([agencyId, caregiverId, section, questionKey])
+  @@index([agencyId, caregiverId])
+  @@schema("medical")
+}
+
+/// @tier restricted
+/// The outcome half of a health screening, and NOTHING else. Every column here is projected out
+/// of the store by readMedicalClearanceResults, so a column added here is a disclosure. Clinical
+/// detail belongs on MedicalAnswer with section SCREENING_DETAIL. Who recorded the result is the
+/// audit log's answer, not a column.
+model MedicalScreeningResult {
+  id          String @id @default(uuid(7))
+  agencyId    String
+  caregiverId String
+
+  item       MedicalScreeningItem
+  outcome    MedicalScreeningOutcome
+  /// A result date, not an instant (CONVENTIONS.md § Code).
+  resultedOn DateTime                @db.Date
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([agencyId, caregiverId, item])
+  @@index([agencyId, caregiverId])
+  @@schema("medical")
+}
+
+enum MedicalSection {
+  MEDICAL_HISTORY
+  PHYSICAL_CAPABILITY
+  SCREENING_DETAIL
+
+  @@schema("medical")
+}
+
+enum MedicalResponse {
+  YES
+  NO
+  LIMITED
+  DECLINED_TO_ANSWER
+
+  @@schema("medical")
+}
+
+enum MedicalScreeningItem {
+  PHYSICAL_EXAM
+  TB_SCREENING
+  IMMUNISATION
+
+  @@schema("medical")
+}
+
+enum MedicalScreeningOutcome {
+  PASS
+  FAIL
+
+  @@schema("medical")
+}
+
+enum EeocGender {
+  MALE
+  FEMALE
+  NON_BINARY
+  DECLINE_TO_SELF_IDENTIFY
+
+  @@schema("eeoc")
+}
+
+enum EeocRaceEthnicity {
+  HISPANIC_OR_LATINO
+  WHITE
+  BLACK_OR_AFRICAN_AMERICAN
+  NATIVE_HAWAIIAN_OR_OTHER_PACIFIC_ISLANDER
+  ASIAN
+  AMERICAN_INDIAN_OR_ALASKA_NATIVE
+  TWO_OR_MORE_RACES
+  DECLINE_TO_SELF_IDENTIFY
+
+  @@schema("eeoc")
+}
+
+/// @tier standard
+model JobSchedule {
+  id       String @id @default(uuid(7))
+  agencyId String
+
+  /// Caller-supplied and stable, e.g. "retention.sweep" or
+  /// "reference.chase:<referenceId>". Unique per agency: that is what makes createSchedule
+  /// idempotent, and it is the part of the occurrence idempotency key that identifies *whose*
+  /// schedule this is, which is why JobSchedule needs no caregiverId of its own.
+  key String
+
+  /// The handler key enqueued for each occurrence — a Job.type.
+  jobType String
+
+  /// Copied verbatim onto every occurrence's Job.payload, and therefore bound by exactly the
+  /// same rule: identifiers only, never a field value. This column is plaintext jsonb.
+  payload Json
+
+  /// Seconds, not milliseconds. Int is 32-bit, so a millisecond interval would cap at 24.8
+  /// days and a monthly-ish schedule would silently overflow. Converted to milliseconds once,
+  /// inside resolveScheduleWindow.
+  intervalSeconds Int
+
+  /// The next occurrence not yet enqueued, and the only mutable scheduling state. Every
+  /// occurrence is this value plus a whole number of intervals, so an occurrence instant is
+  /// reproducible from the row and never depends on when a tick happened to run. There is
+  /// deliberately no `anchorAt`: the cursor already carries the phase.
+  nextOccurrenceAt DateTime
+
+  /// The most recent occurrence actually enqueued; null until the first one is. endSchedule
+  /// reads it to cancel the job still outstanding for that occurrence.
+  lastOccurrenceAt DateTime?
+
+  /// The schedule produces no occurrence at or after this instant; null runs forever. Stopping
+  /// a schedule now is endSchedule, which sets this to now. There is deliberately no second
+  /// `isActive` flag: two columns for one concept is two columns that can disagree.
+  endsAt DateTime?
+
+  /// Occurrences that came due while nothing was ticking and were deliberately never enqueued.
+  /// A tick enqueues only the most recent due occurrence; this counter is what stops that
+  /// being silent.
+  skippedOccurrences Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  agency Agency @relation(fields: [agencyId], references: [id], onDelete: Restrict)
+
+  @@unique([agencyId, key])
+  @@index([nextOccurrenceAt])
+  @@schema("core")
+}
+
+// ── T-032: requirement instances and evidence ───────────────────────────────────────────────
+
+// Mirrors INSTANCE_STATUSES in src/domain/requirements/instance-status.ts, in order.
+enum InstanceStatus {
+  NOT_STARTED
+  PENDING
+  IN_REVIEW
+  SATISFIED
+  EXCEPTION
+  WAIVED
+  EXPIRED
+
+  @@schema("core")
+}
+
+/// @tier standard
+model RequirementInstance {
+  id          String @id @default(uuid(7))
+  agencyId    String
+  caregiverId String
+
+  // A template row, therefore a version: the instance's meaning is frozen at materialisation.
+  // Not the composite tenancy key — a platform template has no agencyId (ADR-014). Tenancy
+  // comes from the Caregiver relation. templateKey is the template's key, and the composite
+  // reference makes Postgres reject a copy that disagrees with it.
+  templateId  String
+  templateKey String
+
+  status InstanceStatus @default(NOT_STARTED)
+  /// Set with status WAIVED from the exception queue (ADR-110): who waived it and when. Not a
+  /// foreign key, as on CheckResult.recordedByUserId.
+  waivedByUserId String?
+  waivedAt       DateTime?
+  /// The date of the passing health screening result a supervisor recorded, copied from the
+  /// medical store's MedicalScreeningResult. Null on every other requirement. A result date, not an instant.
+  resultedOn DateTime? @db.Date
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  caregiver Caregiver           @relation(fields: [agencyId, caregiverId], references: [agencyId, id], onDelete: Cascade)
+  template  RequirementTemplate @relation(fields: [templateId, templateKey], references: [id, key], onDelete: Restrict)
+  evidence  Evidence[]
+  credential Credential?
+
+  @@unique([agencyId, id])
+  @@unique([agencyId, caregiverId, templateKey])
+  @@schema("core")
+}
+
+/// @tier standard
+model Evidence {
+  id         String @id @default(uuid(7))
+  agencyId   String
+  instanceId String
+
+  kind        EvidenceKind
+  // Which of the template's AcceptedEvidence options this is.
+  evidenceKey String
+
+  // One nullable column per evidence arm whose table exists. Each arm's owning task adds its
+  // column and its own kind CHECK, and widens Evidence_exactly_one_source (ADR-028).
+  signedDocumentId   String?
+  uploadedDocumentId String?
+  attestationId      String?
+  checkResultId      String?
+  trainingCompletionId String?
+
+  linkedAt DateTime @default(now())
+
+  instance         RequirementInstance @relation(fields: [agencyId, instanceId], references: [agencyId, id], onDelete: Cascade)
+  signedDocument   SignedDocument?     @relation(fields: [signedDocumentId], references: [id], onDelete: NoAction)
+  uploadedDocument UploadedDocument?   @relation(fields: [uploadedDocumentId], references: [id], onDelete: NoAction)
+  attestation      Attestation?        @relation(fields: [attestationId], references: [id], onDelete: NoAction)
+  checkResult      CheckResult?        @relation(fields: [checkResultId], references: [id], onDelete: NoAction)
+  trainingCompletion TrainingCompletion? @relation(fields: [trainingCompletionId], references: [id], onDelete: NoAction)
+
+  @@index([agencyId, instanceId])
+  @@schema("core")
+}
+
+enum AcceptedIssuerKind {
+  TRAINING_PROGRAM
+  CLINIC
+  STATE_AGENCY
+
+  @@schema("core")
+}
+
+/// @tier standard
+model AcceptedIssuer {
+  id       String @id @default(uuid(7))
+  // NOT NULL: the PRD's list is "agency-maintained", so this is tenant data, not ADR-014
+  // platform reference data. The NY starting list is copied into each agency by the seeder.
+  agencyId String
+
+  // As printed on documents. Matching is normalizeIssuerName equality in the domain, so there is
+  // deliberately no normalised column and no unique index.
+  name String
+  kind AcceptedIssuerKind
+
+  // Never deleted: T-073 records which entry let a document skip the judge's issuer check.
+  retiredAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  agency Agency @relation(fields: [agencyId], references: [id], onDelete: Restrict)
+
+  @@index([agencyId, retiredAt])
+  @@schema("core")
+}
+
+/// @tier standard
+model SentMessage {
+  id                String         @id @default(uuid(7))
+  agencyId          String
+  to                String
+  subject           String
+  body              String
+  idempotencyKey    String
+  providerMessageId String
+  createdAt         DateTime       @default(now())
+
+  agency Agency @relation(fields: [agencyId], references: [id], onDelete: Restrict)
+
+  @@unique([agencyId, idempotencyKey])
+  @@index([createdAt])
+  @@schema("core")
+}
+
+enum WebhookProvider {
+  esign
+  backgroundCheck
+
+  @@schema("core")
+}
+
+/// @tier standard
+model WebhookSubject {
+  id         String          @id @default(uuid(7))
+  agencyId   String
+  provider   WebhookProvider
+  /// envelopeId or orderId, exactly as the vendor issued it.
+  externalId String
+  createdAt  DateTime        @default(now())
+
+  agency Agency @relation(fields: [agencyId], references: [id], onDelete: Restrict)
+
+  @@unique([provider, externalId])
+  @@schema("core")
+}
+
+/// @tier standard
+model InboundWebhook {
+  id         String          @id @default(uuid(7))
+  agencyId   String
+  provider   WebhookProvider
+  externalId String
+  /// Hex SHA-256 of rawBody; the dedupe key.
+  bodySha256 String
+  /// Byte-for-byte what the vendor POSTed.
+  rawBody    String
+  receivedAt DateTime        @default(now())
+
+  agency Agency @relation(fields: [agencyId], references: [id], onDelete: Restrict)
+
+  @@unique([agencyId, provider, bodySha256])
+  @@schema("core")
+}
+
+// ── T-070: uploaded documents ──
+
+/// @tier standard
+model UploadedDocument {
+  id          String @id @default(uuid(7))
+  agencyId    String
+  caregiverId String
+
+  // An ADR-005 storage key, not a relation: the storage port owns the bytes. Its kind segment is
+  // the only record of whether the file is clinical (ADR-068).
+  storageKey String   @unique
+  uploadedAt DateTime @default(now())
+
+  caregiver  Caregiver   @relation(fields: [agencyId, caregiverId], references: [agencyId, id], onDelete: Cascade)
+  evidence   Evidence[]
+  extraction Extraction?
+  judgeDecision JudgeDecision?
+  autoAcceptDecision AutoAcceptDecision?
+  staffDecision StaffDocumentDecision?
+  credentials Credential[]
+
+  @@unique([agencyId, id])
+  @@index([agencyId, caregiverId])
+  @@schema("core")
+}
+
+// ── T-044: caregiver invites ────────────────────────────────────────────────────────────────
+
+// Mirrors INVITE_STATUSES in src/domain/pipeline/invite.ts, in order.
+enum InviteStatus {
+  QUEUED
+  SENT
+  REJECTED
+  CANCELLED
+
+  @@schema("core")
+}
+
+/// @tier standard
+/// One invite email for one caregiver (T-044). The raw link is never stored: the INVITE LinkToken
+/// is minted when the email is sent, and only its hash exists (ADR-027).
+model Invite {
+  id          String       @id @default(uuid(7))
+  agencyId    String
+  caregiverId String
+  status      InviteStatus @default(QUEUED)
+  /// REJECTED: the vendor's permanent reason (e.g. "invalid-number"). CANCELLED: an
+  /// INVITE_CANCEL_REASONS value. Null otherwise. Never an email address or a message body.
+  reason      String?
+  /// When status left QUEUED.
+  settledAt   DateTime?
+  createdAt   DateTime     @default(now())
+
+  caregiver Caregiver @relation(fields: [agencyId, caregiverId], references: [agencyId, id], onDelete: Cascade)
+
+  @@index([agencyId, caregiverId, createdAt])
+  @@schema("core")
+}
+
+/// @tier standard
+model AlayaCareMapping {
+  // One mapping per agency (DATA-MODEL § Core entities: Agency 1─1 AlayaCareMapping).
+  agencyId  String   @id
+  // Optimistic concurrency: an admin and an implementer can edit at once, and a save built on a
+  // stale page must not silently discard the other's change. Starts at 1; 0 means "no row".
+  version   Int
+  // AlayaCareMapping from src/domain/sync/alayacare-mapping.ts. Holds field names and AlayaCare
+  // keys only, never a caregiver value. Parsed by alayaCareMappingSchema on every read and write.
+  config    Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  agency Agency @relation(fields: [agencyId], references: [id], onDelete: Restrict)
+
+  @@schema("core")
+}
+
+// ── T-111: the AlayaCare sync log ───────────────────────────────────────────────────────────
+
+// Mirrors ALAYACARE_SYNC_STATUSES in src/domain/sync/alayacare-sync.ts, in order.
+enum AlayaCareSyncStatus {
+  RUNNING
+  SYNCED
+  CONFLICT
+  REJECTED
+
+  @@schema("core")
+}
+
+/// @tier standard
+/// The AlayaCare sync log (PRD § 8): one row per sync.alayacare job (ADR-116). Field names, counts
+/// and AlayaCare's own id only, never a caregiver value; attempts live in JobAttempt.
+model AlayaCareSync {
+  id          String @id @default(uuid(7))
+  agencyId    String
+  caregiverId String
+  /// The Job.id that ran it. No foreign key: the log outlives queue housekeeping.
+  jobId       String
+
+  /// AlayaCareMapping.version the projection used (0 = no mapping saved).
+  mappingVersion          Int
+  status                  AlayaCareSyncStatus @default(RUNNING)
+  /// AlayaCare's employee id, recorded the moment the profile write is applied.
+  externalId              String?
+  credentialsWritten      Int                 @default(0)
+  unmappedCredentialTypes CredentialType[]
+  /// AlayaCare custom-field keys the mapping could not fill (NO_VALUE / AMBIGUOUS_CREDENTIAL).
+  unresolvedCustomFields  String[]
+  /// FieldConflict.field names only; ours/theirs are never stored.
+  conflictFields          String[]
+  /// Profile fields staff chose to overwrite in AlayaCare with our value (T-113). Names only.
+  keepOursFields          String[]            @default([])
+  /// Profile fields staff chose to leave as AlayaCare holds them (T-113). Names only.
+  keepTheirsFields        String[]            @default([])
+  /// Which step stopped and AlayaCare's stated reason, for CONFLICT and REJECTED.
+  reason                  String?
+
+  startedAt  DateTime
+  finishedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  caregiver Caregiver @relation(fields: [agencyId, caregiverId], references: [agencyId, id], onDelete: Cascade)
+
+  @@unique([agencyId, jobId])
+  @@index([agencyId, caregiverId, startedAt])
+  @@schema("core")
+}
+
+// ── T-064: e-sign envelopes ─────────────────────────────────────────────────────────────────
+
+// Mirrors ENVELOPE_STATUSES in src/domain/documents/envelope.ts, in order.
+enum EnvelopeStatus {
+  PREPARING
+  SENT
+  SIGNED
+  DECLINED
+  VOIDED
+
+  @@schema("core")
+}
+
+/// @tier standard
+/// One e-sign transaction carrying a caregiver's whole document set (T-064). The migration adds
+/// Envelope_one_open_per_caregiver and Envelope_vendor_id_once_sent by hand.
+model Envelope {
+  id               String         @id @default(uuid(7))
+  agencyId         String
+  caregiverId      String
+  status           EnvelopeStatus @default(PREPARING)
+  /// The provider's envelope id; null until esign.sendEnvelope has created it. SignedDocument.envelopeId holds this value.
+  vendorEnvelopeId String?
+  signingUrl       String?
+  signedAt         DateTime?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  caregiver Caregiver          @relation(fields: [agencyId, caregiverId], references: [agencyId, id], onDelete: Cascade)
+  documents EnvelopeDocument[]
+
+  @@unique([agencyId, id])
+  @@unique([agencyId, vendorEnvelopeId])
+  @@index([agencyId, caregiverId])
+  @@schema("core")
+}
+
+/// @tier standard
+model EnvelopeDocument {
+  id              String @id @default(uuid(7))
+  agencyId        String
+  /// Our Envelope.id, not the provider's.
+  envelopeId      String
+  documentKey     String
+  templateVersion String
+  name            String
+  /// An ADR-005 storage key (kind generated). Unsigned official PDFs print SSN and bank numbers; T-130 deletes the bytes and sets unsignedPdfDeletedAt.
+  unsignedPdfKey  String
+  /// Set when retention deleted the bytes; the key is kept as the record of what was deleted.
+  unsignedPdfDeletedAt DateTime?
+
+  envelope Envelope @relation(fields: [agencyId, envelopeId], references: [agencyId, id], onDelete: Cascade)
+
+  @@unique([agencyId, envelopeId, documentKey])
+  @@schema("core")
+}
+
+// ── T-041: attestation evidence ─────────────────────────────────────────────────────────────
+
+/// @tier standard
+/// The source anchor of an ATTESTATION evidence row; Evidence.evidenceKey says what was attested.
+model Attestation {
+  id          String   @id @default(uuid(7))
+  agencyId    String
+  caregiverId String
+  attestedAt  DateTime @default(now())
+
+  caregiver Caregiver  @relation(fields: [agencyId, caregiverId], references: [agencyId, id], onDelete: Cascade)
+  evidence  Evidence[]
+
+  @@index([agencyId, caregiverId])
+  @@schema("core")
+}
+
+// ── T-071: document extractions ─────────────────────────────────────────────────────────────
+
+/// @tier standard
+/// One reading per uploaded document, as printed. Normalised values exist only in reads
+/// (ADR-083); a clinic result's text is in medical.ClinicalDocumentText (ADR-082).
+model Extraction {
+  id                 String   @id @default(uuid(7))
+  agencyId           String
+  uploadedDocumentId String   @unique
+  // The reader's overall confidence, 0..1, as returned. A probability, not money or hours.
+  confidence         Float
+  // The extraction port's fields verbatim, { name, value, confidence }[]. Parsed with
+  // extractedFieldSchema on every read (ADR-083).
+  fields             Json
+  // Null exactly when the document is clinical (ADR-082).
+  text               String?
+  extractedAt        DateTime @default(now())
+
+  uploadedDocument UploadedDocument @relation(fields: [agencyId, uploadedDocumentId], references: [agencyId, id], onDelete: Cascade)
+
+  // Prisma requires the one-to-one relation's fields to be unique as a pair.
+  @@unique([agencyId, uploadedDocumentId])
+  @@schema("core")
+}
+
+/// @tier restricted
+/// The OCR text of a clinic result (TB, physical, immunisation). Clinical detail (ADR-068,
+/// ADR-082).
+model ClinicalDocumentText {
+  id                 String   @id @default(uuid(7))
+  agencyId           String
+  caregiverId        String
+  // core.UploadedDocument.id; no foreign key crosses the schema boundary.
+  uploadedDocumentId String
+  text               String
+  createdAt          DateTime @default(now())
+
+  @@unique([agencyId, uploadedDocumentId])
+  @@index([agencyId, caregiverId])
+  @@schema("medical")
+}
+
+// ── T-076: check-result evidence ────────────────────────────────────────────────────────────
+
+/// @tier standard
+/// The source of a CHECK_RESULT evidence row; Evidence.evidenceKey says which check. Written when
+/// a staff member records the check, or when the vendor reports a background check result.
+model CheckResult {
+  id               String   @id @default(uuid(7))
+  agencyId         String
+  caregiverId      String
+  /// The staff User who recorded it, or null when the vendor reported it (a background check
+  /// result). Not a foreign key, like PipelineEvent.actorUserId.
+  recordedByUserId String?
+  recordedAt       DateTime @default(now())
+
+  caregiver Caregiver  @relation(fields: [agencyId, caregiverId], references: [agencyId, id], onDelete: Cascade)
+  evidence  Evidence[]
+
+  @@index([agencyId, caregiverId])
+  @@schema("core")
+}
+
+// ── T-073: judge decisions ──────────────────────────────────────────────────────────────────
+
+enum JudgeVerdict {
+  VALID
+  INVALID
+  UNCERTAIN
+
+  @@schema("core")
+}
+
+enum JudgeStaffReason {
+  MANUAL_ONLY
+  EXPIRED
+  EXPIRY_UNKNOWN
+  ISSUED_IN_FUTURE
+  ISSUED_AFTER_EXPIRY
+  VERDICT_INVALID
+  VERDICT_UNCERTAIN
+  LOW_JUDGE_CONFIDENCE
+  MOCK_VERDICT_WITHOUT_ALLOWLIST
+
+  @@schema("core")
+}
+
+/// @tier standard
+/// The judge step's decision for one document: an allowlist hit (matchedIssuer*) or a judge
+/// call (inputHash, verdict, confidence, modelVersion, reasons) — never both (ADR-097).
+model JudgeDecision {
+  id                 String             @id @default(uuid(7))
+  agencyId           String
+  uploadedDocumentId String             @unique
+  // AcceptedIssuer.id, not a foreign key: entries are retired, never deleted (ADR-041), and the
+  // name is snapshotted beside it.
+  matchedIssuerId    String?
+  matchedIssuerName  String?
+  // SHA-256 hex of the redacted input actually sent.
+  inputHash          String?
+  verdict            JudgeVerdict?
+  confidence         Float?
+  // The result's modelVersion, never the configured model.
+  modelVersion       String?
+  // Empty when the document is clinical (they are in medical.ClinicalJudgeReasons) or allowlisted.
+  reasons            String[]
+  // Empty exactly when the step passes.
+  staffReasons       JudgeStaffReason[]
+  decidedAt          DateTime           @default(now())
+
+  uploadedDocument UploadedDocument @relation(fields: [agencyId, uploadedDocumentId], references: [agencyId, id], onDelete: Cascade)
+
+  // Prisma requires the one-to-one relation's fields to be unique as a pair.
+  @@unique([agencyId, uploadedDocumentId])
+  @@schema("core")
+}
+
+/// @tier restricted
+/// The judge's reasons about a clinic result; they quote clinical text (ADR-082, ADR-098).
+model ClinicalJudgeReasons {
+  id                 String   @id @default(uuid(7))
+  agencyId           String
+  caregiverId        String
+  // core.UploadedDocument.id; no foreign key crosses the schema boundary.
+  uploadedDocumentId String
+  reasons            String[]
+  createdAt          DateTime @default(now())
+
+  @@unique([agencyId, uploadedDocumentId])
+  @@index([agencyId, caregiverId])
+  @@schema("medical")
+}
+
+// ── T-074: auto-accept decisions ────────────────────────────────────────────────────────────
+
+// Mirrors AUTO_ACCEPT_STAFF_REASONS in src/domain/documents/auto-accept.ts, in order.
+enum AutoAcceptStaffReason {
+  MANUAL_ONLY
+  EXTRACTION_NOT_CONFIDENT
+  IDENTITY_NOT_MATCHED
+  JUDGE_NOT_RUN
+  JUDGE_NOT_PASSED
+
+  @@schema("core")
+}
+
+// Mirrors IDENTITY_OUTCOMES in src/domain/identity/match.ts, in order.
+enum IdentityOutcome {
+  AGREES
+  AGREES_WITH_OTHER_NAME
+  DIFFERS
+  UNREADABLE
+  NOT_PRINTED
+  NOT_ON_INTAKE
+
+  @@schema("core")
+}
+
+/// @tier standard
+/// The auto-accept decision for one document: accepted when staffReasons is empty.
+/// instanceStatusSet is what it moved the requirement instance to, null when the instance was no
+/// longer PENDING (ADR-101).
+model AutoAcceptDecision {
+  id                 String                  @id @default(uuid(7))
+  agencyId           String
+  uploadedDocumentId String                  @unique
+  staffReasons       AutoAcceptStaffReason[]
+  // Snapshots: intake can change later, and a sampler must see "accepted on a former name".
+  fullNameOutcome    IdentityOutcome
+  dateOfBirthOutcome IdentityOutcome
+  instanceStatusSet  InstanceStatus?
+  decidedAt          DateTime                @default(now())
+
+  uploadedDocument UploadedDocument @relation(fields: [agencyId, uploadedDocumentId], references: [agencyId, id], onDelete: Cascade)
+
+  // Prisma requires the one-to-one relation's fields to be unique as a pair.
+  @@unique([agencyId, uploadedDocumentId])
+  @@schema("core")
+}
+
+// ── T-080: CHRC submission ──────────────────────────────────────────────────────────────────
+
+/// @tier standard
+/// That staff submitted the caregiver's NY DOH criminal history record check request, by whom and
+/// when. The result is a CheckResult linked as CHRC_RESULT evidence (ADR-093).
+model ChrcSubmission {
+  id                String   @id @default(uuid(7))
+  agencyId          String
+  caregiverId       String
+  /// The staff User who recorded it. Not a foreign key, as on CheckResult.recordedByUserId.
+  submittedByUserId String
+  submittedAt       DateTime @default(now())
+
+  caregiver Caregiver @relation(fields: [agencyId, caregiverId], references: [agencyId, id], onDelete: Cascade)
+
+  @@unique([agencyId, caregiverId])
+  @@schema("core")
+}
+
+// ── T-123: staff decisions on flagged documents ─────────────────────────────────────────────
+
+// Mirrors STAFF_DECISIONS in src/domain/documents/staff-decision.ts, in order.
+enum StaffDecision {
+  ACCEPTED
+  REJECTED
+  REUPLOAD_REQUESTED
+
+  @@schema("core")
+}
+
+// Mirrors CAREGIVER_NOTICE_STATUSES in src/domain/documents/staff-decision.ts, in order.
+enum CaregiverNoticeStatus {
+  QUEUED
+  SENT
+  REJECTED
+  NO_EMAIL
+  CANCELLED
+
+  @@schema("core")
+}
+
+/// @tier standard
+/// Staff's decision on one flagged document from the exception queue: accepted (the requirement is
+/// satisfied by it), or returned to the caregiver (rejected / re-upload requested) with the state of
+/// the email telling them (ADR-110). A waiver is on the instance, not here.
+model StaffDocumentDecision {
+  id                 String                 @id @default(uuid(7))
+  agencyId           String
+  uploadedDocumentId String                 @unique
+  decision           StaffDecision
+  /// The staff User who decided. Not a foreign key, as on CheckResult.recordedByUserId.
+  decidedByUserId    String
+  decidedAt          DateTime               @default(now())
+  /// null for ACCEPTED; QUEUED at decision for a return, then settled once by review.caregiverNotice.
+  caregiverNotice    CaregiverNoticeStatus?
+  noticeSettledAt    DateTime?
+
+  uploadedDocument UploadedDocument @relation(fields: [agencyId, uploadedDocumentId], references: [agencyId, id], onDelete: Cascade)
+
+  @@unique([agencyId, uploadedDocumentId])
+  @@schema("core")
+}
+
+// ── T-081: background check orders ──────────────────────────────────────────────────────────
+
+// Mirrors BACKGROUND_CHECK_ORDER_STATUSES in src/domain/requirements/background-check.ts, in order.
+enum BackgroundCheckOrderStatus {
+  REQUESTED
+  ORDERED
+  PENDING
+  CLEAR
+  CONSIDER
+
+  @@schema("core")
+}
+
+/// @tier standard
+/// The one background check ordered for a caregiver: who asked, the package code sent, the
+/// vendor's order id and its last known status. No report content.
+model BackgroundCheckOrder {
+  id                String                     @id @default(uuid(7))
+  agencyId          String
+  caregiverId       String
+  /// Not a foreign key, as on CheckResult.
+  requestedByUserId String
+  requestedAt       DateTime                   @default(now())
+  /// As sent; the agency's setting may change later.
+  packageCode       String
+  /// Null until the order job has placed it.
+  vendorOrderId     String?
+  status            BackgroundCheckOrderStatus @default(REQUESTED)
+  /// When Credora learned CLEAR or CONSIDER (the job's clock).
+  resultAt          DateTime?
+
+  caregiver Caregiver @relation(fields: [agencyId, caregiverId], references: [agencyId, id], onDelete: Cascade)
+
+  @@unique([agencyId, caregiverId])
+  @@unique([agencyId, vendorOrderId])
+  @@schema("core")
+}
+
+// ── T-082: reference checks ─────────────────────────────────────────────────────────────────
+
+// Mirrors REFERENCE_REQUEST_STATUSES in src/domain/requirements/reference-check.ts, in order.
+enum ReferenceRequestStatus {
+  NOT_REQUESTED
+  REQUESTED
+  RESPONDED
+  ESCALATED
+
+  @@schema("core")
+}
+
+// Mirrors REFERENCE_ATTEMPT_STATUSES in src/domain/requirements/reference-check.ts, in order.
+enum ReferenceAttemptStatus {
+  QUEUED
+  SENT
+  REJECTED
+  UNANSWERED
+
+  @@schema("core")
+}
+
+/// @tier standard
+/// One request emailed to a reference: which try it was, when it went out, and how it ended.
+/// A REJECTED or UNANSWERED attempt is a miss.
+model ReferenceAttempt {
+  id             String                 @id @default(uuid(7))
+  agencyId       String
+  referenceId    String
+  /// 1 or 2.
+  number         Int
+  status         ReferenceAttemptStatus @default(QUEUED)
+  /// The job's clock when the port accepted it.
+  sentAt         DateTime?
+  /// The port's rejection reason, or NO_CONTACT_DETAILS. Never a message body.
+  rejectedReason String?
+  createdAt      DateTime               @default(now())
+
+  reference Reference @relation(fields: [agencyId, referenceId], references: [agencyId, id], onDelete: Cascade)
+
+  @@unique([agencyId, referenceId, number])
+  @@schema("core")
+}
+
+// ── T-090: training hours ───────────────────────────────────────────────────────────────────
+
+/// @tier standard
+model TrainingImport {
+  id          String   @id @default(uuid(7))
+  agencyId    String
+  sourceRef   String
+  importedAt  DateTime
+  /// Well-formed rows the platform sent.
+  recordCount Int
+  /// Of those, rows not already held.
+  addedCount  Int
+
+  rejections TrainingImportRejection[]
+
+  @@unique([agencyId, id])
+  @@index([agencyId, importedAt])
+  @@schema("core")
+}
+
+/// @tier standard
+model TrainingImportRejection {
+  id       String @id @default(uuid(7))
+  agencyId String
+  importId String
+  line     Int
+  reason   String
+
+  import TrainingImport @relation(fields: [agencyId, importId], references: [agencyId, id], onDelete: Cascade)
+
+  @@index([agencyId, importId])
+  @@schema("core")
+}
+
+/// @tier standard
+model TrainingCompletion {
+  id                  String   @id @default(uuid(7))
+  agencyId            String
+  externalCaregiverId String
+  // Null until staff link the platform id to a caregiver.
+  caregiverId         String?
+  courseCode          String
+  courseName          String
+  completedOn         DateTime @db.Date
+  minutes             Int
+  importedAt          DateTime
+
+  caregiver Caregiver? @relation(fields: [agencyId, caregiverId], references: [agencyId, id], onDelete: Cascade)
+  evidence  Evidence[]
+
+  @@unique([agencyId, externalCaregiverId, courseCode, completedOn])
+  @@index([agencyId, caregiverId])
+  @@schema("core")
+}
