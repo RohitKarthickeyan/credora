@@ -9,6 +9,7 @@ import type { CorePrismaClient } from '../prisma'
 import type { PublishRequirementTemplateInput } from '../repositories/requirement-templates'
 import {
   publishRequirementTemplateIfChanged,
+  retireAgencyTemplatesRescopedBy,
   retirePlatformTemplatesNotIn,
 } from '../repositories/requirement-template-writer'
 
@@ -415,8 +416,9 @@ const NY_PLATFORM_TEMPLATES: readonly PublishRequirementTemplateInput[] = [
 
 // Rules the agency chooses rather than the state imposes, copied into one agency. The PHI
 // acknowledgement, emergency contacts and EEO form are NY-scoped so the DEMO set stays at seven
-// (ADR-166); the disclosure and background check are agency-wide. No key here is also a platform key: a bare {agencyId} scope and a {state} scope are incomparable,
-// so an overlap would make resolution ambiguous.
+// (ADR-166); the disclosure and background check are agency-wide. No key here is also a platform
+// key: a bare {agencyId} scope and a {state} scope are incomparable, so an overlap would make
+// resolution ambiguous.
 const NY_AGENCY_DEFAULT_TEMPLATES: readonly PublishRequirementTemplateInput[] = [
   // SECURITY.md: the PHI acknowledgement workflow is an agency-configured requirement.
   {
@@ -504,10 +506,14 @@ export async function seedNyPlatformRequirementTemplates(
   return published
 }
 
-export function seedNyAgencyRequirementTemplates(
+export async function seedNyAgencyRequirementTemplates(
   db: CorePrismaClient,
   agencyId: string,
   now: Date,
 ): Promise<number> {
-  return publishAll(db, agencyId, NY_AGENCY_DEFAULT_TEMPLATES, now)
+  const published = await publishAll(db, agencyId, NY_AGENCY_DEFAULT_TEMPLATES, now)
+  await db.$transaction((tx) =>
+    retireAgencyTemplatesRescopedBy(tx, agencyId, NY_AGENCY_DEFAULT_TEMPLATES, now),
+  )
+  return published
 }

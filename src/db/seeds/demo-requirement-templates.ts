@@ -9,7 +9,7 @@ import { option, PERMANENT, publishAll, YEARLY } from './ny-requirement-template
 // requirements in all: these five plus the agency-wide disclosure and background check.
 const DEMO: ResolutionContext = { state: 'DEMO' }
 
-export const DEMO_PLATFORM_TEMPLATES: readonly PublishRequirementTemplateInput[] = [
+const DEMO_PLATFORM_TEMPLATES: readonly PublishRequirementTemplateInput[] = [
   {
     ...PERMANENT,
     key: INTAKE_REQUIREMENT_KEYS.TEXT,

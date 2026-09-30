@@ -215,3 +215,26 @@ export async function retirePlatformTemplatesNotIn(
   })
   return count
 }
+
+/**
+ * Retires the live rows of one agency whose key `library` still produces but under another scope,
+ * so re-scoping a default withdraws the old row instead of leaving both resolvable. Rows whose key
+ * the library does not produce are left alone: an administrator may have created them.
+ */
+export async function retireAgencyTemplatesRescopedBy(
+  tx: RequirementTemplateWriter,
+  agencyId: string,
+  library: readonly PublishRequirementTemplateInput[],
+  now: Date,
+): Promise<void> {
+  const produced = new Set(
+    library.map((input) => `${scopeKeyOf({ ...input.scope, agencyId })}|${input.key}`),
+  )
+  const live = await tx.requirementTemplate.findMany({
+    where: { agencyId, key: { in: library.map((input) => input.key) }, retiredAt: null },
+    select: { id: true, scopeKey: true, key: true },
+  })
+  for (const row of live) {
+    if (!produced.has(`${row.scopeKey}|${row.key}`)) await retireRequirementTemplate(tx, row.id, now)
+  }
+}
