@@ -213,6 +213,7 @@ model Caregiver {
   // is what makes an accidental include: impossible (ADR-002, T-002 § Design 3a).
   identity              IdentityRecord?
   contact               ContactRecord?
+  conversation          Conversation?
   homeCareProfile       HomeCareProfile?
   payrollInputs         PayrollInputs?
   employment            EmploymentEntry[]
@@ -319,6 +320,7 @@ model ContactRecord {
 
   @@unique([agencyId, caregiverId])
   @@index([agencyId, email])
+  @@index([agencyId, mobilePhone])
   // findCaregiversByEmail, the declared unscoped sign-in read (ADR-058).
   @@index([email])
   @@schema("core")
@@ -1263,6 +1265,61 @@ model AcceptedIssuer {
   agency Agency @relation(fields: [agencyId], references: [id], onDelete: Restrict)
 
   @@index([agencyId, retiredAt])
+  @@schema("core")
+}
+
+enum MessageDirection {
+  INBOUND
+  OUTBOUND
+
+  @@schema("core")
+}
+
+enum MessageAuthor {
+  CAREGIVER
+  AGENT
+  STAFF
+
+  @@schema("core")
+}
+
+/// @tier standard
+model Conversation {
+  id           String    @id @default(uuid(7))
+  agencyId     String
+  caregiverId  String
+  phone        String
+  awaitingStep String?
+  unclearCount Int       @default(0)
+  pausedAt     DateTime?
+  optedOutAt   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  caregiver Caregiver @relation(fields: [agencyId, caregiverId], references: [agencyId, id], onDelete: Cascade)
+  messages  Message[]
+
+  @@unique([agencyId, caregiverId])
+  @@unique([agencyId, id])
+  @@schema("core")
+}
+
+/// @tier sensitive
+model Message {
+  id              String           @id @default(uuid(7))
+  agencyId        String
+  conversationId  String
+  direction       MessageDirection
+  author          MessageAuthor
+  body            String
+  /// @tier sensitive @encrypted
+  ssnEnc          Bytes?
+  mediaStorageKey String?
+  createdAt       DateTime         @default(now())
+
+  conversation Conversation @relation(fields: [agencyId, conversationId], references: [agencyId, id], onDelete: Cascade)
+
+  @@index([agencyId, conversationId, createdAt])
   @@schema("core")
 }
 

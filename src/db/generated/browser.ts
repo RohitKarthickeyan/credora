@@ -191,6 +191,16 @@ export type Evidence = Prisma.EvidenceModel
  */
 export type AcceptedIssuer = Prisma.AcceptedIssuerModel
 /**
+ * Model Conversation
+ * @tier standard
+ */
+export type Conversation = Prisma.ConversationModel
+/**
+ * Model Message
+ * @tier sensitive
+ */
+export type Message = Prisma.MessageModel
+/**
  * Model SentMessage
  * @tier standard
  */

@@ -270,6 +270,23 @@ export const AcceptedIssuerKind = {
 export type AcceptedIssuerKind = (typeof AcceptedIssuerKind)[keyof typeof AcceptedIssuerKind]
 
 
+export const MessageDirection = {
+  INBOUND: 'INBOUND',
+  OUTBOUND: 'OUTBOUND'
+} as const
+
+export type MessageDirection = (typeof MessageDirection)[keyof typeof MessageDirection]
+
+
+export const MessageAuthor = {
+  CAREGIVER: 'CAREGIVER',
+  AGENT: 'AGENT',
+  STAFF: 'STAFF'
+} as const
+
+export type MessageAuthor = (typeof MessageAuthor)[keyof typeof MessageAuthor]
+
+
 export const WebhookProvider = {
   esign: 'esign',
   backgroundCheck: 'backgroundCheck'

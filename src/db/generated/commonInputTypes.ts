@@ -691,6 +691,40 @@ export type EnumAcceptedIssuerKindWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedEnumAcceptedIssuerKindFilter<$PrismaModel>
 }
 
+export type EnumMessageDirectionFilter<$PrismaModel = never> = {
+  equals?: $Enums.MessageDirection | Prisma.EnumMessageDirectionFieldRefInput<$PrismaModel>
+  in?: $Enums.MessageDirection[] | Prisma.ListEnumMessageDirectionFieldRefInput<$PrismaModel>
+  notIn?: $Enums.MessageDirection[] | Prisma.ListEnumMessageDirectionFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumMessageDirectionFilter<$PrismaModel> | $Enums.MessageDirection
+}
+
+export type EnumMessageAuthorFilter<$PrismaModel = never> = {
+  equals?: $Enums.MessageAuthor | Prisma.EnumMessageAuthorFieldRefInput<$PrismaModel>
+  in?: $Enums.MessageAuthor[] | Prisma.ListEnumMessageAuthorFieldRefInput<$PrismaModel>
+  notIn?: $Enums.MessageAuthor[] | Prisma.ListEnumMessageAuthorFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumMessageAuthorFilter<$PrismaModel> | $Enums.MessageAuthor
+}
+
+export type EnumMessageDirectionWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.MessageDirection | Prisma.EnumMessageDirectionFieldRefInput<$PrismaModel>
+  in?: $Enums.MessageDirection[] | Prisma.ListEnumMessageDirectionFieldRefInput<$PrismaModel>
+  notIn?: $Enums.MessageDirection[] | Prisma.ListEnumMessageDirectionFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumMessageDirectionWithAggregatesFilter<$PrismaModel> | $Enums.MessageDirection
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumMessageDirectionFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumMessageDirectionFilter<$PrismaModel>
+}
+
+export type EnumMessageAuthorWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.MessageAuthor | Prisma.EnumMessageAuthorFieldRefInput<$PrismaModel>
+  in?: $Enums.MessageAuthor[] | Prisma.ListEnumMessageAuthorFieldRefInput<$PrismaModel>
+  notIn?: $Enums.MessageAuthor[] | Prisma.ListEnumMessageAuthorFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumMessageAuthorWithAggregatesFilter<$PrismaModel> | $Enums.MessageAuthor
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumMessageAuthorFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumMessageAuthorFilter<$PrismaModel>
+}
+
 export type EnumWebhookProviderFilter<$PrismaModel = never> = {
   equals?: $Enums.WebhookProvider | Prisma.EnumWebhookProviderFieldRefInput<$PrismaModel>
   in?: $Enums.WebhookProvider[] | Prisma.ListEnumWebhookProviderFieldRefInput<$PrismaModel>
@@ -1593,6 +1627,40 @@ export type NestedEnumAcceptedIssuerKindWithAggregatesFilter<$PrismaModel = neve
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumAcceptedIssuerKindFilter<$PrismaModel>
   _max?: Prisma.NestedEnumAcceptedIssuerKindFilter<$PrismaModel>
+}
+
+export type NestedEnumMessageDirectionFilter<$PrismaModel = never> = {
+  equals?: $Enums.MessageDirection | Prisma.EnumMessageDirectionFieldRefInput<$PrismaModel>
+  in?: $Enums.MessageDirection[] | Prisma.ListEnumMessageDirectionFieldRefInput<$PrismaModel>
+  notIn?: $Enums.MessageDirection[] | Prisma.ListEnumMessageDirectionFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumMessageDirectionFilter<$PrismaModel> | $Enums.MessageDirection
+}
+
+export type NestedEnumMessageAuthorFilter<$PrismaModel = never> = {
+  equals?: $Enums.MessageAuthor | Prisma.EnumMessageAuthorFieldRefInput<$PrismaModel>
+  in?: $Enums.MessageAuthor[] | Prisma.ListEnumMessageAuthorFieldRefInput<$PrismaModel>
+  notIn?: $Enums.MessageAuthor[] | Prisma.ListEnumMessageAuthorFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumMessageAuthorFilter<$PrismaModel> | $Enums.MessageAuthor
+}
+
+export type NestedEnumMessageDirectionWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.MessageDirection | Prisma.EnumMessageDirectionFieldRefInput<$PrismaModel>
+  in?: $Enums.MessageDirection[] | Prisma.ListEnumMessageDirectionFieldRefInput<$PrismaModel>
+  notIn?: $Enums.MessageDirection[] | Prisma.ListEnumMessageDirectionFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumMessageDirectionWithAggregatesFilter<$PrismaModel> | $Enums.MessageDirection
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumMessageDirectionFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumMessageDirectionFilter<$PrismaModel>
+}
+
+export type NestedEnumMessageAuthorWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.MessageAuthor | Prisma.EnumMessageAuthorFieldRefInput<$PrismaModel>
+  in?: $Enums.MessageAuthor[] | Prisma.ListEnumMessageAuthorFieldRefInput<$PrismaModel>
+  notIn?: $Enums.MessageAuthor[] | Prisma.ListEnumMessageAuthorFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumMessageAuthorWithAggregatesFilter<$PrismaModel> | $Enums.MessageAuthor
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumMessageAuthorFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumMessageAuthorFilter<$PrismaModel>
 }
 
 export type NestedEnumWebhookProviderFilter<$PrismaModel = never> = {

@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { revalidatePath } from 'next/cache'
 import type { RevealSensitiveFieldState } from '@/app/_components/sensitive'
 import { Sensitive } from '@/app/_components/sensitive'
@@ -5,6 +6,7 @@ import type { Principal } from '@/domain/auth/role'
 import { revealSensitiveFieldInputSchema } from '@/domain/masking/sensitive-field'
 import { requirePrincipal, runAsPrincipal } from '@/server/auth/context'
 import { revealSensitiveField } from '@/server/caregivers/reveal-sensitive-field'
+import { devPhoneCaregivers } from '@/server/dev/phone'
 import { devDatabaseSnapshot, resetDevDatabase } from '@/server/dev/database'
 import type { ProbeSeam } from '@/server/dev/audit-probe'
 import { auditProbe } from '@/server/dev/audit-probe'
@@ -25,6 +27,7 @@ let lastProbe: readonly ProbeSeam[] = []
 
 export default async function DevToolsPage() {
   const snapshot = await devDatabaseSnapshot()
+  const phones = await devPhoneCaregivers()
 
   async function reset() {
     'use server'
@@ -94,6 +97,19 @@ export default async function DevToolsPage() {
           {snapshot.tables.map((table) => (
             <li key={`${table.schema}.${table.table}`}>
               {table.schema}.{table.table}: {table.rows}
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="flex flex-col gap-2">
+        <h2 className="text-sm font-medium text-ink-muted">Web phones</h2>
+        <ul className="font-mono text-sm">
+          {phones.map((phone) => (
+            <li key={phone.caregiverId}>
+              <Link href={`/dev/phone/${phone.caregiverId}`} className="underline">
+                {phone.mobilePhone}
+              </Link>
             </li>
           ))}
         </ul>

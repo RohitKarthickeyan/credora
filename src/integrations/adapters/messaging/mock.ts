@@ -1,5 +1,5 @@
 import { recordSentMessage } from '@/db/repositories/sent-messages'
-import { sendMessageInputSchema } from '@/integrations/ports/messaging'
+import { sendMessageInputSchema, sendTextInputSchema } from '@/integrations/ports/messaging'
 import type { MessagingPort } from '@/integrations/ports/messaging'
 import { buildIdempotencyKey } from '@/integrations/queue/idempotency'
 import { REJECTED_RECIPIENTS } from './fixtures/recipients'
@@ -24,6 +24,18 @@ export function createMockMessaging(): MessagingPort {
         ]),
       })
       return { status: 'sent', providerMessageId: row.providerMessageId }
+    },
+
+    // Writes nothing: the conversation stores the Message, and /dev/phone shows it.
+    async sendText(input) {
+      const parsed = sendTextInputSchema.parse(input)
+      return {
+        status: 'sent',
+        providerMessageId: buildIdempotencyKey('messaging.mock.text', [
+          parsed.agencyId,
+          parsed.idempotencyKey,
+        ]),
+      }
     },
   }
 }

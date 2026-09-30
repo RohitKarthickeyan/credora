@@ -217,6 +217,7 @@ export type CaregiverWhereInput = {
   agency?: Prisma.XOR<Prisma.AgencyScalarRelationFilter, Prisma.AgencyWhereInput>
   identity?: Prisma.XOR<Prisma.IdentityRecordNullableScalarRelationFilter, Prisma.IdentityRecordWhereInput> | null
   contact?: Prisma.XOR<Prisma.ContactRecordNullableScalarRelationFilter, Prisma.ContactRecordWhereInput> | null
+  conversation?: Prisma.XOR<Prisma.ConversationNullableScalarRelationFilter, Prisma.ConversationWhereInput> | null
   homeCareProfile?: Prisma.XOR<Prisma.HomeCareProfileNullableScalarRelationFilter, Prisma.HomeCareProfileWhereInput> | null
   payrollInputs?: Prisma.XOR<Prisma.PayrollInputsNullableScalarRelationFilter, Prisma.PayrollInputsWhereInput> | null
   employment?: Prisma.EmploymentEntryListRelationFilter
@@ -254,6 +255,7 @@ export type CaregiverOrderByWithRelationInput = {
   agency?: Prisma.AgencyOrderByWithRelationInput
   identity?: Prisma.IdentityRecordOrderByWithRelationInput
   contact?: Prisma.ContactRecordOrderByWithRelationInput
+  conversation?: Prisma.ConversationOrderByWithRelationInput
   homeCareProfile?: Prisma.HomeCareProfileOrderByWithRelationInput
   payrollInputs?: Prisma.PayrollInputsOrderByWithRelationInput
   employment?: Prisma.EmploymentEntryOrderByRelationAggregateInput
@@ -296,6 +298,7 @@ export type CaregiverWhereUniqueInput = Prisma.AtLeast<{
   agency?: Prisma.XOR<Prisma.AgencyScalarRelationFilter, Prisma.AgencyWhereInput>
   identity?: Prisma.XOR<Prisma.IdentityRecordNullableScalarRelationFilter, Prisma.IdentityRecordWhereInput> | null
   contact?: Prisma.XOR<Prisma.ContactRecordNullableScalarRelationFilter, Prisma.ContactRecordWhereInput> | null
+  conversation?: Prisma.XOR<Prisma.ConversationNullableScalarRelationFilter, Prisma.ConversationWhereInput> | null
   homeCareProfile?: Prisma.XOR<Prisma.HomeCareProfileNullableScalarRelationFilter, Prisma.HomeCareProfileWhereInput> | null
   payrollInputs?: Prisma.XOR<Prisma.PayrollInputsNullableScalarRelationFilter, Prisma.PayrollInputsWhereInput> | null
   employment?: Prisma.EmploymentEntryListRelationFilter
@@ -362,6 +365,7 @@ export type CaregiverCreateInput = {
   agency: Prisma.AgencyCreateNestedOneWithoutCaregiversInput
   identity?: Prisma.IdentityRecordCreateNestedOneWithoutCaregiverInput
   contact?: Prisma.ContactRecordCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryCreateNestedManyWithoutCaregiverInput
@@ -398,6 +402,7 @@ export type CaregiverUncheckedCreateInput = {
   trainingPlatformId?: string | null
   identity?: Prisma.IdentityRecordUncheckedCreateNestedOneWithoutCaregiverInput
   contact?: Prisma.ContactRecordUncheckedCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationUncheckedCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsUncheckedCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryUncheckedCreateNestedManyWithoutCaregiverInput
@@ -434,6 +439,7 @@ export type CaregiverUpdateInput = {
   agency?: Prisma.AgencyUpdateOneRequiredWithoutCaregiversNestedInput
   identity?: Prisma.IdentityRecordUpdateOneWithoutCaregiverNestedInput
   contact?: Prisma.ContactRecordUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUpdateManyWithoutCaregiverNestedInput
@@ -470,6 +476,7 @@ export type CaregiverUncheckedUpdateInput = {
   trainingPlatformId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   identity?: Prisma.IdentityRecordUncheckedUpdateOneWithoutCaregiverNestedInput
   contact?: Prisma.ContactRecordUncheckedUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUncheckedUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUncheckedUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUncheckedUpdateManyWithoutCaregiverNestedInput
@@ -853,6 +860,20 @@ export type CaregiverUpdateOneRequiredWithoutRequirementInstancesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.CaregiverUpdateToOneWithWhereWithoutRequirementInstancesInput, Prisma.CaregiverUpdateWithoutRequirementInstancesInput>, Prisma.CaregiverUncheckedUpdateWithoutRequirementInstancesInput>
 }
 
+export type CaregiverCreateNestedOneWithoutConversationInput = {
+  create?: Prisma.XOR<Prisma.CaregiverCreateWithoutConversationInput, Prisma.CaregiverUncheckedCreateWithoutConversationInput>
+  connectOrCreate?: Prisma.CaregiverCreateOrConnectWithoutConversationInput
+  connect?: Prisma.CaregiverWhereUniqueInput
+}
+
+export type CaregiverUpdateOneRequiredWithoutConversationNestedInput = {
+  create?: Prisma.XOR<Prisma.CaregiverCreateWithoutConversationInput, Prisma.CaregiverUncheckedCreateWithoutConversationInput>
+  connectOrCreate?: Prisma.CaregiverCreateOrConnectWithoutConversationInput
+  upsert?: Prisma.CaregiverUpsertWithoutConversationInput
+  connect?: Prisma.CaregiverWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.CaregiverUpdateToOneWithWhereWithoutConversationInput, Prisma.CaregiverUpdateWithoutConversationInput>, Prisma.CaregiverUncheckedUpdateWithoutConversationInput>
+}
+
 export type CaregiverCreateNestedOneWithoutUploadedDocumentsInput = {
   create?: Prisma.XOR<Prisma.CaregiverCreateWithoutUploadedDocumentsInput, Prisma.CaregiverUncheckedCreateWithoutUploadedDocumentsInput>
   connectOrCreate?: Prisma.CaregiverCreateOrConnectWithoutUploadedDocumentsInput
@@ -992,6 +1013,7 @@ export type CaregiverCreateWithoutAgencyInput = {
   trainingPlatformId?: string | null
   identity?: Prisma.IdentityRecordCreateNestedOneWithoutCaregiverInput
   contact?: Prisma.ContactRecordCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryCreateNestedManyWithoutCaregiverInput
@@ -1027,6 +1049,7 @@ export type CaregiverUncheckedCreateWithoutAgencyInput = {
   trainingPlatformId?: string | null
   identity?: Prisma.IdentityRecordUncheckedCreateNestedOneWithoutCaregiverInput
   contact?: Prisma.ContactRecordUncheckedCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationUncheckedCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsUncheckedCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryUncheckedCreateNestedManyWithoutCaregiverInput
@@ -1103,6 +1126,7 @@ export type CaregiverCreateWithoutIdentityInput = {
   trainingPlatformId?: string | null
   agency: Prisma.AgencyCreateNestedOneWithoutCaregiversInput
   contact?: Prisma.ContactRecordCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryCreateNestedManyWithoutCaregiverInput
@@ -1138,6 +1162,7 @@ export type CaregiverUncheckedCreateWithoutIdentityInput = {
   payer?: string | null
   trainingPlatformId?: string | null
   contact?: Prisma.ContactRecordUncheckedCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationUncheckedCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsUncheckedCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryUncheckedCreateNestedManyWithoutCaregiverInput
@@ -1189,6 +1214,7 @@ export type CaregiverUpdateWithoutIdentityInput = {
   trainingPlatformId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   agency?: Prisma.AgencyUpdateOneRequiredWithoutCaregiversNestedInput
   contact?: Prisma.ContactRecordUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUpdateManyWithoutCaregiverNestedInput
@@ -1224,6 +1250,7 @@ export type CaregiverUncheckedUpdateWithoutIdentityInput = {
   payer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   trainingPlatformId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contact?: Prisma.ContactRecordUncheckedUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUncheckedUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUncheckedUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUncheckedUpdateManyWithoutCaregiverNestedInput
@@ -1259,6 +1286,7 @@ export type CaregiverCreateWithoutContactInput = {
   trainingPlatformId?: string | null
   agency: Prisma.AgencyCreateNestedOneWithoutCaregiversInput
   identity?: Prisma.IdentityRecordCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryCreateNestedManyWithoutCaregiverInput
@@ -1294,6 +1322,7 @@ export type CaregiverUncheckedCreateWithoutContactInput = {
   payer?: string | null
   trainingPlatformId?: string | null
   identity?: Prisma.IdentityRecordUncheckedCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationUncheckedCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsUncheckedCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryUncheckedCreateNestedManyWithoutCaregiverInput
@@ -1345,6 +1374,7 @@ export type CaregiverUpdateWithoutContactInput = {
   trainingPlatformId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   agency?: Prisma.AgencyUpdateOneRequiredWithoutCaregiversNestedInput
   identity?: Prisma.IdentityRecordUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUpdateManyWithoutCaregiverNestedInput
@@ -1380,6 +1410,7 @@ export type CaregiverUncheckedUpdateWithoutContactInput = {
   payer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   trainingPlatformId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   identity?: Prisma.IdentityRecordUncheckedUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUncheckedUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUncheckedUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUncheckedUpdateManyWithoutCaregiverNestedInput
@@ -1416,6 +1447,7 @@ export type CaregiverCreateWithoutHomeCareProfileInput = {
   agency: Prisma.AgencyCreateNestedOneWithoutCaregiversInput
   identity?: Prisma.IdentityRecordCreateNestedOneWithoutCaregiverInput
   contact?: Prisma.ContactRecordCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryCreateNestedManyWithoutCaregiverInput
   education?: Prisma.EducationEntryCreateNestedManyWithoutCaregiverInput
@@ -1451,6 +1483,7 @@ export type CaregiverUncheckedCreateWithoutHomeCareProfileInput = {
   trainingPlatformId?: string | null
   identity?: Prisma.IdentityRecordUncheckedCreateNestedOneWithoutCaregiverInput
   contact?: Prisma.ContactRecordUncheckedCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationUncheckedCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsUncheckedCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryUncheckedCreateNestedManyWithoutCaregiverInput
   education?: Prisma.EducationEntryUncheckedCreateNestedManyWithoutCaregiverInput
@@ -1502,6 +1535,7 @@ export type CaregiverUpdateWithoutHomeCareProfileInput = {
   agency?: Prisma.AgencyUpdateOneRequiredWithoutCaregiversNestedInput
   identity?: Prisma.IdentityRecordUpdateOneWithoutCaregiverNestedInput
   contact?: Prisma.ContactRecordUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUpdateManyWithoutCaregiverNestedInput
   education?: Prisma.EducationEntryUpdateManyWithoutCaregiverNestedInput
@@ -1537,6 +1571,7 @@ export type CaregiverUncheckedUpdateWithoutHomeCareProfileInput = {
   trainingPlatformId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   identity?: Prisma.IdentityRecordUncheckedUpdateOneWithoutCaregiverNestedInput
   contact?: Prisma.ContactRecordUncheckedUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUncheckedUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUncheckedUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUncheckedUpdateManyWithoutCaregiverNestedInput
   education?: Prisma.EducationEntryUncheckedUpdateManyWithoutCaregiverNestedInput
@@ -1572,6 +1607,7 @@ export type CaregiverCreateWithoutCareSettingExperienceInput = {
   agency: Prisma.AgencyCreateNestedOneWithoutCaregiversInput
   identity?: Prisma.IdentityRecordCreateNestedOneWithoutCaregiverInput
   contact?: Prisma.ContactRecordCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryCreateNestedManyWithoutCaregiverInput
@@ -1607,6 +1643,7 @@ export type CaregiverUncheckedCreateWithoutCareSettingExperienceInput = {
   trainingPlatformId?: string | null
   identity?: Prisma.IdentityRecordUncheckedCreateNestedOneWithoutCaregiverInput
   contact?: Prisma.ContactRecordUncheckedCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationUncheckedCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsUncheckedCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryUncheckedCreateNestedManyWithoutCaregiverInput
@@ -1658,6 +1695,7 @@ export type CaregiverUpdateWithoutCareSettingExperienceInput = {
   agency?: Prisma.AgencyUpdateOneRequiredWithoutCaregiversNestedInput
   identity?: Prisma.IdentityRecordUpdateOneWithoutCaregiverNestedInput
   contact?: Prisma.ContactRecordUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUpdateManyWithoutCaregiverNestedInput
@@ -1693,6 +1731,7 @@ export type CaregiverUncheckedUpdateWithoutCareSettingExperienceInput = {
   trainingPlatformId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   identity?: Prisma.IdentityRecordUncheckedUpdateOneWithoutCaregiverNestedInput
   contact?: Prisma.ContactRecordUncheckedUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUncheckedUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUncheckedUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUncheckedUpdateManyWithoutCaregiverNestedInput
@@ -1728,6 +1767,7 @@ export type CaregiverCreateWithoutPayrollInputsInput = {
   agency: Prisma.AgencyCreateNestedOneWithoutCaregiversInput
   identity?: Prisma.IdentityRecordCreateNestedOneWithoutCaregiverInput
   contact?: Prisma.ContactRecordCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryCreateNestedManyWithoutCaregiverInput
   education?: Prisma.EducationEntryCreateNestedManyWithoutCaregiverInput
@@ -1763,6 +1803,7 @@ export type CaregiverUncheckedCreateWithoutPayrollInputsInput = {
   trainingPlatformId?: string | null
   identity?: Prisma.IdentityRecordUncheckedCreateNestedOneWithoutCaregiverInput
   contact?: Prisma.ContactRecordUncheckedCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationUncheckedCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryUncheckedCreateNestedManyWithoutCaregiverInput
   education?: Prisma.EducationEntryUncheckedCreateNestedManyWithoutCaregiverInput
@@ -1814,6 +1855,7 @@ export type CaregiverUpdateWithoutPayrollInputsInput = {
   agency?: Prisma.AgencyUpdateOneRequiredWithoutCaregiversNestedInput
   identity?: Prisma.IdentityRecordUpdateOneWithoutCaregiverNestedInput
   contact?: Prisma.ContactRecordUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUpdateManyWithoutCaregiverNestedInput
   education?: Prisma.EducationEntryUpdateManyWithoutCaregiverNestedInput
@@ -1849,6 +1891,7 @@ export type CaregiverUncheckedUpdateWithoutPayrollInputsInput = {
   trainingPlatformId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   identity?: Prisma.IdentityRecordUncheckedUpdateOneWithoutCaregiverNestedInput
   contact?: Prisma.ContactRecordUncheckedUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUncheckedUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUncheckedUpdateManyWithoutCaregiverNestedInput
   education?: Prisma.EducationEntryUncheckedUpdateManyWithoutCaregiverNestedInput
@@ -1884,6 +1927,7 @@ export type CaregiverCreateWithoutEmploymentInput = {
   agency: Prisma.AgencyCreateNestedOneWithoutCaregiversInput
   identity?: Prisma.IdentityRecordCreateNestedOneWithoutCaregiverInput
   contact?: Prisma.ContactRecordCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsCreateNestedOneWithoutCaregiverInput
   education?: Prisma.EducationEntryCreateNestedManyWithoutCaregiverInput
@@ -1919,6 +1963,7 @@ export type CaregiverUncheckedCreateWithoutEmploymentInput = {
   trainingPlatformId?: string | null
   identity?: Prisma.IdentityRecordUncheckedCreateNestedOneWithoutCaregiverInput
   contact?: Prisma.ContactRecordUncheckedCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationUncheckedCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsUncheckedCreateNestedOneWithoutCaregiverInput
   education?: Prisma.EducationEntryUncheckedCreateNestedManyWithoutCaregiverInput
@@ -1970,6 +2015,7 @@ export type CaregiverUpdateWithoutEmploymentInput = {
   agency?: Prisma.AgencyUpdateOneRequiredWithoutCaregiversNestedInput
   identity?: Prisma.IdentityRecordUpdateOneWithoutCaregiverNestedInput
   contact?: Prisma.ContactRecordUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUpdateOneWithoutCaregiverNestedInput
   education?: Prisma.EducationEntryUpdateManyWithoutCaregiverNestedInput
@@ -2005,6 +2051,7 @@ export type CaregiverUncheckedUpdateWithoutEmploymentInput = {
   trainingPlatformId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   identity?: Prisma.IdentityRecordUncheckedUpdateOneWithoutCaregiverNestedInput
   contact?: Prisma.ContactRecordUncheckedUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUncheckedUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUncheckedUpdateOneWithoutCaregiverNestedInput
   education?: Prisma.EducationEntryUncheckedUpdateManyWithoutCaregiverNestedInput
@@ -2040,6 +2087,7 @@ export type CaregiverCreateWithoutEducationInput = {
   agency: Prisma.AgencyCreateNestedOneWithoutCaregiversInput
   identity?: Prisma.IdentityRecordCreateNestedOneWithoutCaregiverInput
   contact?: Prisma.ContactRecordCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryCreateNestedManyWithoutCaregiverInput
@@ -2075,6 +2123,7 @@ export type CaregiverUncheckedCreateWithoutEducationInput = {
   trainingPlatformId?: string | null
   identity?: Prisma.IdentityRecordUncheckedCreateNestedOneWithoutCaregiverInput
   contact?: Prisma.ContactRecordUncheckedCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationUncheckedCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsUncheckedCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryUncheckedCreateNestedManyWithoutCaregiverInput
@@ -2126,6 +2175,7 @@ export type CaregiverUpdateWithoutEducationInput = {
   agency?: Prisma.AgencyUpdateOneRequiredWithoutCaregiversNestedInput
   identity?: Prisma.IdentityRecordUpdateOneWithoutCaregiverNestedInput
   contact?: Prisma.ContactRecordUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUpdateManyWithoutCaregiverNestedInput
@@ -2161,6 +2211,7 @@ export type CaregiverUncheckedUpdateWithoutEducationInput = {
   trainingPlatformId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   identity?: Prisma.IdentityRecordUncheckedUpdateOneWithoutCaregiverNestedInput
   contact?: Prisma.ContactRecordUncheckedUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUncheckedUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUncheckedUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUncheckedUpdateManyWithoutCaregiverNestedInput
@@ -2196,6 +2247,7 @@ export type CaregiverCreateWithoutReferencesInput = {
   agency: Prisma.AgencyCreateNestedOneWithoutCaregiversInput
   identity?: Prisma.IdentityRecordCreateNestedOneWithoutCaregiverInput
   contact?: Prisma.ContactRecordCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryCreateNestedManyWithoutCaregiverInput
@@ -2231,6 +2283,7 @@ export type CaregiverUncheckedCreateWithoutReferencesInput = {
   trainingPlatformId?: string | null
   identity?: Prisma.IdentityRecordUncheckedCreateNestedOneWithoutCaregiverInput
   contact?: Prisma.ContactRecordUncheckedCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationUncheckedCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsUncheckedCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryUncheckedCreateNestedManyWithoutCaregiverInput
@@ -2282,6 +2335,7 @@ export type CaregiverUpdateWithoutReferencesInput = {
   agency?: Prisma.AgencyUpdateOneRequiredWithoutCaregiversNestedInput
   identity?: Prisma.IdentityRecordUpdateOneWithoutCaregiverNestedInput
   contact?: Prisma.ContactRecordUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUpdateManyWithoutCaregiverNestedInput
@@ -2317,6 +2371,7 @@ export type CaregiverUncheckedUpdateWithoutReferencesInput = {
   trainingPlatformId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   identity?: Prisma.IdentityRecordUncheckedUpdateOneWithoutCaregiverNestedInput
   contact?: Prisma.ContactRecordUncheckedUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUncheckedUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUncheckedUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUncheckedUpdateManyWithoutCaregiverNestedInput
@@ -2352,6 +2407,7 @@ export type CaregiverCreateWithoutEmergencyContactsInput = {
   agency: Prisma.AgencyCreateNestedOneWithoutCaregiversInput
   identity?: Prisma.IdentityRecordCreateNestedOneWithoutCaregiverInput
   contact?: Prisma.ContactRecordCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryCreateNestedManyWithoutCaregiverInput
@@ -2387,6 +2443,7 @@ export type CaregiverUncheckedCreateWithoutEmergencyContactsInput = {
   trainingPlatformId?: string | null
   identity?: Prisma.IdentityRecordUncheckedCreateNestedOneWithoutCaregiverInput
   contact?: Prisma.ContactRecordUncheckedCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationUncheckedCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsUncheckedCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryUncheckedCreateNestedManyWithoutCaregiverInput
@@ -2438,6 +2495,7 @@ export type CaregiverUpdateWithoutEmergencyContactsInput = {
   agency?: Prisma.AgencyUpdateOneRequiredWithoutCaregiversNestedInput
   identity?: Prisma.IdentityRecordUpdateOneWithoutCaregiverNestedInput
   contact?: Prisma.ContactRecordUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUpdateManyWithoutCaregiverNestedInput
@@ -2473,6 +2531,7 @@ export type CaregiverUncheckedUpdateWithoutEmergencyContactsInput = {
   trainingPlatformId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   identity?: Prisma.IdentityRecordUncheckedUpdateOneWithoutCaregiverNestedInput
   contact?: Prisma.ContactRecordUncheckedUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUncheckedUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUncheckedUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUncheckedUpdateManyWithoutCaregiverNestedInput
@@ -2508,6 +2567,7 @@ export type CaregiverCreateWithoutCredentialsInput = {
   agency: Prisma.AgencyCreateNestedOneWithoutCaregiversInput
   identity?: Prisma.IdentityRecordCreateNestedOneWithoutCaregiverInput
   contact?: Prisma.ContactRecordCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryCreateNestedManyWithoutCaregiverInput
@@ -2543,6 +2603,7 @@ export type CaregiverUncheckedCreateWithoutCredentialsInput = {
   trainingPlatformId?: string | null
   identity?: Prisma.IdentityRecordUncheckedCreateNestedOneWithoutCaregiverInput
   contact?: Prisma.ContactRecordUncheckedCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationUncheckedCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsUncheckedCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryUncheckedCreateNestedManyWithoutCaregiverInput
@@ -2594,6 +2655,7 @@ export type CaregiverUpdateWithoutCredentialsInput = {
   agency?: Prisma.AgencyUpdateOneRequiredWithoutCaregiversNestedInput
   identity?: Prisma.IdentityRecordUpdateOneWithoutCaregiverNestedInput
   contact?: Prisma.ContactRecordUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUpdateManyWithoutCaregiverNestedInput
@@ -2629,6 +2691,7 @@ export type CaregiverUncheckedUpdateWithoutCredentialsInput = {
   trainingPlatformId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   identity?: Prisma.IdentityRecordUncheckedUpdateOneWithoutCaregiverNestedInput
   contact?: Prisma.ContactRecordUncheckedUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUncheckedUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUncheckedUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUncheckedUpdateManyWithoutCaregiverNestedInput
@@ -2664,6 +2727,7 @@ export type CaregiverCreateWithoutSignedDocumentsInput = {
   agency: Prisma.AgencyCreateNestedOneWithoutCaregiversInput
   identity?: Prisma.IdentityRecordCreateNestedOneWithoutCaregiverInput
   contact?: Prisma.ContactRecordCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryCreateNestedManyWithoutCaregiverInput
@@ -2699,6 +2763,7 @@ export type CaregiverUncheckedCreateWithoutSignedDocumentsInput = {
   trainingPlatformId?: string | null
   identity?: Prisma.IdentityRecordUncheckedCreateNestedOneWithoutCaregiverInput
   contact?: Prisma.ContactRecordUncheckedCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationUncheckedCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsUncheckedCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryUncheckedCreateNestedManyWithoutCaregiverInput
@@ -2750,6 +2815,7 @@ export type CaregiverUpdateWithoutSignedDocumentsInput = {
   agency?: Prisma.AgencyUpdateOneRequiredWithoutCaregiversNestedInput
   identity?: Prisma.IdentityRecordUpdateOneWithoutCaregiverNestedInput
   contact?: Prisma.ContactRecordUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUpdateManyWithoutCaregiverNestedInput
@@ -2785,6 +2851,7 @@ export type CaregiverUncheckedUpdateWithoutSignedDocumentsInput = {
   trainingPlatformId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   identity?: Prisma.IdentityRecordUncheckedUpdateOneWithoutCaregiverNestedInput
   contact?: Prisma.ContactRecordUncheckedUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUncheckedUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUncheckedUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUncheckedUpdateManyWithoutCaregiverNestedInput
@@ -2820,6 +2887,7 @@ export type CaregiverCreateWithoutPipelineEventsInput = {
   agency: Prisma.AgencyCreateNestedOneWithoutCaregiversInput
   identity?: Prisma.IdentityRecordCreateNestedOneWithoutCaregiverInput
   contact?: Prisma.ContactRecordCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryCreateNestedManyWithoutCaregiverInput
@@ -2855,6 +2923,7 @@ export type CaregiverUncheckedCreateWithoutPipelineEventsInput = {
   trainingPlatformId?: string | null
   identity?: Prisma.IdentityRecordUncheckedCreateNestedOneWithoutCaregiverInput
   contact?: Prisma.ContactRecordUncheckedCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationUncheckedCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsUncheckedCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryUncheckedCreateNestedManyWithoutCaregiverInput
@@ -2906,6 +2975,7 @@ export type CaregiverUpdateWithoutPipelineEventsInput = {
   agency?: Prisma.AgencyUpdateOneRequiredWithoutCaregiversNestedInput
   identity?: Prisma.IdentityRecordUpdateOneWithoutCaregiverNestedInput
   contact?: Prisma.ContactRecordUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUpdateManyWithoutCaregiverNestedInput
@@ -2941,6 +3011,7 @@ export type CaregiverUncheckedUpdateWithoutPipelineEventsInput = {
   trainingPlatformId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   identity?: Prisma.IdentityRecordUncheckedUpdateOneWithoutCaregiverNestedInput
   contact?: Prisma.ContactRecordUncheckedUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUncheckedUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUncheckedUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUncheckedUpdateManyWithoutCaregiverNestedInput
@@ -2976,6 +3047,7 @@ export type CaregiverCreateWithoutLinkTokensInput = {
   agency: Prisma.AgencyCreateNestedOneWithoutCaregiversInput
   identity?: Prisma.IdentityRecordCreateNestedOneWithoutCaregiverInput
   contact?: Prisma.ContactRecordCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryCreateNestedManyWithoutCaregiverInput
@@ -3011,6 +3083,7 @@ export type CaregiverUncheckedCreateWithoutLinkTokensInput = {
   trainingPlatformId?: string | null
   identity?: Prisma.IdentityRecordUncheckedCreateNestedOneWithoutCaregiverInput
   contact?: Prisma.ContactRecordUncheckedCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationUncheckedCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsUncheckedCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryUncheckedCreateNestedManyWithoutCaregiverInput
@@ -3062,6 +3135,7 @@ export type CaregiverUpdateWithoutLinkTokensInput = {
   agency?: Prisma.AgencyUpdateOneRequiredWithoutCaregiversNestedInput
   identity?: Prisma.IdentityRecordUpdateOneWithoutCaregiverNestedInput
   contact?: Prisma.ContactRecordUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUpdateManyWithoutCaregiverNestedInput
@@ -3097,6 +3171,7 @@ export type CaregiverUncheckedUpdateWithoutLinkTokensInput = {
   trainingPlatformId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   identity?: Prisma.IdentityRecordUncheckedUpdateOneWithoutCaregiverNestedInput
   contact?: Prisma.ContactRecordUncheckedUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUncheckedUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUncheckedUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUncheckedUpdateManyWithoutCaregiverNestedInput
@@ -3132,6 +3207,7 @@ export type CaregiverCreateWithoutOneTimeCodesInput = {
   agency: Prisma.AgencyCreateNestedOneWithoutCaregiversInput
   identity?: Prisma.IdentityRecordCreateNestedOneWithoutCaregiverInput
   contact?: Prisma.ContactRecordCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryCreateNestedManyWithoutCaregiverInput
@@ -3167,6 +3243,7 @@ export type CaregiverUncheckedCreateWithoutOneTimeCodesInput = {
   trainingPlatformId?: string | null
   identity?: Prisma.IdentityRecordUncheckedCreateNestedOneWithoutCaregiverInput
   contact?: Prisma.ContactRecordUncheckedCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationUncheckedCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsUncheckedCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryUncheckedCreateNestedManyWithoutCaregiverInput
@@ -3218,6 +3295,7 @@ export type CaregiverUpdateWithoutOneTimeCodesInput = {
   agency?: Prisma.AgencyUpdateOneRequiredWithoutCaregiversNestedInput
   identity?: Prisma.IdentityRecordUpdateOneWithoutCaregiverNestedInput
   contact?: Prisma.ContactRecordUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUpdateManyWithoutCaregiverNestedInput
@@ -3253,6 +3331,7 @@ export type CaregiverUncheckedUpdateWithoutOneTimeCodesInput = {
   trainingPlatformId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   identity?: Prisma.IdentityRecordUncheckedUpdateOneWithoutCaregiverNestedInput
   contact?: Prisma.ContactRecordUncheckedUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUncheckedUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUncheckedUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUncheckedUpdateManyWithoutCaregiverNestedInput
@@ -3288,6 +3367,7 @@ export type CaregiverCreateWithoutRequirementInstancesInput = {
   agency: Prisma.AgencyCreateNestedOneWithoutCaregiversInput
   identity?: Prisma.IdentityRecordCreateNestedOneWithoutCaregiverInput
   contact?: Prisma.ContactRecordCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryCreateNestedManyWithoutCaregiverInput
@@ -3323,6 +3403,7 @@ export type CaregiverUncheckedCreateWithoutRequirementInstancesInput = {
   trainingPlatformId?: string | null
   identity?: Prisma.IdentityRecordUncheckedCreateNestedOneWithoutCaregiverInput
   contact?: Prisma.ContactRecordUncheckedCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationUncheckedCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsUncheckedCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryUncheckedCreateNestedManyWithoutCaregiverInput
@@ -3374,6 +3455,7 @@ export type CaregiverUpdateWithoutRequirementInstancesInput = {
   agency?: Prisma.AgencyUpdateOneRequiredWithoutCaregiversNestedInput
   identity?: Prisma.IdentityRecordUpdateOneWithoutCaregiverNestedInput
   contact?: Prisma.ContactRecordUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUpdateManyWithoutCaregiverNestedInput
@@ -3409,6 +3491,7 @@ export type CaregiverUncheckedUpdateWithoutRequirementInstancesInput = {
   trainingPlatformId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   identity?: Prisma.IdentityRecordUncheckedUpdateOneWithoutCaregiverNestedInput
   contact?: Prisma.ContactRecordUncheckedUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUncheckedUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUncheckedUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUncheckedUpdateManyWithoutCaregiverNestedInput
@@ -3420,6 +3503,166 @@ export type CaregiverUncheckedUpdateWithoutRequirementInstancesInput = {
   signedDocuments?: Prisma.SignedDocumentUncheckedUpdateManyWithoutCaregiverNestedInput
   pipelineEvents?: Prisma.PipelineEventUncheckedUpdateManyWithoutCaregiverNestedInput
   linkTokens?: Prisma.LinkTokenUncheckedUpdateManyWithoutCaregiverNestedInput
+  oneTimeCodes?: Prisma.OneTimeCodeUncheckedUpdateManyWithoutCaregiverNestedInput
+  invites?: Prisma.InviteUncheckedUpdateManyWithoutCaregiverNestedInput
+  uploadedDocuments?: Prisma.UploadedDocumentUncheckedUpdateManyWithoutCaregiverNestedInput
+  envelopes?: Prisma.EnvelopeUncheckedUpdateManyWithoutCaregiverNestedInput
+  attestations?: Prisma.AttestationUncheckedUpdateManyWithoutCaregiverNestedInput
+  checkResults?: Prisma.CheckResultUncheckedUpdateManyWithoutCaregiverNestedInput
+  chrcSubmission?: Prisma.ChrcSubmissionUncheckedUpdateOneWithoutCaregiverNestedInput
+  backgroundCheckOrder?: Prisma.BackgroundCheckOrderUncheckedUpdateOneWithoutCaregiverNestedInput
+  alayaCareSyncs?: Prisma.AlayaCareSyncUncheckedUpdateManyWithoutCaregiverNestedInput
+  trainingCompletions?: Prisma.TrainingCompletionUncheckedUpdateManyWithoutCaregiverNestedInput
+}
+
+export type CaregiverCreateWithoutConversationInput = {
+  id?: string
+  stage?: $Enums.PipelineStage
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  workState?: string | null
+  serviceType?: string | null
+  payer?: string | null
+  trainingPlatformId?: string | null
+  agency: Prisma.AgencyCreateNestedOneWithoutCaregiversInput
+  identity?: Prisma.IdentityRecordCreateNestedOneWithoutCaregiverInput
+  contact?: Prisma.ContactRecordCreateNestedOneWithoutCaregiverInput
+  homeCareProfile?: Prisma.HomeCareProfileCreateNestedOneWithoutCaregiverInput
+  payrollInputs?: Prisma.PayrollInputsCreateNestedOneWithoutCaregiverInput
+  employment?: Prisma.EmploymentEntryCreateNestedManyWithoutCaregiverInput
+  education?: Prisma.EducationEntryCreateNestedManyWithoutCaregiverInput
+  references?: Prisma.ReferenceCreateNestedManyWithoutCaregiverInput
+  emergencyContacts?: Prisma.EmergencyContactCreateNestedManyWithoutCaregiverInput
+  careSettingExperience?: Prisma.CareSettingExperienceCreateNestedManyWithoutCaregiverInput
+  credentials?: Prisma.CredentialCreateNestedManyWithoutCaregiverInput
+  signedDocuments?: Prisma.SignedDocumentCreateNestedManyWithoutCaregiverInput
+  pipelineEvents?: Prisma.PipelineEventCreateNestedManyWithoutCaregiverInput
+  linkTokens?: Prisma.LinkTokenCreateNestedManyWithoutCaregiverInput
+  requirementInstances?: Prisma.RequirementInstanceCreateNestedManyWithoutCaregiverInput
+  oneTimeCodes?: Prisma.OneTimeCodeCreateNestedManyWithoutCaregiverInput
+  invites?: Prisma.InviteCreateNestedManyWithoutCaregiverInput
+  uploadedDocuments?: Prisma.UploadedDocumentCreateNestedManyWithoutCaregiverInput
+  envelopes?: Prisma.EnvelopeCreateNestedManyWithoutCaregiverInput
+  attestations?: Prisma.AttestationCreateNestedManyWithoutCaregiverInput
+  checkResults?: Prisma.CheckResultCreateNestedManyWithoutCaregiverInput
+  chrcSubmission?: Prisma.ChrcSubmissionCreateNestedOneWithoutCaregiverInput
+  backgroundCheckOrder?: Prisma.BackgroundCheckOrderCreateNestedOneWithoutCaregiverInput
+  alayaCareSyncs?: Prisma.AlayaCareSyncCreateNestedManyWithoutCaregiverInput
+  trainingCompletions?: Prisma.TrainingCompletionCreateNestedManyWithoutCaregiverInput
+}
+
+export type CaregiverUncheckedCreateWithoutConversationInput = {
+  id?: string
+  agencyId: string
+  stage?: $Enums.PipelineStage
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  workState?: string | null
+  serviceType?: string | null
+  payer?: string | null
+  trainingPlatformId?: string | null
+  identity?: Prisma.IdentityRecordUncheckedCreateNestedOneWithoutCaregiverInput
+  contact?: Prisma.ContactRecordUncheckedCreateNestedOneWithoutCaregiverInput
+  homeCareProfile?: Prisma.HomeCareProfileUncheckedCreateNestedOneWithoutCaregiverInput
+  payrollInputs?: Prisma.PayrollInputsUncheckedCreateNestedOneWithoutCaregiverInput
+  employment?: Prisma.EmploymentEntryUncheckedCreateNestedManyWithoutCaregiverInput
+  education?: Prisma.EducationEntryUncheckedCreateNestedManyWithoutCaregiverInput
+  references?: Prisma.ReferenceUncheckedCreateNestedManyWithoutCaregiverInput
+  emergencyContacts?: Prisma.EmergencyContactUncheckedCreateNestedManyWithoutCaregiverInput
+  careSettingExperience?: Prisma.CareSettingExperienceUncheckedCreateNestedManyWithoutCaregiverInput
+  credentials?: Prisma.CredentialUncheckedCreateNestedManyWithoutCaregiverInput
+  signedDocuments?: Prisma.SignedDocumentUncheckedCreateNestedManyWithoutCaregiverInput
+  pipelineEvents?: Prisma.PipelineEventUncheckedCreateNestedManyWithoutCaregiverInput
+  linkTokens?: Prisma.LinkTokenUncheckedCreateNestedManyWithoutCaregiverInput
+  requirementInstances?: Prisma.RequirementInstanceUncheckedCreateNestedManyWithoutCaregiverInput
+  oneTimeCodes?: Prisma.OneTimeCodeUncheckedCreateNestedManyWithoutCaregiverInput
+  invites?: Prisma.InviteUncheckedCreateNestedManyWithoutCaregiverInput
+  uploadedDocuments?: Prisma.UploadedDocumentUncheckedCreateNestedManyWithoutCaregiverInput
+  envelopes?: Prisma.EnvelopeUncheckedCreateNestedManyWithoutCaregiverInput
+  attestations?: Prisma.AttestationUncheckedCreateNestedManyWithoutCaregiverInput
+  checkResults?: Prisma.CheckResultUncheckedCreateNestedManyWithoutCaregiverInput
+  chrcSubmission?: Prisma.ChrcSubmissionUncheckedCreateNestedOneWithoutCaregiverInput
+  backgroundCheckOrder?: Prisma.BackgroundCheckOrderUncheckedCreateNestedOneWithoutCaregiverInput
+  alayaCareSyncs?: Prisma.AlayaCareSyncUncheckedCreateNestedManyWithoutCaregiverInput
+  trainingCompletions?: Prisma.TrainingCompletionUncheckedCreateNestedManyWithoutCaregiverInput
+}
+
+export type CaregiverCreateOrConnectWithoutConversationInput = {
+  where: Prisma.CaregiverWhereUniqueInput
+  create: Prisma.XOR<Prisma.CaregiverCreateWithoutConversationInput, Prisma.CaregiverUncheckedCreateWithoutConversationInput>
+}
+
+export type CaregiverUpsertWithoutConversationInput = {
+  update: Prisma.XOR<Prisma.CaregiverUpdateWithoutConversationInput, Prisma.CaregiverUncheckedUpdateWithoutConversationInput>
+  create: Prisma.XOR<Prisma.CaregiverCreateWithoutConversationInput, Prisma.CaregiverUncheckedCreateWithoutConversationInput>
+  where?: Prisma.CaregiverWhereInput
+}
+
+export type CaregiverUpdateToOneWithWhereWithoutConversationInput = {
+  where?: Prisma.CaregiverWhereInput
+  data: Prisma.XOR<Prisma.CaregiverUpdateWithoutConversationInput, Prisma.CaregiverUncheckedUpdateWithoutConversationInput>
+}
+
+export type CaregiverUpdateWithoutConversationInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  stage?: Prisma.EnumPipelineStageFieldUpdateOperationsInput | $Enums.PipelineStage
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  workState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  serviceType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  payer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  trainingPlatformId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  agency?: Prisma.AgencyUpdateOneRequiredWithoutCaregiversNestedInput
+  identity?: Prisma.IdentityRecordUpdateOneWithoutCaregiverNestedInput
+  contact?: Prisma.ContactRecordUpdateOneWithoutCaregiverNestedInput
+  homeCareProfile?: Prisma.HomeCareProfileUpdateOneWithoutCaregiverNestedInput
+  payrollInputs?: Prisma.PayrollInputsUpdateOneWithoutCaregiverNestedInput
+  employment?: Prisma.EmploymentEntryUpdateManyWithoutCaregiverNestedInput
+  education?: Prisma.EducationEntryUpdateManyWithoutCaregiverNestedInput
+  references?: Prisma.ReferenceUpdateManyWithoutCaregiverNestedInput
+  emergencyContacts?: Prisma.EmergencyContactUpdateManyWithoutCaregiverNestedInput
+  careSettingExperience?: Prisma.CareSettingExperienceUpdateManyWithoutCaregiverNestedInput
+  credentials?: Prisma.CredentialUpdateManyWithoutCaregiverNestedInput
+  signedDocuments?: Prisma.SignedDocumentUpdateManyWithoutCaregiverNestedInput
+  pipelineEvents?: Prisma.PipelineEventUpdateManyWithoutCaregiverNestedInput
+  linkTokens?: Prisma.LinkTokenUpdateManyWithoutCaregiverNestedInput
+  requirementInstances?: Prisma.RequirementInstanceUpdateManyWithoutCaregiverNestedInput
+  oneTimeCodes?: Prisma.OneTimeCodeUpdateManyWithoutCaregiverNestedInput
+  invites?: Prisma.InviteUpdateManyWithoutCaregiverNestedInput
+  uploadedDocuments?: Prisma.UploadedDocumentUpdateManyWithoutCaregiverNestedInput
+  envelopes?: Prisma.EnvelopeUpdateManyWithoutCaregiverNestedInput
+  attestations?: Prisma.AttestationUpdateManyWithoutCaregiverNestedInput
+  checkResults?: Prisma.CheckResultUpdateManyWithoutCaregiverNestedInput
+  chrcSubmission?: Prisma.ChrcSubmissionUpdateOneWithoutCaregiverNestedInput
+  backgroundCheckOrder?: Prisma.BackgroundCheckOrderUpdateOneWithoutCaregiverNestedInput
+  alayaCareSyncs?: Prisma.AlayaCareSyncUpdateManyWithoutCaregiverNestedInput
+  trainingCompletions?: Prisma.TrainingCompletionUpdateManyWithoutCaregiverNestedInput
+}
+
+export type CaregiverUncheckedUpdateWithoutConversationInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  agencyId?: Prisma.StringFieldUpdateOperationsInput | string
+  stage?: Prisma.EnumPipelineStageFieldUpdateOperationsInput | $Enums.PipelineStage
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  workState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  serviceType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  payer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  trainingPlatformId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  identity?: Prisma.IdentityRecordUncheckedUpdateOneWithoutCaregiverNestedInput
+  contact?: Prisma.ContactRecordUncheckedUpdateOneWithoutCaregiverNestedInput
+  homeCareProfile?: Prisma.HomeCareProfileUncheckedUpdateOneWithoutCaregiverNestedInput
+  payrollInputs?: Prisma.PayrollInputsUncheckedUpdateOneWithoutCaregiverNestedInput
+  employment?: Prisma.EmploymentEntryUncheckedUpdateManyWithoutCaregiverNestedInput
+  education?: Prisma.EducationEntryUncheckedUpdateManyWithoutCaregiverNestedInput
+  references?: Prisma.ReferenceUncheckedUpdateManyWithoutCaregiverNestedInput
+  emergencyContacts?: Prisma.EmergencyContactUncheckedUpdateManyWithoutCaregiverNestedInput
+  careSettingExperience?: Prisma.CareSettingExperienceUncheckedUpdateManyWithoutCaregiverNestedInput
+  credentials?: Prisma.CredentialUncheckedUpdateManyWithoutCaregiverNestedInput
+  signedDocuments?: Prisma.SignedDocumentUncheckedUpdateManyWithoutCaregiverNestedInput
+  pipelineEvents?: Prisma.PipelineEventUncheckedUpdateManyWithoutCaregiverNestedInput
+  linkTokens?: Prisma.LinkTokenUncheckedUpdateManyWithoutCaregiverNestedInput
+  requirementInstances?: Prisma.RequirementInstanceUncheckedUpdateManyWithoutCaregiverNestedInput
   oneTimeCodes?: Prisma.OneTimeCodeUncheckedUpdateManyWithoutCaregiverNestedInput
   invites?: Prisma.InviteUncheckedUpdateManyWithoutCaregiverNestedInput
   uploadedDocuments?: Prisma.UploadedDocumentUncheckedUpdateManyWithoutCaregiverNestedInput
@@ -3444,6 +3687,7 @@ export type CaregiverCreateWithoutUploadedDocumentsInput = {
   agency: Prisma.AgencyCreateNestedOneWithoutCaregiversInput
   identity?: Prisma.IdentityRecordCreateNestedOneWithoutCaregiverInput
   contact?: Prisma.ContactRecordCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryCreateNestedManyWithoutCaregiverInput
@@ -3479,6 +3723,7 @@ export type CaregiverUncheckedCreateWithoutUploadedDocumentsInput = {
   trainingPlatformId?: string | null
   identity?: Prisma.IdentityRecordUncheckedCreateNestedOneWithoutCaregiverInput
   contact?: Prisma.ContactRecordUncheckedCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationUncheckedCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsUncheckedCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryUncheckedCreateNestedManyWithoutCaregiverInput
@@ -3530,6 +3775,7 @@ export type CaregiverUpdateWithoutUploadedDocumentsInput = {
   agency?: Prisma.AgencyUpdateOneRequiredWithoutCaregiversNestedInput
   identity?: Prisma.IdentityRecordUpdateOneWithoutCaregiverNestedInput
   contact?: Prisma.ContactRecordUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUpdateManyWithoutCaregiverNestedInput
@@ -3565,6 +3811,7 @@ export type CaregiverUncheckedUpdateWithoutUploadedDocumentsInput = {
   trainingPlatformId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   identity?: Prisma.IdentityRecordUncheckedUpdateOneWithoutCaregiverNestedInput
   contact?: Prisma.ContactRecordUncheckedUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUncheckedUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUncheckedUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUncheckedUpdateManyWithoutCaregiverNestedInput
@@ -3600,6 +3847,7 @@ export type CaregiverCreateWithoutInvitesInput = {
   agency: Prisma.AgencyCreateNestedOneWithoutCaregiversInput
   identity?: Prisma.IdentityRecordCreateNestedOneWithoutCaregiverInput
   contact?: Prisma.ContactRecordCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryCreateNestedManyWithoutCaregiverInput
@@ -3635,6 +3883,7 @@ export type CaregiverUncheckedCreateWithoutInvitesInput = {
   trainingPlatformId?: string | null
   identity?: Prisma.IdentityRecordUncheckedCreateNestedOneWithoutCaregiverInput
   contact?: Prisma.ContactRecordUncheckedCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationUncheckedCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsUncheckedCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryUncheckedCreateNestedManyWithoutCaregiverInput
@@ -3686,6 +3935,7 @@ export type CaregiverUpdateWithoutInvitesInput = {
   agency?: Prisma.AgencyUpdateOneRequiredWithoutCaregiversNestedInput
   identity?: Prisma.IdentityRecordUpdateOneWithoutCaregiverNestedInput
   contact?: Prisma.ContactRecordUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUpdateManyWithoutCaregiverNestedInput
@@ -3721,6 +3971,7 @@ export type CaregiverUncheckedUpdateWithoutInvitesInput = {
   trainingPlatformId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   identity?: Prisma.IdentityRecordUncheckedUpdateOneWithoutCaregiverNestedInput
   contact?: Prisma.ContactRecordUncheckedUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUncheckedUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUncheckedUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUncheckedUpdateManyWithoutCaregiverNestedInput
@@ -3756,6 +4007,7 @@ export type CaregiverCreateWithoutAlayaCareSyncsInput = {
   agency: Prisma.AgencyCreateNestedOneWithoutCaregiversInput
   identity?: Prisma.IdentityRecordCreateNestedOneWithoutCaregiverInput
   contact?: Prisma.ContactRecordCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryCreateNestedManyWithoutCaregiverInput
@@ -3791,6 +4043,7 @@ export type CaregiverUncheckedCreateWithoutAlayaCareSyncsInput = {
   trainingPlatformId?: string | null
   identity?: Prisma.IdentityRecordUncheckedCreateNestedOneWithoutCaregiverInput
   contact?: Prisma.ContactRecordUncheckedCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationUncheckedCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsUncheckedCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryUncheckedCreateNestedManyWithoutCaregiverInput
@@ -3842,6 +4095,7 @@ export type CaregiverUpdateWithoutAlayaCareSyncsInput = {
   agency?: Prisma.AgencyUpdateOneRequiredWithoutCaregiversNestedInput
   identity?: Prisma.IdentityRecordUpdateOneWithoutCaregiverNestedInput
   contact?: Prisma.ContactRecordUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUpdateManyWithoutCaregiverNestedInput
@@ -3877,6 +4131,7 @@ export type CaregiverUncheckedUpdateWithoutAlayaCareSyncsInput = {
   trainingPlatformId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   identity?: Prisma.IdentityRecordUncheckedUpdateOneWithoutCaregiverNestedInput
   contact?: Prisma.ContactRecordUncheckedUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUncheckedUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUncheckedUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUncheckedUpdateManyWithoutCaregiverNestedInput
@@ -3912,6 +4167,7 @@ export type CaregiverCreateWithoutEnvelopesInput = {
   agency: Prisma.AgencyCreateNestedOneWithoutCaregiversInput
   identity?: Prisma.IdentityRecordCreateNestedOneWithoutCaregiverInput
   contact?: Prisma.ContactRecordCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryCreateNestedManyWithoutCaregiverInput
@@ -3947,6 +4203,7 @@ export type CaregiverUncheckedCreateWithoutEnvelopesInput = {
   trainingPlatformId?: string | null
   identity?: Prisma.IdentityRecordUncheckedCreateNestedOneWithoutCaregiverInput
   contact?: Prisma.ContactRecordUncheckedCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationUncheckedCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsUncheckedCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryUncheckedCreateNestedManyWithoutCaregiverInput
@@ -3998,6 +4255,7 @@ export type CaregiverUpdateWithoutEnvelopesInput = {
   agency?: Prisma.AgencyUpdateOneRequiredWithoutCaregiversNestedInput
   identity?: Prisma.IdentityRecordUpdateOneWithoutCaregiverNestedInput
   contact?: Prisma.ContactRecordUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUpdateManyWithoutCaregiverNestedInput
@@ -4033,6 +4291,7 @@ export type CaregiverUncheckedUpdateWithoutEnvelopesInput = {
   trainingPlatformId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   identity?: Prisma.IdentityRecordUncheckedUpdateOneWithoutCaregiverNestedInput
   contact?: Prisma.ContactRecordUncheckedUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUncheckedUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUncheckedUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUncheckedUpdateManyWithoutCaregiverNestedInput
@@ -4068,6 +4327,7 @@ export type CaregiverCreateWithoutAttestationsInput = {
   agency: Prisma.AgencyCreateNestedOneWithoutCaregiversInput
   identity?: Prisma.IdentityRecordCreateNestedOneWithoutCaregiverInput
   contact?: Prisma.ContactRecordCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryCreateNestedManyWithoutCaregiverInput
@@ -4103,6 +4363,7 @@ export type CaregiverUncheckedCreateWithoutAttestationsInput = {
   trainingPlatformId?: string | null
   identity?: Prisma.IdentityRecordUncheckedCreateNestedOneWithoutCaregiverInput
   contact?: Prisma.ContactRecordUncheckedCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationUncheckedCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsUncheckedCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryUncheckedCreateNestedManyWithoutCaregiverInput
@@ -4154,6 +4415,7 @@ export type CaregiverUpdateWithoutAttestationsInput = {
   agency?: Prisma.AgencyUpdateOneRequiredWithoutCaregiversNestedInput
   identity?: Prisma.IdentityRecordUpdateOneWithoutCaregiverNestedInput
   contact?: Prisma.ContactRecordUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUpdateManyWithoutCaregiverNestedInput
@@ -4189,6 +4451,7 @@ export type CaregiverUncheckedUpdateWithoutAttestationsInput = {
   trainingPlatformId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   identity?: Prisma.IdentityRecordUncheckedUpdateOneWithoutCaregiverNestedInput
   contact?: Prisma.ContactRecordUncheckedUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUncheckedUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUncheckedUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUncheckedUpdateManyWithoutCaregiverNestedInput
@@ -4224,6 +4487,7 @@ export type CaregiverCreateWithoutCheckResultsInput = {
   agency: Prisma.AgencyCreateNestedOneWithoutCaregiversInput
   identity?: Prisma.IdentityRecordCreateNestedOneWithoutCaregiverInput
   contact?: Prisma.ContactRecordCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryCreateNestedManyWithoutCaregiverInput
@@ -4259,6 +4523,7 @@ export type CaregiverUncheckedCreateWithoutCheckResultsInput = {
   trainingPlatformId?: string | null
   identity?: Prisma.IdentityRecordUncheckedCreateNestedOneWithoutCaregiverInput
   contact?: Prisma.ContactRecordUncheckedCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationUncheckedCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsUncheckedCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryUncheckedCreateNestedManyWithoutCaregiverInput
@@ -4310,6 +4575,7 @@ export type CaregiverUpdateWithoutCheckResultsInput = {
   agency?: Prisma.AgencyUpdateOneRequiredWithoutCaregiversNestedInput
   identity?: Prisma.IdentityRecordUpdateOneWithoutCaregiverNestedInput
   contact?: Prisma.ContactRecordUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUpdateManyWithoutCaregiverNestedInput
@@ -4345,6 +4611,7 @@ export type CaregiverUncheckedUpdateWithoutCheckResultsInput = {
   trainingPlatformId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   identity?: Prisma.IdentityRecordUncheckedUpdateOneWithoutCaregiverNestedInput
   contact?: Prisma.ContactRecordUncheckedUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUncheckedUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUncheckedUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUncheckedUpdateManyWithoutCaregiverNestedInput
@@ -4380,6 +4647,7 @@ export type CaregiverCreateWithoutChrcSubmissionInput = {
   agency: Prisma.AgencyCreateNestedOneWithoutCaregiversInput
   identity?: Prisma.IdentityRecordCreateNestedOneWithoutCaregiverInput
   contact?: Prisma.ContactRecordCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryCreateNestedManyWithoutCaregiverInput
@@ -4415,6 +4683,7 @@ export type CaregiverUncheckedCreateWithoutChrcSubmissionInput = {
   trainingPlatformId?: string | null
   identity?: Prisma.IdentityRecordUncheckedCreateNestedOneWithoutCaregiverInput
   contact?: Prisma.ContactRecordUncheckedCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationUncheckedCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsUncheckedCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryUncheckedCreateNestedManyWithoutCaregiverInput
@@ -4466,6 +4735,7 @@ export type CaregiverUpdateWithoutChrcSubmissionInput = {
   agency?: Prisma.AgencyUpdateOneRequiredWithoutCaregiversNestedInput
   identity?: Prisma.IdentityRecordUpdateOneWithoutCaregiverNestedInput
   contact?: Prisma.ContactRecordUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUpdateManyWithoutCaregiverNestedInput
@@ -4501,6 +4771,7 @@ export type CaregiverUncheckedUpdateWithoutChrcSubmissionInput = {
   trainingPlatformId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   identity?: Prisma.IdentityRecordUncheckedUpdateOneWithoutCaregiverNestedInput
   contact?: Prisma.ContactRecordUncheckedUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUncheckedUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUncheckedUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUncheckedUpdateManyWithoutCaregiverNestedInput
@@ -4536,6 +4807,7 @@ export type CaregiverCreateWithoutBackgroundCheckOrderInput = {
   agency: Prisma.AgencyCreateNestedOneWithoutCaregiversInput
   identity?: Prisma.IdentityRecordCreateNestedOneWithoutCaregiverInput
   contact?: Prisma.ContactRecordCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryCreateNestedManyWithoutCaregiverInput
@@ -4571,6 +4843,7 @@ export type CaregiverUncheckedCreateWithoutBackgroundCheckOrderInput = {
   trainingPlatformId?: string | null
   identity?: Prisma.IdentityRecordUncheckedCreateNestedOneWithoutCaregiverInput
   contact?: Prisma.ContactRecordUncheckedCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationUncheckedCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsUncheckedCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryUncheckedCreateNestedManyWithoutCaregiverInput
@@ -4622,6 +4895,7 @@ export type CaregiverUpdateWithoutBackgroundCheckOrderInput = {
   agency?: Prisma.AgencyUpdateOneRequiredWithoutCaregiversNestedInput
   identity?: Prisma.IdentityRecordUpdateOneWithoutCaregiverNestedInput
   contact?: Prisma.ContactRecordUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUpdateManyWithoutCaregiverNestedInput
@@ -4657,6 +4931,7 @@ export type CaregiverUncheckedUpdateWithoutBackgroundCheckOrderInput = {
   trainingPlatformId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   identity?: Prisma.IdentityRecordUncheckedUpdateOneWithoutCaregiverNestedInput
   contact?: Prisma.ContactRecordUncheckedUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUncheckedUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUncheckedUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUncheckedUpdateManyWithoutCaregiverNestedInput
@@ -4692,6 +4967,7 @@ export type CaregiverCreateWithoutTrainingCompletionsInput = {
   agency: Prisma.AgencyCreateNestedOneWithoutCaregiversInput
   identity?: Prisma.IdentityRecordCreateNestedOneWithoutCaregiverInput
   contact?: Prisma.ContactRecordCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryCreateNestedManyWithoutCaregiverInput
@@ -4727,6 +5003,7 @@ export type CaregiverUncheckedCreateWithoutTrainingCompletionsInput = {
   trainingPlatformId?: string | null
   identity?: Prisma.IdentityRecordUncheckedCreateNestedOneWithoutCaregiverInput
   contact?: Prisma.ContactRecordUncheckedCreateNestedOneWithoutCaregiverInput
+  conversation?: Prisma.ConversationUncheckedCreateNestedOneWithoutCaregiverInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedCreateNestedOneWithoutCaregiverInput
   payrollInputs?: Prisma.PayrollInputsUncheckedCreateNestedOneWithoutCaregiverInput
   employment?: Prisma.EmploymentEntryUncheckedCreateNestedManyWithoutCaregiverInput
@@ -4778,6 +5055,7 @@ export type CaregiverUpdateWithoutTrainingCompletionsInput = {
   agency?: Prisma.AgencyUpdateOneRequiredWithoutCaregiversNestedInput
   identity?: Prisma.IdentityRecordUpdateOneWithoutCaregiverNestedInput
   contact?: Prisma.ContactRecordUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUpdateManyWithoutCaregiverNestedInput
@@ -4813,6 +5091,7 @@ export type CaregiverUncheckedUpdateWithoutTrainingCompletionsInput = {
   trainingPlatformId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   identity?: Prisma.IdentityRecordUncheckedUpdateOneWithoutCaregiverNestedInput
   contact?: Prisma.ContactRecordUncheckedUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUncheckedUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUncheckedUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUncheckedUpdateManyWithoutCaregiverNestedInput
@@ -4858,6 +5137,7 @@ export type CaregiverUpdateWithoutAgencyInput = {
   trainingPlatformId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   identity?: Prisma.IdentityRecordUpdateOneWithoutCaregiverNestedInput
   contact?: Prisma.ContactRecordUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUpdateManyWithoutCaregiverNestedInput
@@ -4893,6 +5173,7 @@ export type CaregiverUncheckedUpdateWithoutAgencyInput = {
   trainingPlatformId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   identity?: Prisma.IdentityRecordUncheckedUpdateOneWithoutCaregiverNestedInput
   contact?: Prisma.ContactRecordUncheckedUpdateOneWithoutCaregiverNestedInput
+  conversation?: Prisma.ConversationUncheckedUpdateOneWithoutCaregiverNestedInput
   homeCareProfile?: Prisma.HomeCareProfileUncheckedUpdateOneWithoutCaregiverNestedInput
   payrollInputs?: Prisma.PayrollInputsUncheckedUpdateOneWithoutCaregiverNestedInput
   employment?: Prisma.EmploymentEntryUncheckedUpdateManyWithoutCaregiverNestedInput
@@ -5125,6 +5406,7 @@ export type CaregiverSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   agency?: boolean | Prisma.AgencyDefaultArgs<ExtArgs>
   identity?: boolean | Prisma.Caregiver$identityArgs<ExtArgs>
   contact?: boolean | Prisma.Caregiver$contactArgs<ExtArgs>
+  conversation?: boolean | Prisma.Caregiver$conversationArgs<ExtArgs>
   homeCareProfile?: boolean | Prisma.Caregiver$homeCareProfileArgs<ExtArgs>
   payrollInputs?: boolean | Prisma.Caregiver$payrollInputsArgs<ExtArgs>
   employment?: boolean | Prisma.Caregiver$employmentArgs<ExtArgs>
@@ -5193,6 +5475,7 @@ export type CaregiverInclude<ExtArgs extends runtime.Types.Extensions.InternalAr
   agency?: boolean | Prisma.AgencyDefaultArgs<ExtArgs>
   identity?: boolean | Prisma.Caregiver$identityArgs<ExtArgs>
   contact?: boolean | Prisma.Caregiver$contactArgs<ExtArgs>
+  conversation?: boolean | Prisma.Caregiver$conversationArgs<ExtArgs>
   homeCareProfile?: boolean | Prisma.Caregiver$homeCareProfileArgs<ExtArgs>
   payrollInputs?: boolean | Prisma.Caregiver$payrollInputsArgs<ExtArgs>
   employment?: boolean | Prisma.Caregiver$employmentArgs<ExtArgs>
@@ -5230,6 +5513,7 @@ export type $CaregiverPayload<ExtArgs extends runtime.Types.Extensions.InternalA
     agency: Prisma.$AgencyPayload<ExtArgs>
     identity: Prisma.$IdentityRecordPayload<ExtArgs> | null
     contact: Prisma.$ContactRecordPayload<ExtArgs> | null
+    conversation: Prisma.$ConversationPayload<ExtArgs> | null
     homeCareProfile: Prisma.$HomeCareProfilePayload<ExtArgs> | null
     payrollInputs: Prisma.$PayrollInputsPayload<ExtArgs> | null
     employment: Prisma.$EmploymentEntryPayload<ExtArgs>[]
@@ -5670,6 +5954,7 @@ export interface Prisma__CaregiverClient<T, Null = never, ExtArgs extends runtim
   agency<T extends Prisma.AgencyDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AgencyDefaultArgs<ExtArgs>>): Prisma.Prisma__AgencyClient<runtime.Types.Result.GetResult<Prisma.$AgencyPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   identity<T extends Prisma.Caregiver$identityArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Caregiver$identityArgs<ExtArgs>>): Prisma.Prisma__IdentityRecordClient<runtime.Types.Result.GetResult<Prisma.$IdentityRecordPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   contact<T extends Prisma.Caregiver$contactArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Caregiver$contactArgs<ExtArgs>>): Prisma.Prisma__ContactRecordClient<runtime.Types.Result.GetResult<Prisma.$ContactRecordPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  conversation<T extends Prisma.Caregiver$conversationArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Caregiver$conversationArgs<ExtArgs>>): Prisma.Prisma__ConversationClient<runtime.Types.Result.GetResult<Prisma.$ConversationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   homeCareProfile<T extends Prisma.Caregiver$homeCareProfileArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Caregiver$homeCareProfileArgs<ExtArgs>>): Prisma.Prisma__HomeCareProfileClient<runtime.Types.Result.GetResult<Prisma.$HomeCareProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   payrollInputs<T extends Prisma.Caregiver$payrollInputsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Caregiver$payrollInputsArgs<ExtArgs>>): Prisma.Prisma__PayrollInputsClient<runtime.Types.Result.GetResult<Prisma.$PayrollInputsPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   employment<T extends Prisma.Caregiver$employmentArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Caregiver$employmentArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EmploymentEntryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -6166,6 +6451,25 @@ export type Caregiver$contactArgs<ExtArgs extends runtime.Types.Extensions.Inter
    */
   include?: Prisma.ContactRecordInclude<ExtArgs> | null
   where?: Prisma.ContactRecordWhereInput
+}
+
+/**
+ * Caregiver.conversation
+ */
+export type Caregiver$conversationArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Conversation
+   */
+  select?: Prisma.ConversationSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Conversation
+   */
+  omit?: Prisma.ConversationOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ConversationInclude<ExtArgs> | null
+  where?: Prisma.ConversationWhereInput
 }
 
 /**

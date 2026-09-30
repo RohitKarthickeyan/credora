@@ -66,3 +66,8 @@ export function toWorkAuthorizationNumberColumns(documentNumber: string | null):
 } {
   return { workAuthorizationNumberEnc: encryptField(documentNumber) }
 }
+
+/** The SSN a caregiver typed into a text message: the message body keeps only a placeholder. */
+export function toSsnCiphertext(ssn: string | null): Buffer<ArrayBuffer> | null {
+  return encryptField(ssn)
+}

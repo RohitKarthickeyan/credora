@@ -26,7 +26,7 @@ not a rewrite. We hold no credentials for any of them, so every port ships a det
 
 | Port | Vendor (later) | Mock behaviour | Env |
 | --- | --- | --- | --- |
-| `messaging` | an email provider (e.g. SendGrid) | Email only — Credora sends no text messages (ADR-161). Writes to a `SentMessage` table; a dev page at `/dev/outbox` renders them. Sign-in codes are readable there in dev. | `MESSAGING_ADAPTER` |
+| `messaging` | an email provider (e.g. SendGrid) | Email for staff; text for caregivers through `sendText` (ADR-162). The mock returns sent; the conversation stores each `Message`, and the dev web phone at `/dev/phone/[caregiverId]` shows them. Email writes to a `SentMessage` table; `/dev/outbox` renders them, and sign-in codes are readable there in dev. | `MESSAGING_ADAPTER` |
 | `esign` | DocuSign / Dropbox Sign | Creates an envelope, exposes a local signing page, stamps a signature into the PDF with pdf-lib, fires the webhook back into our own route. | `ESIGN_ADAPTER` |
 | `extraction` | Textract / Document AI | Reads the bytes through the storage port and selects a fixture by **SHA-256 of the content**, returning the recorded fields with confidences. Unknown content returns low confidence → exception. | `EXTRACTION_ADAPTER` |
 | `judge` | Claude (see `AGENTIC-TASKS.md`) | Rule-based: applies the same published criteria deterministically, returns verdict + confidence + reasons. | `JUDGE_ADAPTER` |

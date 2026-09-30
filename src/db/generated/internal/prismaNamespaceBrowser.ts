@@ -83,6 +83,8 @@ export const ModelName = {
   RequirementInstance: 'RequirementInstance',
   Evidence: 'Evidence',
   AcceptedIssuer: 'AcceptedIssuer',
+  Conversation: 'Conversation',
+  Message: 'Message',
   SentMessage: 'SentMessage',
   WebhookSubject: 'WebhookSubject',
   InboundWebhook: 'InboundWebhook',
@@ -688,6 +690,37 @@ export const AcceptedIssuerScalarFieldEnum = {
 } as const
 
 export type AcceptedIssuerScalarFieldEnum = (typeof AcceptedIssuerScalarFieldEnum)[keyof typeof AcceptedIssuerScalarFieldEnum]
+
+
+export const ConversationScalarFieldEnum = {
+  id: 'id',
+  agencyId: 'agencyId',
+  caregiverId: 'caregiverId',
+  phone: 'phone',
+  awaitingStep: 'awaitingStep',
+  unclearCount: 'unclearCount',
+  pausedAt: 'pausedAt',
+  optedOutAt: 'optedOutAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ConversationScalarFieldEnum = (typeof ConversationScalarFieldEnum)[keyof typeof ConversationScalarFieldEnum]
+
+
+export const MessageScalarFieldEnum = {
+  id: 'id',
+  agencyId: 'agencyId',
+  conversationId: 'conversationId',
+  direction: 'direction',
+  author: 'author',
+  body: 'body',
+  ssnEnc: 'ssnEnc',
+  mediaStorageKey: 'mediaStorageKey',
+  createdAt: 'createdAt'
+} as const
+
+export type MessageScalarFieldEnum = (typeof MessageScalarFieldEnum)[keyof typeof MessageScalarFieldEnum]
 
 
 export const SentMessageScalarFieldEnum = {
