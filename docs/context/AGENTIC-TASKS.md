@@ -30,7 +30,7 @@ just means more staff work, which is the acceptable failure mode.
 | Does it match the requirement? | Document-type mapping from the requirement template. |
 | Known issuer? | Allowlist lookup. A hit short-circuits — the judge is never called. |
 | Do the names/DOB match? | `domain/identity` rules. Never the LLM. |
-| Final accept/reject | `domain/documents/autoAccept.ts`. The judge is one input among several; it cannot accept on its own. |
+| Final outcome | `reviewOutcome` in `domain/documents/`: return to the caregiver or send to staff. Nothing is auto-accepted (ADR-164). |
 
 **Contract.** The judge port takes extracted document text + the requirement description and
 returns `{ verdict: VALID | INVALID | UNCERTAIN, confidence: 0..1, reasons: string[] }` where
@@ -44,6 +44,7 @@ output, and model version to `JudgeDecision`. Staff sample auto-accepted records
 **Implementation.** Port with two adapters:
 - `mock` (default everywhere, including CI): applies the published criteria deterministically.
   Same input → same verdict.
+- `openai`: the adapter the demo selects (ADR-165), a port of `claude` to the OpenAI Responses API.
 - `claude`: real call. **Before writing it, load the `claude-api` skill** for current model
   ids and SDK usage — do not write model strings from memory. Use structured output with no sampling
   parameters (the model rejects `temperature`; ADR-035), and a strict zod parse of the response.
@@ -53,6 +54,29 @@ needing tools or multi-step reasoning. A single Messages API call is the right s
 future version needs to *fetch* evidence about an issuer (search a state registry), that
 becomes a tool-use loop and is the point at which the Claude Agent SDK earns its place —
 record it as a new ADR then, not now.
+
+---
+
+## Permitted: 2 — Caregiver conversation interpreter  (ADR-163)
+
+**Why it cannot be deterministic.** Caregivers answer by free text: "march 14 88", "F", "wait my
+email is wrong, it's ...", "when do I start?". No finite grammar covers the replies, and a question
+asked mid-flow needs an answer drawn from the FAQ and the caregiver's status.
+
+**What stays deterministic around it:**
+
+| Concern | Mechanism |
+| --- | --- |
+| Which step the caregiver is on | `nextStep` in `domain/conversation/`, derived from the record every turn. |
+| What the model may return | Only the current step's event schemas (Zod); anything else is `unclear`. |
+| Whether a value is valid | The existing zod primitives (DOB, SSN, address, email). |
+| What happens next | Use cases, run as the caregiver. The model calls nothing. |
+| What the caregiver is told | Fixed templates for every prompt, link, failure and status line. |
+| The model's own words | Only answers to questions, after the output check (no nine-digit numbers, no foreign URLs, length cap). |
+| SSN | Redacted to `[SSN]` before storage and before any prompt. |
+
+**Implementation.** The `agent` port, adapters `openai` (a low-cost model, Structured Outputs, no
+sampling parameters; ADR-165) and `mock` (a deterministic parser for dev).
 
 ---
 

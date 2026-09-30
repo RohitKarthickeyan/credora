@@ -5,10 +5,9 @@ finished. Task-level progress inside a plan lives in that plan's superpowers led
 
 ## Current plan
 
-None yet. The design is approved:
-`docs/superpowers/specs/2026-09-30-sms-onboarding-demo-design.md`. **Next step:**
-`superpowers:writing-plans` for part 1 (conversation core) of that spec. Parts 2 and 3 can be
-planned in parallel; the spec's "The four parts" table lists what each depends on.
+`docs/superpowers/plans/2026-09-30-text-onboarding-demo.md`, implementing
+`docs/superpowers/specs/2026-09-30-sms-onboarding-demo-design.md` (revised 2026-09-30: web phone
+instead of Twilio, three documents, staff-completed background check, OpenAI `gpt-5-mini`).
 
 ## Direction: SMS agent for caregivers (started 2026-09-30)
 
@@ -24,11 +23,10 @@ diagram).
 - The portal is deleted only after the SMS flow reaches parity. Work lands directly on
   `main`, so each plan must leave it working and demoable.
 
-The first target is a live demo for Alvita staff; its decisions (Twilio, Haiku, DocuSeal,
-PaddleOCR, Next.js kept, SSN by text, two certifications) are in the spec above.
+The first target is a live demo for Alvita staff; its decisions (web phone, OpenAI, DocuSeal,
+PaddleOCR, Next.js kept, SSN by text, three documents) are in the spec above.
 
-Owner actions with lead time: Twilio paid account and A2P 10DLC registration (several days), an
-Anthropic API key, a tunnel with a fixed address.
+Owner actions: an OpenAI API key (needed from Task 6's manual check). Twilio is deferred (ADR-162).
 
 ## Baseline: V1 web-portal build (commit cc64b3c)
 

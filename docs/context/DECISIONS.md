@@ -3388,3 +3388,84 @@ ADR-087's subject (it is now the email that intake cannot edit). ADR-057, ADR-05
 unchanged for the emailed code. OPEN-QUESTIONS 83, 113, 144, 146, 152, 229 and 260 are closed by
 this. The migration deletes dev-only rows that cannot survive: mock SMS sends, verification links,
 and notices cancelled for SMS reasons (mapped to CANCELLED).
+
+## ADR-162 — Caregivers onboard by text conversation; the mobile number identifies them  (2026-09-30, demo spec)
+
+**Decision.** The caregiver's onboarding runs as a text conversation through the messaging port's
+new `sendText`. An inbound text is matched to a caregiver by `ContactRecord.mobilePhone`, unique
+among the agency's live caregivers. For the demo the phone is a dev-only web page backed by the
+mock adapter; a Twilio adapter and webhook come later without changing the conversation code. Staff
+stay on email. Supersedes ADR-161 for caregivers.
+
+**Because.** The product owner's workflow summary (`docs/HH Workflow Summary.pdf`) replaces the
+caregiver web portal with a text agent; caregivers answer texts more reliably than they finish web
+forms.
+
+**Rejected.** Twilio for the first demo (10DLC registration takes days and adds nothing a staff
+audience can see). Keeping the web portal as the primary caregiver path (the goal is to retire it).
+
+**Consequence.** Invite takes a mobile number; email becomes optional and is collected by text.
+The web portal stays until the text flow reaches parity.
+
+## ADR-163 — A conversational agent interprets texts into typed events; it decides nothing  (2026-09-30, demo spec)
+
+**Decision.** `AGENTIC-TASKS.md` entry 2. At each turn the model receives the current step, the
+caregiver's status, a fixed FAQ, recent messages and only that step's event schemas, and returns
+one event. Code derives the step, applies the event through existing use cases, and sends fixed
+templates for every prompt and outcome. The model's words reach the caregiver only as answers to
+questions, after a deterministic output check.
+
+**Because.** Free-text replies ("it's march 14 88", "wait my email is wrong") have no finite
+grammar; the decisions downstream of them must stay auditable rules.
+
+**Rejected.** A regex/keyword parser only (brittle on real replies; kept as the mock adapter). An
+agent loop with tools that calls use cases itself (non-deterministic control of the record).
+
+**Consequence.** A new `agent` port with `openai` and `mock` adapters, selected by `AGENT_ADAPTER`.
+
+## ADR-164 — Uploaded documents are never auto-accepted; deterministic failures return to the caregiver  (2026-09-30, demo spec)
+
+**Decision.** `reviewOutcome` replaces `autoAcceptOutcome`. Unreadable, expired, name not found
+and date of birth different return the document to the caregiver by text with the reason;
+everything else goes to staff, and only a staff approval satisfies a document. Supersedes
+ADR-101's accept path and makes ADR-109's weekly sample of auto-accepted records moot.
+
+**Because.** The product owner wants staff to approve every document; the failures a caregiver can
+fix themselves should not wait in a staff queue.
+
+**Rejected.** Keeping auto-accept for allowlisted issuers (the owner asked for approval of all).
+
+**Consequence.** Returned and staff-bound documents both sit at `EXCEPTION`; the queue separates
+them by the decision's outcome.
+
+## ADR-165 — The agent and the judge run on a low-cost OpenAI model  (2026-09-30, demo spec)
+
+**Decision.** The agent's `openai` adapter and a new `openai` judge adapter use `gpt-5-mini` with
+low reasoning effort, through the official `openai` SDK and Structured Outputs, with no sampling
+parameters. The model id is one constant, `OPENAI_MODEL`. The demo selects `JUDGE_ADAPTER=openai`;
+the claude judge adapter stays available. Supersedes ADR-035's model choice for the demo.
+
+**Because.** The product owner chose OpenAI and asked for a cheap model. Both calls are short
+bounded classifications on a conversational latency budget.
+
+**Rejected.** Claude Haiku 4.5 (the owner's provider choice). A larger model (cost, latency).
+
+**Consequence.** `OPENAI_API_KEY` joins the env list. Before real caregiver data reaches the model,
+OpenAI zero data retention and a BAA must be in place (AGENTIC-TASKS entry 1's constraint).
+
+## ADR-166 — A DEMO jurisdiction with its own requirement set, staff-completed background check and no AlayaCare sync  (2026-09-30, demo spec)
+
+**Decision.** `DEMO` is added to `STATES`, with platform templates `INTAKE_TEXT`,
+`DEMO_INTAKE_FORM`, `AIDE_CERTIFICATION`, `TB_TEST` and `PHOTO_ID`; the agency-wide
+`FCRA_DISCLOSURE` and `BACKGROUND_CHECK` also apply, and the agency's other agency-wide templates
+are scoped to NY. For a DEMO caregiver, staff record "Background check completed", which also signs
+off clearance and does not enqueue the AlayaCare sync. `SYNCING` is shown as "Ready for AlayaCare".
+
+**Because.** The NY set has about 25 blocking requirements; a live demo needs seven. The owner asked
+for the background check as one staff click and no AlayaCare step.
+
+**Rejected.** Shrinking the NY set (it is the real rule set). A separate demo agency (the demo is for
+Alvita's staff, on Alvita's portal).
+
+**Consequence.** ADR-125's vendor ordering still holds for NY. `TB_TEST` is deliberately not a
+health-screening key, so a staff approval satisfies it.
