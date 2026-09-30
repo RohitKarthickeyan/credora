@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { z } from 'zod'
 import type { RevealSensitiveFieldState } from '@/app/_components/sensitive'
 import { revealSensitiveFieldInputSchema } from '@/domain/masking/sensitive-field'
 import { correctEmailInputSchema } from '@/domain/pipeline/invite'
@@ -117,16 +118,48 @@ export async function voidEnvelopeAction(
   return {}
 }
 
-export async function pauseConversationAction(caregiverId: string, paused: boolean): Promise<void> {
+type ConversationState = { readonly error?: string; readonly sent?: true }
+
+const pauseConversationSchema = z.object({
+  caregiverId: z.string().min(1),
+  paused: z.enum(['true', 'false']).transform((value) => value === 'true'),
+})
+
+const sendStaffTextSchema = z.object({
+  caregiverId: z.string().min(1),
+  body: z.string().trim().min(1).max(1600),
+  idempotencyKey: z.string().min(1),
+})
+
+export async function pauseConversationAction(
+  _previous: ConversationState,
+  formData: FormData,
+): Promise<ConversationState> {
   const { principal } = await requireStaffSession()
-  await runAsPrincipal(principal, {}, () => setConversationPaused({ caregiverId, paused }))
-  revalidatePath(`/caregivers/${caregiverId}`)
+  const parsed = pauseConversationSchema.safeParse({
+    caregiverId: formData.get('caregiverId'),
+    paused: formData.get('paused'),
+  })
+  if (!parsed.success) return { error: 'This request could not be read. Refresh the page.' }
+
+  await runAsPrincipal(principal, {}, () => setConversationPaused(parsed.data))
+  revalidatePath(`/caregivers/${parsed.data.caregiverId}`)
+  return {}
 }
 
-export async function sendStaffTextAction(caregiverId: string, formData: FormData): Promise<void> {
+export async function sendStaffTextAction(
+  _previous: ConversationState,
+  formData: FormData,
+): Promise<ConversationState> {
   const { principal } = await requireStaffSession()
-  await runAsPrincipal(principal, {}, () =>
-    sendStaffText({ caregiverId, body: text(formData, 'body') }),
-  )
-  revalidatePath(`/caregivers/${caregiverId}`)
+  const parsed = sendStaffTextSchema.safeParse({
+    caregiverId: formData.get('caregiverId'),
+    body: formData.get('body'),
+    idempotencyKey: formData.get('idempotencyKey'),
+  })
+  if (!parsed.success) return { error: 'Enter a message of up to 1600 characters.' }
+
+  await runAsPrincipal(principal, {}, () => sendStaffText(parsed.data))
+  revalidatePath(`/caregivers/${parsed.data.caregiverId}`)
+  return { sent: true }
 }

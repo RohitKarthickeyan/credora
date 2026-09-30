@@ -1,9 +1,10 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useEffect, useRef } from 'react'
-import { Button } from '@/ui/button'
+import { useActionState, useEffect, useRef } from 'react'
+import { Alert } from '@/ui/alert'
 import { StatusBadge } from '@/ui/status-badge'
+import { SubmitButton } from '@/ui/submit-button'
 import { pauseConversationAction, sendStaffTextAction } from './actions'
 
 type TranscriptMessage = {
@@ -35,24 +36,34 @@ export function Conversation({
     return () => clearInterval(timer)
   }, [router])
 
-  async function send(formData: FormData) {
-    await sendStaffTextAction(caregiverId, formData)
-    formRef.current?.reset()
-  }
+  const [pauseState, pauseAction] = useActionState(pauseConversationAction, {})
+  const [sendState, sendAction] = useActionState(sendStaffTextAction, {})
+  // Keyed to the transcript's last message: it changes once a send lands, so a double submit of
+  // the same render repeats the key and a new reply gets a new one.
+  const idempotencyKey = `${caregiverId}:${messages.at(-1)?.id ?? 'empty'}`
+
+  useEffect(() => {
+    if (sendState.sent) formRef.current?.reset()
+  }, [sendState])
 
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-3">
         {paused ? <StatusBadge tone="warning" label="Paused" glyph="clock" size="sm" /> : null}
         {handedOff ? <StatusBadge tone="danger" label="Handed off" glyph="alert" size="sm" /> : null}
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => pauseConversationAction(caregiverId, !paused)}
-        >
-          {paused ? 'Resume agent' : 'Pause agent'}
-        </Button>
+        <form action={pauseAction}>
+          <input type="hidden" name="caregiverId" value={caregiverId} />
+          <input type="hidden" name="paused" value={String(!paused)} />
+          <SubmitButton variant="secondary" size="sm">
+            {paused ? 'Resume agent' : 'Pause agent'}
+          </SubmitButton>
+        </form>
       </div>
+      {pauseState.error ? (
+        <Alert tone="danger" live>
+          {pauseState.error}
+        </Alert>
+      ) : null}
 
       <ul className="flex max-h-[480px] flex-col gap-2 overflow-y-auto rounded-card border border-border bg-surface-sunken p-3">
         {messages.map((message) => (
@@ -75,7 +86,14 @@ export function Conversation({
         ))}
       </ul>
 
-      <form ref={formRef} action={send} className="flex items-center gap-2">
+      {sendState.error ? (
+        <Alert tone="danger" live>
+          {sendState.error}
+        </Alert>
+      ) : null}
+      <form ref={formRef} action={sendAction} className="flex items-center gap-2">
+        <input type="hidden" name="caregiverId" value={caregiverId} />
+        <input type="hidden" name="idempotencyKey" value={idempotencyKey} />
         <input
           name="body"
           autoComplete="off"
@@ -83,9 +101,9 @@ export function Conversation({
           placeholder="Reply as staff"
           className="min-h-9 min-w-0 flex-1 rounded-control border border-border-strong px-3 text-sm"
         />
-        <Button type="submit" size="sm">
+        <SubmitButton size="sm" pendingLabel="Sending…">
           Send
-        </Button>
+        </SubmitButton>
       </form>
     </div>
   )

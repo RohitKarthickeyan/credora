@@ -81,8 +81,10 @@ export const setConversationPaused: UseCase<
   }),
 )
 
-export const sendStaffText: UseCase<{ readonly caregiverId: string; readonly body: string }, void> =
-  defineUseCase('conversation.manage', async ({ principal, input }) => {
+export const sendStaffText: UseCase<
+  { readonly caregiverId: string; readonly body: string; readonly idempotencyKey: string },
+  void
+> = defineUseCase('conversation.manage', async ({ principal, input }) => {
     const body = input.body.trim()
     const conversation = await findConversation(principal.agencyId, input.caregiverId)
     if (conversation === null || body === '') return
@@ -93,6 +95,6 @@ export const sendStaffText: UseCase<{ readonly caregiverId: string; readonly bod
       phone: conversation.phone,
       body,
       author: 'STAFF',
-      idempotencyKey: randomUUID(),
+      idempotencyKey: input.idempotencyKey,
     })
   })
