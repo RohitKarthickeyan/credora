@@ -26,10 +26,10 @@ project stands and which plan is current.
    record it under Finished plans in `docs/PROGRESS.md` (what changed, and the commit range
    where the plan can be recovered), and commit. Specs and ADRs are kept; plans are not.
 
-**All work is committed directly on `main`.** No feature branches or worktrees: skip
-`superpowers:using-git-worktrees` and `superpowers:finishing-a-development-branch`, and this
-overrides the skills' "never implement on main" rule. Pushing to `origin` leaves the machine,
-so ask first.
+**All work is committed directly on `main`.** This is the user's standing consent to implement
+on `main` and their answer to the worktree question, so do not ask either. No feature branches
+or worktrees, so `superpowers:finishing-a-development-branch` is not used. Pushing to `origin`
+leaves the machine, so ask first.
 
 `superpowers:systematic-debugging`, `superpowers:verification-before-completion` and
 `superpowers:receiving-code-review` apply everywhere.
