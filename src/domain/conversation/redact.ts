@@ -1,4 +1,4 @@
-const SSN_PATTERN = /(?<!\d)(\d{3})[- ]?(\d{2})[- ]?(\d{4})(?!\d)/g
+const SSN_PATTERN = /(?<!\d)(\d{3})[ .\-]*(\d{2})[ .\-]*(\d{4})(?!\d)/g
 
 export const SSN_PLACEHOLDER = '[SSN]'
 

@@ -6,6 +6,8 @@ describe('redactSsn', () => {
     expect(redactSsn('my ssn is 123-45-6789 thanks')).toEqual({ redacted: 'my ssn is [SSN] thanks', ssn: '123456789' })
     expect(redactSsn('123 45 6789')).toEqual({ redacted: '[SSN]', ssn: '123456789' })
     expect(redactSsn('123456789')).toEqual({ redacted: '[SSN]', ssn: '123456789' })
+    expect(redactSsn('123.45.6789')).toEqual({ redacted: '[SSN]', ssn: '123456789' })
+    expect(redactSsn('123 - 45 - 6789')).toEqual({ redacted: '[SSN]', ssn: '123456789' })
   })
 
   it('leaves dates, zip codes and phone numbers alone', () => {
