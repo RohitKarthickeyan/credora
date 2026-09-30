@@ -30,7 +30,7 @@ PaddleOCR, Next.js kept, SSN by text, two certifications) are in the spec above.
 Owner actions with lead time: Twilio paid account and A2P 10DLC registration (several days), an
 Anthropic API key, a tunnel with a fixed address.
 
-## Baseline: V1 web-portal build (commit 435a084)
+## Baseline: V1 web-portal build (commit cc64b3c)
 
 Built by the former DAG flow, 94 of 96 tasks; recoverable from commit 66015f7.
 
