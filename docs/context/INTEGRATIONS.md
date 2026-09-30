@@ -34,6 +34,7 @@ not a rewrite. We hold no credentials for any of them, so every port ships a det
 | `alayacare` | AlayaCare API | A real local HTTP server (`mock-servers/alayacare`) speaking the subset of AlayaCare's published employee API that the adapter calls (ADR-160): employees, profile attributes, skills, employee skills, attachments. Not an in-process stub — the sync engine must exercise real HTTP, retries, and retry safety. | `ALAYACARE_ADAPTER`, `ALAYACARE_BASE_URL` |
 | `training` | agency training platform | Reads a CSV fixture as the "scheduled file" import; also serves an API shape. | `TRAINING_ADAPTER` |
 | `storage` | S3 / GCS | Local disk under `storage/`. Not a vendor integration, but the same shape: one place that owns where a byte goes. | `STORAGE_ADAPTER`, `STORAGE_ROOT` |
+| `agent` | OpenAI `gpt-5-mini` | Deterministic parser for dates, F/M/X, emails, addresses, yes; `?` is a question with no answer | `AGENT_ADAPTER` |
 
 Every `*_ADAPTER` defaults to `mock`. There is no code path that requires a real credential.
 
@@ -105,6 +106,8 @@ TRAINING_ADAPTER=mock
 STORAGE_ADAPTER=local
 STORAGE_ROOT=./storage
 ANTHROPIC_API_KEY             only when JUDGE_ADAPTER=claude
+AGENT_ADAPTER=mock            | openai
+OPENAI_API_KEY                only when AGENT_ADAPTER=openai
 ```
 
 ## Webhooks

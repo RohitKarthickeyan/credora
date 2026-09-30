@@ -1,4 +1,6 @@
 import { createExportAlayaCare } from '@/integrations/adapters/alayacare/export'
+import { createMockAgent } from '@/integrations/adapters/agent/mock'
+import { createOpenAIAgent } from '@/integrations/adapters/agent/openai'
 import { createHttpAlayaCare } from '@/integrations/adapters/alayacare/http'
 import { createMockBackgroundCheck } from '@/integrations/adapters/backgroundCheck/mock'
 import { createMockEsign } from '@/integrations/adapters/esign/mock'
@@ -55,6 +57,11 @@ const slots: { [N in PortName]: PortSlot<N> } = {
     variable: 'STORAGE_ADAPTER',
     selected: env.STORAGE_ADAPTER,
     adapters: { local: () => createLocalDiskStorage() },
+  },
+  agent: {
+    variable: 'AGENT_ADAPTER',
+    selected: env.AGENT_ADAPTER,
+    adapters: { mock: () => createMockAgent(), openai: () => createOpenAIAgent() },
   },
 }
 

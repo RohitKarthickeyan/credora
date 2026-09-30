@@ -25,9 +25,11 @@ const envSchema = z.object({
   ALAYACARE_BASE_URL: z.url({ protocol: /^https?$/ }).default('http://localhost:4010'),
   TRAINING_ADAPTER: z.string().min(1).default('mock'),
   STORAGE_ADAPTER: z.string().min(1).default('local'),
+  AGENT_ADAPTER: z.string().min(1).default('mock'),
   // Checked by the judge's `claude` factory, not by a refine here, so no adapter name lives in
   // this file.
   ANTHROPIC_API_KEY: z.string().min(1).optional(),
+  OPENAI_API_KEY: z.string().min(1).optional(),
   SESSION_SECRET: z.string().min(32, { error: 'SESSION_SECRET must be at least 32 characters.' }),
   // The absolute origin links to this app are built on; set it in any deployed environment.
   APP_URL: z.url({ protocol: /^https?$/ }).default('http://localhost:3000'),

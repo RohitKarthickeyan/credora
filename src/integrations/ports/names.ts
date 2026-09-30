@@ -1,3 +1,4 @@
+import type { AgentPort } from './agent'
 import type { AlayaCarePort } from './alayacare'
 import type { BackgroundCheckPort } from './backgroundCheck'
 import type { EsignPort } from './esign'
@@ -18,6 +19,7 @@ export const PORT_NAMES = [
   'alayacare',
   'training',
   'storage',
+  'agent',
 ] as const
 export type PortName = (typeof PORT_NAMES)[number]
 
@@ -30,4 +32,5 @@ export type Ports = {
   alayacare: AlayaCarePort
   training: TrainingPort
   storage: StoragePort
+  agent: AgentPort
 }
