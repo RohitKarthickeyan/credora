@@ -23,7 +23,7 @@ export const PIPELINE_STAGE_PRESENTATION: Record<PipelineStage, StatusPresentati
   DOCUMENT_REVIEW: { tone: 'info', label: 'Document review', glyph: 'search' },
   VERIFICATION: { tone: 'info', label: 'Verification', glyph: 'search' },
   CLEARANCE: { tone: 'info', label: 'Clearance', glyph: 'search' },
-  SYNCING: { tone: 'progress', label: 'Syncing', glyph: 'half' },
+  SYNCING: { tone: 'progress', label: 'Ready for AlayaCare', glyph: 'half' },
   ACTIVE: { tone: 'success', label: 'Active', glyph: 'check' },
   WITHDRAWN: { tone: 'muted', label: 'Withdrawn', glyph: 'slash' },
 }

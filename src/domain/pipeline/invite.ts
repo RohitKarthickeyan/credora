@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { PAYERS, SERVICE_TYPES, STATES } from '../requirements/vocabulary'
 import { emailSchema } from '../validation/email'
 import { personNameSchema } from '../validation/name'
+import { phoneSchema } from '../validation/phone'
 import type { PipelineStage } from './stage'
 
 // The source of truth for invite statuses. The Prisma enum `InviteStatus` mirrors this list,
@@ -15,7 +16,8 @@ export type InviteCancelReason = (typeof INVITE_CANCEL_REASONS)[number]
 export const inviteCaregiverInputSchema = z.object({
   legalFirstName: personNameSchema.shape.first,
   legalLastName: personNameSchema.shape.last,
-  email: emailSchema,
+  mobilePhone: phoneSchema,
+  email: z.preprocess((value) => (value === '' ? undefined : value), emailSchema.optional()),
   workState: z.enum(STATES),
   serviceType: z.enum(SERVICE_TYPES, { error: 'Choose HHA or PCA.' }),
   payer: z.enum(PAYERS),

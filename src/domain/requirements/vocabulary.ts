@@ -5,13 +5,14 @@
 // Service type is the aide service the caregiver is hired to deliver. Role is the certification
 // they hold, lowest to highest, and caregiverRoleOf picks the highest declared. Payer is private
 // pay only: V1 covers private-duty agencies.
-export const STATES = ['NY'] as const
+export const STATES = ['NY', 'DEMO'] as const
 export const SERVICE_TYPES = ['HHA', 'PCA'] as const
 export const PAYERS = ['PRIVATE_PAY'] as const
 export const CAREGIVER_ROLES = ['PCA', 'HHA', 'CNA'] as const
 export type CaregiverRole = (typeof CAREGIVER_ROLES)[number]
 
 export const INTAKE_REQUIREMENT_KEYS = {
+  TEXT: 'INTAKE_TEXT',
   IDENTITY: 'INTAKE_IDENTITY',
   CONTACT: 'INTAKE_CONTACT',
   GOVERNMENT_ID: 'INTAKE_GOVERNMENT_ID',
@@ -45,6 +46,7 @@ export const DOCUMENT_KEYS = {
   // vaccination statements (type FORM; T-084)
   HEPATITIS_B_CONSENT_OR_DECLINATION: 'HEPATITIS_B_CONSENT_OR_DECLINATION',
   FLU_VACCINATION_STATEMENT: 'FLU_VACCINATION_STATEMENT',
+  DEMO_INTAKE_FORM: 'DEMO_INTAKE_FORM',
   // sign-only (type ATTESTATION; T-062)
   PHI_ACKNOWLEDGEMENT: 'PHI_ACKNOWLEDGEMENT',
   FCRA_DISCLOSURE: 'FCRA_DISCLOSURE',

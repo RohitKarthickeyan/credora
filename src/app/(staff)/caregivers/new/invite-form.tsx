@@ -9,7 +9,7 @@ import { TextField } from '@/ui/text-field'
 import type { InviteFormState } from './actions'
 import { inviteCaregiverAction } from './actions'
 
-const STATE_LABELS: Record<(typeof STATES)[number], string> = { NY: 'New York' }
+const STATE_LABELS: Record<(typeof STATES)[number], string> = { NY: 'New York', DEMO: 'Demo' }
 const SERVICE_TYPE_LABELS: Record<(typeof SERVICE_TYPES)[number], string> = {
   HHA: 'Home health aide (HHA)',
   PCA: 'Personal care aide (PCA)',
@@ -52,16 +52,25 @@ export function InviteForm() {
           error={errors?.legalLastName}
         />
       </div>
-      <TextField
-        name="email"
-        label="Email address"
-        type="email"
-        autoComplete="off"
-        required
-        defaultValue={state.values?.email}
-        error={errors?.email}
-        containerClassName="sm:w-1/2"
-      />
+      <div className="grid gap-4 sm:grid-cols-2">
+        <TextField
+          name="mobilePhone"
+          label="Mobile phone"
+          type="tel"
+          autoComplete="off"
+          required
+          defaultValue={state.values?.mobilePhone}
+          error={errors?.mobilePhone}
+        />
+        <TextField
+          name="email"
+          label="Email address (optional)"
+          type="email"
+          autoComplete="off"
+          defaultValue={state.values?.email}
+          error={errors?.email}
+        />
+      </div>
       <div className="grid gap-4 sm:grid-cols-3">
         <SelectField
           name="workState"

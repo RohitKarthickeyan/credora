@@ -26,21 +26,21 @@ const AGENCY_WIDE: ResolutionContext = {}
 
 type Option = { readonly kind: EvidenceKind; readonly evidenceKey: string; readonly label: string }
 
-const PERMANENT = {
+export const PERMANENT = {
   validityRule: 'NEVER_EXPIRES',
   validityMonths: null,
   renewalRule: 'NONE',
   manualOnlyReason: null,
 } as const
 
-const YEARLY = {
+export const YEARLY = {
   validityRule: 'FIXED_PERIOD',
   validityMonths: 12,
   renewalRule: 'ANNUAL',
   manualOnlyReason: null,
 } as const
 
-function option(kind: EvidenceKind, evidenceKey: string, label: string): Option {
+export function option(kind: EvidenceKind, evidenceKey: string, label: string): Option {
   return { kind, evidenceKey, label }
 }
 
@@ -413,15 +413,16 @@ const NY_PLATFORM_TEMPLATES: readonly PublishRequirementTemplateInput[] = [
   },
 ]
 
-// Rules the agency chooses rather than the state imposes, copied into one agency agency-wide. No
-// key here is also a platform key: a bare {agencyId} scope and a {state} scope are incomparable,
+// Rules the agency chooses rather than the state imposes, copied into one agency. The PHI
+// acknowledgement, emergency contacts and EEO form are NY-scoped so the DEMO set stays at seven
+// (ADR-166); the disclosure and background check are agency-wide. No key here is also a platform key: a bare {agencyId} scope and a {state} scope are incomparable,
 // so an overlap would make resolution ambiguous.
 const NY_AGENCY_DEFAULT_TEMPLATES: readonly PublishRequirementTemplateInput[] = [
   // SECURITY.md: the PHI acknowledgement workflow is an agency-configured requirement.
   {
     ...PERMANENT,
     key: DOCUMENT_KEYS.PHI_ACKNOWLEDGEMENT,
-    scope: AGENCY_WIDE,
+    scope: NY,
     name: 'PHI acknowledgement',
     description: 'A signed acknowledgement of the agency policy on protected health information.',
     type: 'ATTESTATION',
@@ -432,14 +433,14 @@ const NY_AGENCY_DEFAULT_TEMPLATES: readonly PublishRequirementTemplateInput[] = 
   // OPEN-QUESTIONS 42: an always-asked section is an agency-wide FORM template.
   intake(
     INTAKE_REQUIREMENT_KEYS.EMERGENCY_CONTACTS,
-    AGENCY_WIDE,
+    NY,
     'Emergency contacts',
     'People to contact in an emergency, with their relationship and phone number.',
   ),
   {
     ...intake(
       INTAKE_REQUIREMENT_KEYS.EEOC_SELF_IDENTIFICATION,
-      AGENCY_WIDE,
+      NY,
       'EEO self-identification',
       'Voluntary self-identification of race, ethnicity, sex, veteran and disability status.',
     ),
@@ -474,7 +475,7 @@ const NY_AGENCY_DEFAULT_TEMPLATES: readonly PublishRequirementTemplateInput[] = 
   },
 ]
 
-async function publishAll(
+export async function publishAll(
   db: CorePrismaClient,
   agencyId: string | null,
   templates: readonly PublishRequirementTemplateInput[],

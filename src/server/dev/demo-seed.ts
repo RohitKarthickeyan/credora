@@ -22,6 +22,7 @@ type DemoCaregiver = {
     readonly legalFirstName: string
     readonly legalLastName: string
     readonly email: string
+    readonly mobilePhone: string
     readonly serviceType: 'HHA' | 'PCA'
   }
   readonly identity: { readonly legalMiddleName: string; readonly dateOfBirth: string; readonly ssn: string } | null
@@ -33,7 +34,7 @@ type DemoCaregiver = {
 const DEMO_CAREGIVERS = [
   {
     key: 'MARIA_SANTOS',
-    invite: { legalFirstName: 'Maria', legalLastName: 'Santos', email: 'maria.santos@example.com', serviceType: 'HHA' },
+    invite: { legalFirstName: 'Maria', legalLastName: 'Santos', email: 'maria.santos@example.com', mobilePhone: '(212) 555-0147', serviceType: 'HHA' },
     identity: { legalMiddleName: 'Elena', dateOfBirth: '1988-03-14', ssn: '123-45-6789' },
     uploads: [
       { templateKey: 'AIDE_CERTIFICATION', evidenceKey: 'HHA_CERTIFICATE', fixture: 'hha-certificate.pdf' },
@@ -42,13 +43,13 @@ const DEMO_CAREGIVERS = [
   },
   {
     key: 'GRACE_MENSAH',
-    invite: { legalFirstName: 'Grace', legalLastName: 'Mensah', email: 'grace.mensah@example.com', serviceType: 'HHA' },
+    invite: { legalFirstName: 'Grace', legalLastName: 'Mensah', email: 'grace.mensah@example.com', mobilePhone: '(212) 555-0148', serviceType: 'HHA' },
     identity: { legalMiddleName: '', dateOfBirth: '1991-07-22', ssn: '234-56-7890' },
     uploads: [],
   },
   {
     key: 'ANDRE_JOSEPH',
-    invite: { legalFirstName: 'Andre', legalLastName: 'Joseph', email: 'andre.joseph@example.com', serviceType: 'PCA' },
+    invite: { legalFirstName: 'Andre', legalLastName: 'Joseph', email: 'andre.joseph@example.com', mobilePhone: '(212) 555-0149', serviceType: 'PCA' },
     identity: null,
     uploads: [],
   },
@@ -139,7 +140,7 @@ export async function seedDemoCaregivers(input: {
     const invited = await runAsPrincipal(staff, {}, () =>
       inviteCaregiver({ ...demo.invite, workState: 'NY', payer: 'PRIVATE_PAY' }),
     )
-    if (!invited.ok && invited.reason === 'EMAIL_IN_USE') {
+    if (!invited.ok && (invited.reason === 'EMAIL_IN_USE' || invited.reason === 'PHONE_IN_USE')) {
       outcomes.push({ key: demo.key, outcome: 'SKIPPED' })
       continue
     }

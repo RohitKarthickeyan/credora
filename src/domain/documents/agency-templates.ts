@@ -29,6 +29,20 @@ function jobDescription(documentKey: string, role: string): DocumentTemplate {
 
 export const AGENCY_TEMPLATES: readonly DocumentTemplate[] = [
   {
+    documentKey: 'DEMO_INTAKE_FORM',
+    version: '1',
+    title: 'Caregiver intake form',
+    signOnly: false,
+    blocks: [
+      { kind: 'heading', text: 'Caregiver' },
+      { kind: 'field', label: 'Legal name', field: 'caregiverLegalName' },
+      { kind: 'field', label: 'Address', field: 'caregiverAddress' },
+      { kind: 'field', label: 'Mobile phone', field: 'caregiverMobilePhone' },
+      { kind: 'field', label: 'Date', field: 'issuedOn' },
+      { kind: 'paragraph', text: 'I confirm the information above is true and complete.' },
+    ],
+  },
+  {
     documentKey: 'EMPLOYMENT_APPLICATION',
     version: '1',
     title: 'Employment Application',

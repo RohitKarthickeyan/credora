@@ -1,7 +1,7 @@
 import 'server-only'
 import type { z } from 'zod'
 import { runInAuditedTransaction, writeAuditEntry } from '@/db/audit'
-import { createInvitedCaregiver, isEmailInUse } from '@/db/repositories/invites'
+import { createInvitedCaregiver, isEmailInUse, isMobilePhoneInUse } from '@/db/repositories/invites'
 import { enqueueJobInTransaction } from '@/db/repositories/jobs'
 import { materialiseRequirementInstances } from '@/db/repositories/requirement-instances'
 import { inviteCaregiverInputSchema } from '@/domain/pipeline/invite'
@@ -13,6 +13,7 @@ import { INVITE_EMAIL_JOB_TYPE } from './invite-email-job'
 type InviteCaregiverResult =
   | { readonly ok: true; readonly caregiverId: string; readonly inviteId: string }
   | { readonly ok: false; readonly reason: 'EMAIL_IN_USE' }
+  | { readonly ok: false; readonly reason: 'PHONE_IN_USE' }
   | { readonly ok: false; readonly reason: 'REQUIREMENTS_AMBIGUOUS'; readonly keys: readonly string[] }
 
 // Thrown to roll the caregiver, invite and audit rows back with the ambiguity: a caregiver with
@@ -37,8 +38,11 @@ export const inviteCaregiver: UseCase<
 
   try {
     return await runInAuditedTransaction(async (tx): Promise<InviteCaregiverResult> => {
-      if (await isEmailInUse(tx, agencyId, input.email)) {
+      if (input.email !== undefined && (await isEmailInUse(tx, agencyId, input.email))) {
         return { ok: false, reason: 'EMAIL_IN_USE' }
+      }
+      if (await isMobilePhoneInUse(tx, agencyId, input.mobilePhone)) {
+        return { ok: false, reason: 'PHONE_IN_USE' }
       }
 
       const { caregiverId, inviteId } = await createInvitedCaregiver(tx, agencyId, input)

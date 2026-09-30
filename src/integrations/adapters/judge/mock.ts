@@ -11,6 +11,7 @@ const CREDENTIAL_KINDS: Readonly<Record<string, readonly string[]>> = {
   TB: ['tuberculosis', 'tb', 'ppd', 'quantiferon', 'igra'],
   PHYSICAL: ['physical exam', 'physical examination', 'medical examination', 'health assessment'],
   IMMUNIZATION: ['immunization', 'immunisation', 'vaccination', 'vaccine', 'mmr', 'titer', 'influenza'],
+  DRIVERS_LICENSE: ['driver', 'license', 'driver license', 'motor vehicles', 'dmv'],
   CPR: ['cpr', 'cardiopulmonary resuscitation', 'bls', 'basic life support'],
 }
 

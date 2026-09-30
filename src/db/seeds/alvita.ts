@@ -2,6 +2,7 @@ import { hashPassword } from '@/lib/password'
 import { createAgency, createUser } from '../factories'
 import { prisma } from '../prisma'
 import { seedAlvitaAlayaCareMapping } from './alvita-alayacare-mapping'
+import { seedDemoPlatformRequirementTemplates } from './demo-requirement-templates'
 import { seedNyAcceptedIssuers } from './ny-accepted-issuers'
 import {
   seedNyAgencyRequirementTemplates,
@@ -63,6 +64,7 @@ export async function seedAlvitaReferenceData(now: Date): Promise<{
   if (coordinatorUserId === undefined) throw new Error('ALVITA_STAFF names no coordinator.')
 
   await seedNyPlatformRequirementTemplates(prisma, now)
+  await seedDemoPlatformRequirementTemplates(prisma, now)
   await seedNyAgencyRequirementTemplates(prisma, agency.id, now)
   await seedNyAcceptedIssuers(prisma, agency.id)
   await seedAlvitaAlayaCareMapping(prisma, agency.id)

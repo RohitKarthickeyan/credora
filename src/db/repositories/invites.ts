@@ -22,7 +22,7 @@ export async function createInvitedCaregiver(
       identity: {
         create: { legalFirstName: input.legalFirstName, legalLastName: input.legalLastName },
       },
-      contact: { create: { email: input.email } },
+      contact: { create: { email: input.email ?? null, mobilePhone: input.mobilePhone } },
       invites: { create: {} },
     },
     select: { id: true, invites: { select: { id: true } } },
@@ -42,6 +42,17 @@ export async function isEmailInUse(
 ): Promise<boolean> {
   const count = await tx.contactRecord.count({
     where: { agencyId, email, caregiver: { stage: { not: 'WITHDRAWN' } } },
+  })
+  return count > 0
+}
+
+export async function isMobilePhoneInUse(
+  tx: AuditedTx,
+  agencyId: string,
+  mobilePhone: string,
+): Promise<boolean> {
+  const count = await tx.contactRecord.count({
+    where: { agencyId, mobilePhone, caregiver: { stage: { not: 'WITHDRAWN' } } },
   })
   return count > 0
 }
