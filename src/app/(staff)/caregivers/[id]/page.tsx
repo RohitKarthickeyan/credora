@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Sensitive } from '@/app/_components/sensitive'
 import {
@@ -14,12 +15,15 @@ import { runAsPrincipal } from '@/server/auth/context'
 import { can } from '@/server/auth/policy'
 import { requireStaffSession } from '@/server/auth/session'
 import { getCaregiverDetail } from '@/server/caregivers/caregiver-detail'
+import { viewConversation } from '@/server/conversation/staff'
+import { Card } from '@/ui/card'
 import type { Column } from '@/ui/data-table'
 import { DataTable } from '@/ui/data-table'
 import { PageHeader } from '@/ui/page-header'
 import { StatusBadge } from '@/ui/status-badge'
 import { WithdrawCaregiver } from '../../pipeline/withdraw-caregiver'
 import { revealSensitiveFieldAction } from './actions'
+import { Conversation } from './conversation'
 import { CorrectEmail } from './correct-email'
 import { ResendInvite } from './resend-invite'
 import { VoidEnvelope } from './void-envelope'
@@ -62,6 +66,9 @@ export default async function CaregiverPage(props: PageProps<'/caregivers/[id]'>
   if (detail === null) notFound()
 
   const { blocker, latestInvite, latestEnvelope } = detail
+  const conversation = can(principal, 'conversation.manage')
+    ? await runAsPrincipal(principal, {}, () => viewConversation({ caregiverId: id }))
+    : null
 
   return (
     <>
@@ -101,6 +108,35 @@ export default async function CaregiverPage(props: PageProps<'/caregivers/[id]'>
             getRowKey={(instance) => instance.templateKey}
           />
         </section>
+
+        {conversation === null ? null : (
+          <Card
+            title="Conversation"
+            action={
+              process.env.NODE_ENV !== 'production' ? (
+                <Link
+                  href={`/dev/phone/${detail.caregiverId}`}
+                  className="text-sm font-medium text-brand-700 underline"
+                >
+                  Open phone
+                </Link>
+              ) : null
+            }
+          >
+            <Conversation
+              caregiverId={detail.caregiverId}
+              paused={conversation.paused}
+              handedOff={conversation.handedOff}
+              messages={conversation.messages.map((message) => ({
+                id: message.id,
+                fromCaregiver: message.direction === 'INBOUND',
+                author: message.author,
+                body: message.body,
+                hasMedia: message.mediaStorageKey !== null,
+              }))}
+            />
+          </Card>
+        )}
 
         <section aria-labelledby="contact" className="flex flex-col gap-3">
           <h2 id="contact" className="text-base font-semibold text-ink">

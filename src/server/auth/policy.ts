@@ -81,6 +81,10 @@ const ACTION_POLICIES = {
   'training.view': { dataClass: 'CAREGIVER_RECORD', roles: ['COORDINATOR', 'AGENCY_ADMIN'] },
   'training.link': { dataClass: 'CAREGIVER_RECORD', roles: ['COORDINATOR', 'AGENCY_ADMIN'] },
   'trainingImport.schedule': { dataClass: 'CONFIGURATION', roles: ['AGENCY_ADMIN'] },
+  'conversation.manage': {
+    dataClass: 'CAREGIVER_RECORD',
+    roles: ['COORDINATOR', 'SUPERVISOR', 'AGENCY_ADMIN'],
+  },
 } as const satisfies Record<string, ActionPolicy>
 
 type PolicyAction = keyof typeof ACTION_POLICIES

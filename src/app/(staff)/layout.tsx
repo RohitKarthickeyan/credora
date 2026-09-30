@@ -23,6 +23,7 @@ export default async function StaffLayout({ children }: LayoutProps<'/'>) {
             Pipeline
           </Link>
         ) : null}
+        {can(principal, 'conversation.manage') ? <Link href="/conversations" className="text-sm font-medium text-ink">Conversations</Link> : null}
         {can(principal, 'exceptionQueue.view') ? <Link href="/queue" className="text-sm font-medium text-ink">Exceptions</Link> : null}
         {can(principal, 'manualCheck.list') ? <Link href="/checks" className="text-sm font-medium text-ink">Staff checks</Link> : null}
         {can(principal, 'clearance.view') ? <Link href="/clearance" className="text-sm font-medium text-ink">Clearance</Link> : null}

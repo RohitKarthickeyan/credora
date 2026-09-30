@@ -11,6 +11,7 @@ import { correctEmail } from '@/server/caregivers/correct-email'
 import type { ResendInviteResult } from '@/server/caregivers/resend-invite'
 import { resendInvite } from '@/server/caregivers/resend-invite'
 import { revealSensitiveField } from '@/server/caregivers/reveal-sensitive-field'
+import { sendStaffText, setConversationPaused } from '@/server/conversation/staff'
 import type { VoidEnvelopeResult } from '@/server/forms/void-envelope'
 import { voidEnvelope } from '@/server/forms/void-envelope'
 
@@ -114,4 +115,18 @@ export async function voidEnvelopeAction(
 
   revalidatePath(`/caregivers/${caregiverId}`)
   return {}
+}
+
+export async function pauseConversationAction(caregiverId: string, paused: boolean): Promise<void> {
+  const { principal } = await requireStaffSession()
+  await runAsPrincipal(principal, {}, () => setConversationPaused({ caregiverId, paused }))
+  revalidatePath(`/caregivers/${caregiverId}`)
+}
+
+export async function sendStaffTextAction(caregiverId: string, formData: FormData): Promise<void> {
+  const { principal } = await requireStaffSession()
+  await runAsPrincipal(principal, {}, () =>
+    sendStaffText({ caregiverId, body: text(formData, 'body') }),
+  )
+  revalidatePath(`/caregivers/${caregiverId}`)
 }

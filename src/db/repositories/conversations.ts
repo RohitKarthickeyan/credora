@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import type { AuditedTx } from '../audit'
+import type { PipelineStage } from '@/domain/pipeline/stage'
 import { prisma } from '../prisma'
 
 export type ConversationRow = {
@@ -53,6 +54,16 @@ function toMessageRow(row: {
 }): MessageRow {
   const { ssnEnc, ...rest } = row
   return { ...rest, hasSsn: ssnEnc !== null }
+}
+
+export type ConversationListRow = {
+  readonly caregiverId: string
+  readonly caregiverName: string
+  readonly stage: PipelineStage
+  readonly lastMessage: string
+  readonly lastMessageAt: Date
+  readonly unclearCount: number
+  readonly pausedAt: Date | null
 }
 
 export function ensureConversation(
@@ -146,6 +157,57 @@ export async function listMessages(
     select: MESSAGE_SELECT,
   })
   return rows.reverse().map(toMessageRow)
+}
+
+export async function findConversation(
+  agencyId: string,
+  caregiverId: string,
+): Promise<ConversationRow | null> {
+  return prisma.conversation.findUnique({
+    where: { agencyId_caregiverId: { agencyId, caregiverId } },
+    select: CONVERSATION_SELECT,
+  })
+}
+
+/** One row per conversation that has a message, newest message first. */
+export async function listConversations(agencyId: string): Promise<readonly ConversationListRow[]> {
+  const rows = await prisma.conversation.findMany({
+    where: { agencyId, messages: { some: {} } },
+    select: {
+      caregiverId: true,
+      unclearCount: true,
+      pausedAt: true,
+      caregiver: {
+        select: {
+          stage: true,
+          identity: { select: { legalFirstName: true, legalLastName: true } },
+        },
+      },
+      messages: {
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        take: 1,
+        select: { body: true, createdAt: true },
+      },
+    },
+  })
+  return rows
+    .flatMap(({ messages: [last], caregiver, ...row }) =>
+      last === undefined
+        ? []
+        : [
+            {
+              ...row,
+              caregiverName:
+                [caregiver.identity?.legalFirstName, caregiver.identity?.legalLastName]
+                  .filter(Boolean)
+                  .join(' ') || 'Name not yet provided',
+              stage: caregiver.stage,
+              lastMessage: last.body,
+              lastMessageAt: last.createdAt,
+            },
+          ],
+    )
+    .sort((a, b) => b.lastMessageAt.getTime() - a.lastMessageAt.getTime())
 }
 
 export async function findMessage(agencyId: string, messageId: string): Promise<MessageRow | null> {
