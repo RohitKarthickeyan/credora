@@ -74,7 +74,7 @@ the database tests) and was removed on 2026-09-28. These rules keep its replacem
   done, cut them to one test per rule with consequences (a state-machine transition, an expiry,
   an identity match, clearance) plus one per real bug fixed. Delete the rest.
 - **Run only what you touched.** A task runs `npx vitest related <changed files> --run`. The full
-  suite runs once per branch, when it is finished.
+  suite runs once per plan, when it is finished.
 - Vitest is not installed. The first task that writes a test adds it: `vitest` as a
   devDependency, a `test` script, and one project with no database setup.
 

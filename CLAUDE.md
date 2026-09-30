@@ -9,7 +9,8 @@ from accepted offer to cleared-to-work with no manual re-keying. First customer:
 
 ## READ THIS FIRST — how to work in this repo
 
-Work runs through the superpowers skills.
+Work runs through the superpowers skills. Start at `docs/PROGRESS.md`: it says where the
+project stands and which plan is current.
 
 1. **Design** with `superpowers:brainstorming`, in the main session with the user. The spec goes
    in `docs/superpowers/specs/`. A decision that changes a rule in `docs/context/` (superseding
@@ -17,11 +18,18 @@ Work runs through the superpowers skills.
    the context file is updated to match.
 2. **Plan** with `superpowers:writing-plans`, saved in `docs/superpowers/plans/`. Each task
    names the context files and `MODULES.md` rows its implementer needs, so nobody searches.
-3. **Branch.** Work on a feature branch (`superpowers:using-git-worktrees`), never on `main`.
-4. **Build** with `superpowers:subagent-driven-development`. Implementers commit their own
-   task; tasks run one at a time, so commits cannot collide.
-5. **Finish** with `superpowers:finishing-a-development-branch`. Merging into `main` is the
-   user's call, and a push leaves the machine, so ask before either.
+   Once the user approves it, commit the spec and plan, and put the plan's path under Current
+   plan in `docs/PROGRESS.md`.
+3. **Build** with `superpowers:subagent-driven-development`, on `main`. Implementers commit
+   their own task; tasks run one at a time, so commits cannot collide.
+4. **Finish.** Run the full test suite once and the final review. Then delete the plan file,
+   record it under Finished plans in `docs/PROGRESS.md` (what changed, and the commit range
+   where the plan can be recovered), and commit. Specs and ADRs are kept; plans are not.
+
+**All work is committed directly on `main`.** No feature branches or worktrees: skip
+`superpowers:using-git-worktrees` and `superpowers:finishing-a-development-branch`, and this
+overrides the skills' "never implement on main" rule. Pushing to `origin` leaves the machine,
+so ask first.
 
 `superpowers:systematic-debugging`, `superpowers:verification-before-completion` and
 `superpowers:receiving-code-review` apply everywhere.
@@ -37,8 +45,8 @@ This file takes precedence over the skills (`using-superpowers` § User Instruct
   agent evals. Pages, actions, use-case wiring and adapters get no tests; `npm run build` and
   `npm run lint` verify them. This overrides TDD's "no production code without a failing test".
 - **No full-suite runs inside a task.** Where a skill says to run the full test suite, run
-  `npx vitest related <changed files> --run`. The full suite runs once, when finishing the branch.
-- **Reviewers delete.** When dispatching a task or branch reviewer, put § Hard rules and this
+  `npx vitest related <changed files> --run`. The full suite runs once, when a plan is finished.
+- **Reviewers delete.** When dispatching a task or final reviewer, put § Hard rules and this
   list in its global constraints, and have the fixes applied: dead code and unused exports;
   abstraction with one caller; `try/catch` that only rethrows or logs; branches guarding states
   that cannot occur; comments that restate the code; scaffolding, console logs and
@@ -66,6 +74,7 @@ committed), then stop and do not start the next one. Resume only when asked.
 | I need to know… | Read |
 | --- | --- |
 | What we are building, and why | `docs/PRD.md` (cite a section; never read it whole) |
+| Where the project stands, the current plan, what is next | `docs/PROGRESS.md` |
 | The current design and plan | `docs/superpowers/specs/`, `docs/superpowers/plans/` |
 | **Which directory owns a feature** | `docs/context/MODULES.md` ← start here to locate code |
 | System layering, directory map, what may import what | `docs/context/ARCHITECTURE.md` |
@@ -99,7 +108,7 @@ no comments restating the code. Reviewers delete these.
 
 **Tests.** Few and fast: unit tests for pure rules in `src/domain/` and agent evals on the mock
 model, nothing else. Each task runs only the tests related to its changes; the full suite runs
-once per branch, before it is finished. Every task is also verified by `npm run build` and
+once per plan, when it is finished. Every task is also verified by `npm run build` and
 `npm run lint`. See `CONVENTIONS.md` § Tests.
 
 ---
