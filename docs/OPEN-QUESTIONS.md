@@ -4,11 +4,10 @@ Decisions the build could not make from the PRD or the context files. Each was *
 rather than invented** — where a default was needed to keep going, the default is named, is
 isolated to one place, and is cheap to change.
 
-Nothing here blocks the current wave. Everything here should be answered before real
-caregiver data is accepted.
+Nothing here blocks the build. Everything here should be answered before real caregiver data
+is accepted.
 
-Raised by a planner or checker; maintained by the orchestrator. When one is answered, record
-the answer as an ADR in `DECISIONS.md` and delete the row.
+When one is answered, record the answer as an ADR in `DECISIONS.md` and delete the row.
 
 | # | Question | Default in force | Where it lives | Raised by |
 | --- | --- | --- | --- | --- |

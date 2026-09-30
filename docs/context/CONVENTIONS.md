@@ -14,7 +14,7 @@
 
 Write a comment only for something the code cannot say: a regulatory constraint, a
 counter-intuitive rule, a deliberate deviation. Never restate the code. Never leave
-`// TODO` without a task ID. The checker agent deletes commentary.
+`// TODO` without a task ID. Reviewers delete commentary.
 
 Good: `// I-9 §2 is examined by a person; there is deliberately no auto-accept path.`
 Bad: `// loop over the requirements`
@@ -60,10 +60,29 @@ Bad: `// loop over the requirements`
 - The staff app is desktop-first, dense, keyboard-navigable.
 - Primitives in `src/ui/` know nothing about caregivers.
 
+## Tests
+
+The previous suite outgrew the code it tested (48k test lines against 36k source; 25 minutes for
+the database tests) and was removed on 2026-09-28. These rules keep its replacement small and fast.
+
+- **Two kinds only.** Unit tests for pure rules in `src/domain/`, as `*.test.ts` beside the file,
+  and agent evals: scripted caregiver conversations run against the mock model. No database, UI
+  or route tests. `npm run build` and `npm run lint` cover everything else.
+- **Test a rule once**, in `src/domain/`. Never prove it again through a use case.
+- **Never test** the framework, a schema's shape, exact copy strings, or that a function exists.
+- **Write freely, keep few.** Tests written while building (TDD) are scaffolding. Before a task is
+  done, cut them to one test per rule with consequences (a state-machine transition, an expiry,
+  an identity match, clearance) plus one per real bug fixed. Delete the rest.
+- **Run only what you touched.** A task runs `npx vitest related <changed files> --run`. The full
+  suite runs once per branch, when it is finished.
+- Vitest is not installed. The first task that writes a test adds it: `vitest` as a
+  devDependency, a `test` script, and one project with no database setup.
+
 ## Definition of done for a task
 
 1. The PRD requirement it cites is satisfied.
 2. `npm run build` passes (this is the typecheck gate).
 3. `npm run lint` passes.
-4. No dead code, no unused exports, no commented-out code, no speculative abstraction.
-5. `docs/PROGRESS.md` updated; `REVIEW.md` written.
+4. Any tests follow § Tests, and `npx vitest related` passes for the changed files.
+5. No dead code, no unused exports, no commented-out code, no speculative abstraction.
+6. Reviewed, with the reviewer's deletions applied, and committed.

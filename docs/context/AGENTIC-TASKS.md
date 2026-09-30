@@ -73,6 +73,6 @@ record it as a new ADR then, not now.
 
 ## Development-time agent use (not runtime)
 
-Building this product uses subagents (planner / implementor / checker per task). That is
+Building this product uses subagents (implementers and reviewers, via the superpowers skills). That is
 development tooling and ships nothing. Nothing in `src/` may call an agent unless it appears
 in the permitted list above.

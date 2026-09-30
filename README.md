@@ -140,4 +140,3 @@ are encrypted with AES-256-GCM.
 | Integrations and env vars | `docs/context/INTEGRATIONS.md` |
 | Decisions (ADR log) | `docs/context/DECISIONS.md` |
 | Questions for the product owner, each with its default in force | `docs/OPEN-QUESTIONS.md` |
-| How the build was run (task graph, planner/implementor/checker agents) | `docs/context/ORCHESTRATION.md`, `docs/dag/`, `docs/tasks/` |

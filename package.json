@@ -14,11 +14,7 @@
     "db:studio": "prisma studio",
     "db:seed": "tsx --tsconfig prisma/tsconfig.seed.json --env-file-if-exists=.env prisma/seed.ts",
     "worker": "tsx --tsconfig prisma/tsconfig.seed.json --env-file-if-exists=.env scripts/worker.ts",
-    "mock:alayacare": "tsx mock-servers/alayacare/server.ts",
-    "dag:ready": "node scripts/dag.mjs ready",
-    "dag:status": "node scripts/dag.mjs status",
-    "dag:waves": "node scripts/dag.mjs waves",
-    "dag:render": "node scripts/dag.mjs render"
+    "mock:alayacare": "tsx mock-servers/alayacare/server.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.128.0",
