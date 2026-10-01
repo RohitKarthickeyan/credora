@@ -10,6 +10,8 @@ import { getPort } from '@/integrations/registry'
 import { runAsSystem } from '@/server/auth/context'
 
 export const CONVERSATION_TURN_JOB_TYPE = 'conversation.turn'
+// A caregiver is waiting on the reply, so a failing turn gives up after seconds, not minutes.
+export const CONVERSATION_TURN_MAX_ATTEMPTS = 3
 
 const UNSUPPORTED_ATTACHMENT = '[unsupported attachment]'
 
@@ -62,6 +64,7 @@ export function receiveText(input: {
         agencyId,
         type: CONVERSATION_TURN_JOB_TYPE,
         payload: { messageId: message.id },
+        maxAttempts: CONVERSATION_TURN_MAX_ATTEMPTS,
         idempotencyKey: buildIdempotencyKey(CONVERSATION_TURN_JOB_TYPE, [message.id]),
       })
     })

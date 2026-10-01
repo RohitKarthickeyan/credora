@@ -28,6 +28,7 @@ Sensitive fields render masked (`•••-••-1234`). Revealing requires a *
 is written to the audit log with the actor and timestamp. Implemented once, in a `<Sensitive>`
 component plus a `revealSensitiveField` server action. There is no other way to decrypt.
 The one other decrypt is `readSealedFormValues`, which prints the SSN, bank and work-authorisation numbers onto official forms inside T-064's send and writes a `VIEW` entry per field, with a system reason, in the same transaction (ADR-069).
+`Message.ssnEnc`, an SSN a caregiver texted, is decrypted only by `readMessageSsn` (`src/db/mapping/message-ssn.ts`) inside `saveTextIntakeField`, to be written straight to that caregiver's own SSN column (ADR-163).
 `StaffMfa.totpSecretEnc`, a staff user's TOTP secret and not caregiver data, is decrypted only in `src/db/repositories/staff-mfa.ts`, to check a code or to show the key during enrolment (ADR-142).
 
 ## Audit log

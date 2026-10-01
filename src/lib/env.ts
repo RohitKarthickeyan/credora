@@ -33,6 +33,8 @@ const envSchema = z.object({
   SESSION_SECRET: z.string().min(32, { error: 'SESSION_SECRET must be at least 32 characters.' }),
   // The absolute origin links to this app are built on; set it in any deployed environment.
   APP_URL: z.url({ protocol: /^https?$/ }).default('http://localhost:3000'),
+  // The e-sign service's public origin; its signing links are the one other URL a reply may carry.
+  DOCUSEAL_URL: z.url({ protocol: /^https?$/ }).optional(),
 })
 
 const parsed = envSchema.safeParse(process.env)

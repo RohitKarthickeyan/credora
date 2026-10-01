@@ -23,6 +23,8 @@ export type MessageRow = {
   readonly createdAt: Date
 }
 
+export type ConversationMessage = MessageRow & { readonly conversationId: string; readonly caregiverId: string }
+
 const CONVERSATION_SELECT = {
   id: true,
   caregiverId: true,
@@ -210,12 +212,17 @@ export async function listConversations(agencyId: string): Promise<readonly Conv
     .sort((a, b) => b.lastMessageAt.getTime() - a.lastMessageAt.getTime())
 }
 
-export async function findMessage(agencyId: string, messageId: string): Promise<MessageRow | null> {
+export async function findMessage(
+  agencyId: string,
+  messageId: string,
+): Promise<ConversationMessage | null> {
   const row = await prisma.message.findFirst({
     where: { agencyId, id: messageId },
-    select: MESSAGE_SELECT,
+    select: { ...MESSAGE_SELECT, conversationId: true, conversation: { select: { caregiverId: true } } },
   })
-  return row === null ? null : toMessageRow(row)
+  if (row === null) return null
+  const { conversationId, conversation, ...message } = row
+  return { ...toMessageRow(message), conversationId, caregiverId: conversation.caregiverId }
 }
 
 /** More than one live caregiver on a number is ambiguous, so no match (as the email lookup). */

@@ -2,6 +2,7 @@ import 'server-only'
 import type { JobRegistry } from '@/integrations/queue/handler'
 import { createJobRegistry } from '@/integrations/queue/handler'
 import { inviteEmailJob } from '@/server/caregivers/invite-email-job'
+import { conversationTurnJob } from '@/server/conversation/turn-job'
 import { extractDocumentJob } from '@/server/documents/extraction-job'
 import { esignWebhookJob } from '@/server/forms/esign-webhook-job'
 import { sendEnvelopeJob } from '@/server/forms/send-envelope-job'
@@ -35,4 +36,5 @@ export const jobRegistry: JobRegistry = createJobRegistry([
   referenceChaseJob,
   trainingImportJob,
   retentionSweepJob,
+  conversationTurnJob,
 ])
