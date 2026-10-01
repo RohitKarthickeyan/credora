@@ -1,6 +1,6 @@
 import { redactSsn } from './redact'
 
-export const MAX_REPLY_LENGTH = 480
+const MAX_REPLY_LENGTH = 480
 const URL_PATTERN = /https?:\/\/[^\s]+/g
 
 export function passesOutputCheck(text: string, allowedOrigins: readonly string[]): boolean {

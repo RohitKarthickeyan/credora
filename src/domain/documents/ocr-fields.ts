@@ -1,7 +1,7 @@
 import { normalizeName, type PersonName } from '@/domain/validation/name'
 import { parseDocumentDate } from './extraction'
 
-export type OcrLine = { readonly text: string; readonly confidence: number }
+type OcrLine = { readonly text: string; readonly confidence: number }
 
 export type FoundField = {
   readonly name: 'fullName' | 'dateOfBirth' | 'issueDate' | 'expiryDate' | 'completionDate'

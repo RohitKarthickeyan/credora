@@ -28,7 +28,7 @@ export const sendMessageResultSchema = z.discriminatedUnion('status', [
   z.object({ status: z.literal('sent'), providerMessageId: z.string().min(1) }),
   z.object({ status: z.literal('rejected'), reason: z.string().min(1) }),
 ])
-export type SendMessageResult = z.infer<typeof sendMessageResultSchema>
+type SendMessageResult = z.infer<typeof sendMessageResultSchema>
 
 export interface MessagingPort {
   send(input: SendMessageInput): Promise<SendMessageResult>

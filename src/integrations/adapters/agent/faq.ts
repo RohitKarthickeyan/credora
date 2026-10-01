@@ -7,7 +7,7 @@ Q: How long does review take?
 A: Usually one to two business days.
 
 Q: Is my Social Security number safe?
-A: Yes. It is encrypted and never shown in this chat.
+A: Yes. It is stored encrypted, and only the last four digits are ever shown.
 
 Q: Any tips for document photos?
 A: Use good light and show the whole document, all four corners.

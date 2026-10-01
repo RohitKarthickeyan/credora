@@ -15,7 +15,7 @@ export const agentEventSchema = z.discriminatedUnion('kind', [
 ])
 export type AgentEvent = z.infer<typeof agentEventSchema>
 
-export type AgentEventKind = AgentEvent['kind']
+type AgentEventKind = AgentEvent['kind']
 
 export function eventKindsFor(step: ConversationStep): readonly AgentEventKind[] {
   switch (step.kind) {

@@ -82,7 +82,7 @@ export function DecideException({
               required
               placeholder="Choose a decision"
               options={decisions.map((decision) => ({ value: decision, label: QUEUE_DECISION_COPY[decision] }))}
-              hint="Rejecting or asking for a photo emails the caregiver. A waived requirement does not count toward clearance."
+              hint="Rejecting or asking for a new photo texts or emails the caregiver. A waived requirement does not count toward clearance."
             />
           )}
           <div className="flex justify-end">
