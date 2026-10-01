@@ -27,7 +27,7 @@ not a rewrite. We hold no credentials for any of them, so every port ships a det
 | Port | Vendor (later) | Mock behaviour | Env |
 | --- | --- | --- | --- |
 | `messaging` | an email provider (e.g. SendGrid) | Email for staff; text for caregivers through `sendText` (ADR-162). The mock returns sent; the conversation stores each `Message`, and the dev web phone at `/dev/phone/[caregiverId]` shows them. Email writes to a `SentMessage` table; `/dev/outbox` renders them, and sign-in codes are readable there in dev. | `MESSAGING_ADAPTER` |
-| `esign` | DocuSign / Dropbox Sign | Creates an envelope, exposes a local signing page, stamps a signature into the PDF with pdf-lib, fires the webhook back into our own route. | `ESIGN_ADAPTER` |
+| `esign` | DocuSeal, self-hosted (`docuseal` in `docker-compose.yml`, `ESIGN_ADAPTER=docuseal`) | Creates an envelope, exposes a local signing page, stamps a signature into the PDF with pdf-lib, fires the webhook back into our own route. The DocuSeal adapter uploads the PDFs as one template, sends no email, and returns DocuSeal's signing link; see its header for where the free edition differs from the API docs. | `ESIGN_ADAPTER`, `DOCUSEAL_*` |
 | `extraction` | Textract / Document AI | Reads the bytes through the storage port and selects a fixture by **SHA-256 of the content**, returning the recorded fields with confidences. Unknown content returns low confidence → exception. | `EXTRACTION_ADAPTER` |
 | `judge` | Claude (see `AGENTIC-TASKS.md`) | Rule-based: applies the same published criteria deterministically, returns verdict + confidence + reasons. | `JUDGE_ADAPTER` |
 | `backgroundCheck` | agency's existing vendor | State machine `ORDERED → PENDING → CLEAR \| CONSIDER`, advanced by a dev control, never by a timer. Order state is JSON files under `STORAGE_ROOT/_mock-background-check/`, shared by the web app and the worker; the dev control is `/dev/background-check`. | `BGCHECK_ADAPTER` |
@@ -96,7 +96,7 @@ FIELD_ENCRYPTION_KEY          32-byte base64
 SESSION_SECRET
 APP_URL
 MESSAGING_ADAPTER=mock
-ESIGN_ADAPTER=mock
+ESIGN_ADAPTER=mock            | docuseal
 EXTRACTION_ADAPTER=mock
 JUDGE_ADAPTER=mock            | claude
 BGCHECK_ADAPTER=mock
@@ -108,6 +108,8 @@ STORAGE_ROOT=./storage
 ANTHROPIC_API_KEY             only when JUDGE_ADAPTER=claude
 AGENT_ADAPTER=mock            | openai
 OPENAI_API_KEY                only when AGENT_ADAPTER=openai
+DOCUSEAL_URL, DOCUSEAL_API_KEY, DOCUSEAL_WEBHOOK_SECRET,
+DOCUSEAL_ADMIN_EMAIL, DOCUSEAL_ADMIN_PASSWORD   only when ESIGN_ADAPTER=docuseal
 ```
 
 ## Webhooks
@@ -118,3 +120,8 @@ Mocks sign their payloads with the same scheme so the verification path is exerc
 Between verifying and persisting, the handler resolves the agency from `WebhookSubject`
 (provider + vendor id), which the task that created the envelope or order registered. An unknown
 id is answered 409 and not stored, so the vendor redelivers.
+
+DocuSeal runs in Docker, so its webhook (Settings > Webhooks) points at
+`http://host.docker.internal:3000/api/webhooks/esign`, subscribed to `form.completed` and
+`form.declined`, with a custom header `X-Credora-Webhook-Secret` whose value is
+`DOCUSEAL_WEBHOOK_SECRET`.

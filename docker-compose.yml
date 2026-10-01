@@ -18,5 +18,15 @@ services:
       retries: 30
       start_period: 5s
 
+  docuseal:
+    image: docuseal/docuseal
+    container_name: credora-docuseal
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    volumes:
+      - credora-docuseal:/data
+
 volumes:
   credora-pgdata:
+  credora-docuseal:

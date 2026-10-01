@@ -35,6 +35,12 @@ const envSchema = z.object({
   APP_URL: z.url({ protocol: /^https?$/ }).default('http://localhost:3000'),
   // The e-sign service's public origin; its signing links are the one other URL a reply may carry.
   DOCUSEAL_URL: z.url({ protocol: /^https?$/ }).optional(),
+  // Checked by the docuseal factory. The admin sign-in exists because the free edition takes PDFs
+  // only through its web upload (see adapters/esign/docuseal.ts).
+  DOCUSEAL_API_KEY: z.string().min(1).optional(),
+  DOCUSEAL_WEBHOOK_SECRET: z.string().min(1).optional(),
+  DOCUSEAL_ADMIN_EMAIL: z.email().optional(),
+  DOCUSEAL_ADMIN_PASSWORD: z.string().min(1).optional(),
 })
 
 const parsed = envSchema.safeParse(process.env)

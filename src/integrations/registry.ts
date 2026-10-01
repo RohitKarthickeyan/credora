@@ -3,6 +3,7 @@ import { createMockAgent } from '@/integrations/adapters/agent/mock'
 import { createOpenAIAgent } from '@/integrations/adapters/agent/openai'
 import { createHttpAlayaCare } from '@/integrations/adapters/alayacare/http'
 import { createMockBackgroundCheck } from '@/integrations/adapters/backgroundCheck/mock'
+import { createDocusealEsign } from '@/integrations/adapters/esign/docuseal'
 import { createMockEsign } from '@/integrations/adapters/esign/mock'
 import { createMockExtraction } from '@/integrations/adapters/extraction/mock'
 import { createClaudeJudge } from '@/integrations/adapters/judge/claude'
@@ -27,7 +28,10 @@ const slots: { [N in PortName]: PortSlot<N> } = {
   esign: {
     variable: 'ESIGN_ADAPTER',
     selected: env.ESIGN_ADAPTER,
-    adapters: { mock: () => createMockEsign({ storage: getPort('storage') }) },
+    adapters: {
+      mock: () => createMockEsign({ storage: getPort('storage') }),
+      docuseal: () => createDocusealEsign({ storage: getPort('storage') }),
+    },
   },
   extraction: {
     variable: 'EXTRACTION_ADAPTER',
