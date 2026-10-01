@@ -45,6 +45,9 @@ describe('reviewOutcome', () => {
     expect(outcome({ fullName: 'DIFFERS', dateOfBirth: 'DIFFERS' })).toEqual({ kind: 'RETURN', reason: 'NAME_NOT_FOUND' })
     expect(outcome({ fullName: 'UNREADABLE' })).toEqual({ kind: 'RETURN', reason: 'NAME_NOT_FOUND' })
   })
+  it('returns a document that does not carry the caregiver\'s name', () => {
+    expect(outcome({ fullName: 'NOT_PRINTED' })).toEqual({ kind: 'RETURN', reason: 'NAME_NOT_FOUND' })
+  })
   it('returns a document whose date of birth differs', () => {
     expect(outcome({ dateOfBirth: 'DIFFERS' })).toEqual({ kind: 'RETURN', reason: 'DOB_DIFFERS' })
   })

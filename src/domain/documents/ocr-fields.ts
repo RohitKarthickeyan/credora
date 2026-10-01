@@ -37,17 +37,22 @@ function withinOneEdit(a: string, b: string): boolean {
 // OCR misreads a letter now and then (I as l, O as 0), so one edit is forgiven on names long
 // enough that one edit does not reach another common name.
 function nameOnLine(lineWords: readonly string[], nameWords: readonly string[]): boolean {
-  return nameWords.every((name) =>
+  return nameWords.length > 0 && nameWords.every((name) =>
     lineWords.some((word) => (name.length <= 4 ? word === name : withinOneEdit(word, name))),
   )
 }
 
+// A date takes its label from the text between the previous date (or the line start) and itself,
+// so "ISS 01/10/2025 EXP 03/14/2029" labels each date by its own prefix.
 function datesOn(line: OcrLine, dateOfBirth: string | null): FoundField[] {
-  return [...line.text.matchAll(DATE)].flatMap(([match]): FoundField[] => {
+  let labelStart = 0
+  return [...line.text.matchAll(DATE)].flatMap(({ 0: match, index }): FoundField[] => {
+    const labelText = line.text.slice(labelStart, index)
+    labelStart = index + match.length
     const value = parseDocumentDate(match, true)
     if (value === null) return []
     if (value === dateOfBirth) return [{ name: 'dateOfBirth', value, confidence: line.confidence }]
-    const label = DATE_LABELS.find(([, pattern]) => pattern.test(line.text))
+    const label = DATE_LABELS.find(([, pattern]) => pattern.test(labelText))
     return label === undefined ? [] : [{ name: label[0], value, confidence: line.confidence }]
   })
 }
@@ -55,17 +60,20 @@ function datesOn(line: OcrLine, dateOfBirth: string | null): FoundField[] {
 /**
  * Reads plain OCR lines for the fields review needs, looking for what intake already says rather
  * than parsing the layout: a line carrying the caregiver's first and last name, the intake date
- * of birth, and dates whose own line labels them.
+ * of birth, and dates whose own line labels them. A found name is reported as the intake name, so
+ * an OCR slip or the words around it do not fail identity matching.
  */
 export function findKnownFields(lines: readonly OcrLine[], known: KnownIdentity): readonly FoundField[] {
-  const first = words(known.legalName.first)
-  const last = words(known.legalName.last)
+  const { first: firstName, middle, last: lastName } = known.legalName
+  const first = words(firstName)
+  const last = words(lastName)
+  const fullName = [firstName, middle, lastName].filter((part) => part !== undefined).join(' ')
 
   return lines.flatMap((line): FoundField[] => {
     const lineWords = words(line.text)
     const name: FoundField[] =
       nameOnLine(lineWords, first) && nameOnLine(lineWords, last)
-        ? [{ name: 'fullName', value: line.text, confidence: line.confidence }]
+        ? [{ name: 'fullName', value: fullName, confidence: line.confidence }]
         : []
     return [...name, ...datesOn(line, known.dateOfBirth)]
   })

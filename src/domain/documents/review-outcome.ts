@@ -31,7 +31,7 @@ function returnReason({ extraction, identity, judge }: ReviewInput): ReturnReaso
   if (extraction.confidence < READABLE_MIN_CONFIDENCE) return 'UNREADABLE'
   if (judge?.kind === 'STAFF' && judge.reasons.includes('EXPIRED')) return 'EXPIRED'
   const fullName = identityOutcome(identity, 'fullName')
-  if (fullName === 'DIFFERS' || fullName === 'UNREADABLE') return 'NAME_NOT_FOUND'
+  if (fullName === 'DIFFERS' || fullName === 'UNREADABLE' || fullName === 'NOT_PRINTED') return 'NAME_NOT_FOUND'
   if (identityOutcome(identity, 'dateOfBirth') === 'DIFFERS') return 'DOB_DIFFERS'
   return null
 }

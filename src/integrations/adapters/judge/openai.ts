@@ -61,7 +61,7 @@ function toResult(input: JudgeInput, response: OpenAI.Responses.Response): Judge
   })
 
   if (refused(response)) return uncertain('the model declined to assess this record')
-  if (response.status !== 'completed') return uncertain("the model's output was truncated")
+  if (response.status !== 'completed') return uncertain('the model did not complete its output')
 
   const output = parseModelOutput(response)
   if (output === null) return uncertain("the model's output was unparseable")

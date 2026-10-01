@@ -32,7 +32,7 @@ services:
     container_name: credora-ocr
     restart: unless-stopped
     ports:
-      - "8866:8866"
+      - "127.0.0.1:8866:8866"
 
 volumes:
   credora-pgdata:
