@@ -23,6 +23,7 @@ import { PageHeader } from '@/ui/page-header'
 import { StatusBadge } from '@/ui/status-badge'
 import { WithdrawCaregiver } from '../../pipeline/withdraw-caregiver'
 import { revealSensitiveFieldAction } from './actions'
+import { CompleteBackgroundCheck } from './complete-background-check'
 import { Conversation } from './conversation'
 import { CorrectEmail } from './correct-email'
 import { ResendInvite } from './resend-invite'
@@ -108,6 +109,12 @@ export default async function CaregiverPage(props: PageProps<'/caregivers/[id]'>
             getRowKey={(instance) => instance.templateKey}
           />
         </section>
+
+        {detail.workState === 'DEMO' &&
+        detail.stage === 'VERIFICATION' &&
+        can(principal, 'backgroundCheck.complete') ? (
+          <CompleteBackgroundCheck caregiverId={detail.caregiverId} />
+        ) : null}
 
         {conversation === null ? null : (
           <Card

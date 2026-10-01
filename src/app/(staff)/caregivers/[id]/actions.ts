@@ -11,6 +11,7 @@ import type { CorrectEmailResult } from '@/server/caregivers/correct-email'
 import { correctEmail } from '@/server/caregivers/correct-email'
 import type { ResendInviteResult } from '@/server/caregivers/resend-invite'
 import { resendInvite } from '@/server/caregivers/resend-invite'
+import { completeBackgroundCheck } from '@/server/verification/complete-background-check'
 import { revealSensitiveField } from '@/server/caregivers/reveal-sensitive-field'
 import { sendStaffText, setConversationPaused } from '@/server/conversation/staff'
 import type { VoidEnvelopeResult } from '@/server/forms/void-envelope'
@@ -23,6 +24,7 @@ export type CorrectEmailState = {
   readonly saved?: true
 }
 type VoidEnvelopeState = { readonly error?: string }
+type CompleteBackgroundCheckState = { readonly error?: string }
 
 const NOT_FOUND = 'This caregiver could not be found.'
 
@@ -45,6 +47,12 @@ const VOID_REFUSALS = {
   CHANGED_AT_PROVIDER:
     'The caregiver has just signed or declined this envelope. Refresh the page.',
 } as const satisfies Record<Extract<VoidEnvelopeResult, { ok: false }>['reason'], string>
+
+const COMPLETE_CHECK_REFUSALS = {
+  NOT_DEMO: 'Only demo caregivers can be cleared this way.',
+  NOT_READY: 'This caregiver is not waiting on the background check. Refresh the page.',
+  FCRA_NOT_SIGNED: 'The FCRA disclosure has not been signed.',
+} as const satisfies Record<Extract<Awaited<ReturnType<typeof completeBackgroundCheck>>, { ok: false }>['reason'], string>
 
 function text(formData: FormData, field: string): string {
   const value = formData.get(field)
@@ -162,4 +170,18 @@ export async function sendStaffTextAction(
   await runAsPrincipal(principal, {}, () => sendStaffText(parsed.data))
   revalidatePath(`/caregivers/${parsed.data.caregiverId}`)
   return { sent: true }
+}
+
+export async function completeBackgroundCheckAction(
+  _previous: CompleteBackgroundCheckState,
+  formData: FormData,
+): Promise<CompleteBackgroundCheckState> {
+  const { principal } = await requireStaffSession()
+  const caregiverId = text(formData, 'caregiverId')
+
+  const result = await runAsPrincipal(principal, {}, () => completeBackgroundCheck({ caregiverId }))
+  if (!result.ok) return { error: COMPLETE_CHECK_REFUSALS[result.reason] }
+
+  revalidatePath(`/caregivers/${caregiverId}`)
+  return {}
 }

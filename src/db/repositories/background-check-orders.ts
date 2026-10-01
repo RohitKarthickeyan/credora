@@ -211,3 +211,12 @@ export async function advanceBackgroundCheckOrder(
   })
   return count === 1
 }
+
+export async function findCaregiverWorkState(
+  tx: AuditedTx,
+  agencyId: string,
+  caregiverId: string,
+): Promise<string | null> {
+  const row = await tx.caregiver.findFirst({ where: { agencyId, id: caregiverId }, select: { workState: true } })
+  return row?.workState ?? null
+}

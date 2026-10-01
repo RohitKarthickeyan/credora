@@ -7,6 +7,7 @@ import type { AuditedTx } from '../audit'
 type CaregiverDetailRow = {
   readonly caregiverId: string
   readonly stage: PipelineStage
+  readonly workState: string | null
   readonly createdAt: Date
   readonly lastTransitionAt: Date | null
   readonly legalFirstName: string | null
@@ -42,6 +43,7 @@ export async function findCaregiverDetail(
     select: {
       id: true,
       stage: true,
+      workState: true,
       createdAt: true,
       identity: { select: { legalFirstName: true, legalLastName: true, ssnLast4: true } },
       payrollInputs: { select: { bankAccountLast4: true } },
@@ -76,6 +78,7 @@ export async function findCaregiverDetail(
   return {
     caregiverId: row.id,
     stage: row.stage,
+    workState: row.workState,
     createdAt: row.createdAt,
     lastTransitionAt: row.pipelineEvents[0]?.occurredAt ?? null,
     legalFirstName: row.identity?.legalFirstName ?? null,

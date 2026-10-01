@@ -16,6 +16,7 @@ type CaregiverDetail = {
   readonly caregiverId: string
   readonly name: string | null
   readonly stage: PipelineStage
+  readonly workState: string | null
   readonly daysInStage: number
   readonly blocker: CurrentBlocker | null
   readonly requirements: readonly BlockerCandidate[]
@@ -56,6 +57,7 @@ export const getCaregiverDetail: UseCase<{ readonly caregiverId: string }, Careg
         caregiverId: row.caregiverId,
         name: nameParts.length === 0 ? null : nameParts.join(' '),
         stage: row.stage,
+        workState: row.workState,
         daysInStage: daysInStage(row, new Date()),
         blocker: currentBlocker(row.instances),
         requirements: row.instances,

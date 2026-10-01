@@ -55,6 +55,7 @@ const ACTION_POLICIES = {
     roles: ['AGENCY_ADMIN', 'IMPLEMENTATION'],
   },
   'manualCheck.list': { dataClass: 'CAREGIVER_RECORD', roles: ['COORDINATOR', 'AGENCY_ADMIN'] },
+  'backgroundCheck.complete': { dataClass: 'CLEARANCE', roles: ['COORDINATOR', 'SUPERVISOR', 'AGENCY_ADMIN'] },
   'manualCheck.record': { dataClass: 'CAREGIVER_RECORD', roles: ['COORDINATOR', 'AGENCY_ADMIN'] },
   'caregiver.correctEmail': { dataClass: 'CAREGIVER_RECORD', roles: ['COORDINATOR', 'AGENCY_ADMIN'] },
   'envelope.void': { dataClass: 'CAREGIVER_RECORD', roles: ['COORDINATOR', 'AGENCY_ADMIN'] },
