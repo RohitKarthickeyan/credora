@@ -9,10 +9,13 @@ import type { WebhookDelivery, WebhookVerification } from '@/integrations/ports/
 import { env } from '@/lib/env'
 
 // Self-hosted DocuSeal, checked against docuseal.com/docs/api and the open-source code, which
-// differ from the plan in four places:
+// differ from the plan as below. The first two lean on what the docs do not promise, so a
+// DocuSeal upgrade may break them:
 // - `POST /api/templates/pdf` is a Pro feature; the open-source image answers 404. The PDFs are
 //   uploaded through the web app's own `POST /templates_upload` under an admin session (the only
-//   way the free edition takes PDF bytes), then given a role and fields by `PUT /api/templates`.
+//   way the free edition takes PDF bytes).
+// - `PUT /api/templates/{id}` is documented with name, folder_name, roles and archived only; the
+//   `submitters` and `fields` it is sent here are accepted by the open-source code, not documented.
 // - `GET /api/submissions` has no `external_id` filter, but submitters carry one, so retry safety
 //   is `GET /api/submitters?external_id=`. A crash between upload and submission leaves an unused
 //   template behind, which nobody can sign.
@@ -20,6 +23,7 @@ import { env } from '@/lib/env'
 //   in the submitter's metadata, and a submission of another agency reads as unknown.
 // - The webhook secret is a custom header set in DocuSeal's webhook settings. Subscribe to
 //   form.completed and form.declined only: any other event is refused, and DocuSeal redelivers it.
+//   submission.completed is left out because with one signer it repeats form.completed.
 const ROLE = 'Caregiver'
 const SECRET_HEADER = 'x-credora-webhook-secret'
 // Fractions of the page: bottom right of each document's last page.
@@ -161,6 +165,11 @@ export function createDocusealEsign(deps: { storage: StoragePort }): EsignPort {
   async function uploadTemplate(files: readonly { name: string; bytes: Uint8Array }[]): Promise<number> {
     const jar = cookieJar()
     const signInPage = jar.keep(await send('/sign_in'))
+    if (signInPage.status !== 200) {
+      throw new Error(
+        `DocuSeal's sign-in page answered ${signInPage.status}; is DocuSeal set up (first-run admin created)?`,
+      )
+    }
     const signedIn = jar.keep(
       await send('/sign_in', {
         method: 'POST',
@@ -267,7 +276,6 @@ export function createDocusealEsign(deps: { storage: StoragePort }): EsignPort {
         }
       })
       await api('PUT', `/templates/${templateId}`, {
-        external_id: idempotencyKey,
         submitters: [{ name: ROLE, uuid: role.uuid }],
         fields,
       })
