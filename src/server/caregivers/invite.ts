@@ -6,6 +6,7 @@ import { enqueueJobInTransaction } from '@/db/repositories/jobs'
 import { materialiseRequirementInstances } from '@/db/repositories/requirement-instances'
 import { inviteCaregiverInputSchema } from '@/domain/pipeline/invite'
 import { buildIdempotencyKey } from '@/integrations/queue/idempotency'
+import { enqueueNudge } from '@/server/conversation/nudge-job'
 import type { UseCase } from '@/server/auth/policy'
 import { defineUseCase } from '@/server/auth/policy'
 import { INVITE_EMAIL_JOB_TYPE } from './invite-email-job'
@@ -68,6 +69,7 @@ export const inviteCaregiver: UseCase<
         payload: { inviteId },
         idempotencyKey: buildIdempotencyKey(INVITE_EMAIL_JOB_TYPE, [inviteId]),
       })
+      await enqueueNudge(tx, agencyId, caregiverId, 'WELCOME', `invite:${inviteId}`)
       return { ok: true, caregiverId, inviteId }
     })
   } catch (error) {

@@ -17,11 +17,13 @@ import {
   isWaivable,
   queueDecisionInputSchema,
 } from '@/domain/documents/staff-decision'
+import { DEMO_DOCUMENTS } from '@/domain/conversation/step'
 import { staffAcceptSteps } from '@/domain/requirements/health-screening'
 import type { InstanceStatus } from '@/domain/requirements/instance-status'
 import { buildIdempotencyKey } from '@/integrations/queue/idempotency'
 import type { UseCase } from '@/server/auth/policy'
 import { defineUseCase } from '@/server/auth/policy'
+import { enqueueNudge } from '@/server/conversation/nudge-job'
 import { CAREGIVER_NOTICE_JOB_TYPE } from './caregiver-notice-job'
 
 export type DecideFlaggedDocumentResult =
@@ -65,6 +67,9 @@ export const decideFlaggedDocument: UseCase<
       decision,
       decidedByUserId: principal.id,
     })
+    const approved = DEMO_DOCUMENTS.find((document) => document === target.templateKey)
+    const notice = decision === 'ACCEPTED' && approved !== undefined ? `APPROVED:${approved}` : null
+    await enqueueNudge(tx, agencyId, target.caregiverId, notice, `decision:${id}`)
     if (decision === 'ACCEPTED') {
       await applyDocumentReviewCleared(tx, agencyId, target.caregiverId, principal.id)
     } else {

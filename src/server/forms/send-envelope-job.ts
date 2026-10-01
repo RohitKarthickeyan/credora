@@ -8,6 +8,7 @@ import { defineJobHandler } from '@/integrations/queue/handler'
 import { buildIdempotencyKey } from '@/integrations/queue/idempotency'
 import { getPort } from '@/integrations/registry'
 import { runAsSystem } from '@/server/auth/context'
+import { enqueueNudge } from '@/server/conversation/nudge-job'
 
 export const SEND_ENVELOPE_JOB_TYPE = 'esign.sendEnvelope'
 
@@ -59,6 +60,7 @@ export const sendEnvelopeJob = defineJobHandler({
             provider: 'esign',
             externalId: vendor.envelopeId,
           })
+          await enqueueNudge(tx, agencyId, envelope.caregiverId, null, `envelope-sent:${envelopeId}`)
         }
       })
       return { status: 'ok' }

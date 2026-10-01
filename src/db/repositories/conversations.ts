@@ -82,6 +82,11 @@ export function ensureConversation(
   })
 }
 
+export async function findMobilePhone(tx: AuditedTx, agencyId: string, caregiverId: string): Promise<string | null> {
+  const contact = await tx.contactRecord.findFirst({ where: { agencyId, caregiverId }, select: { mobilePhone: true } })
+  return contact?.mobilePhone ?? null
+}
+
 const lockedConversationSchema = z.object({
   id: z.string(),
   caregiverId: z.string(),

@@ -13,6 +13,7 @@ import { createSignedDocument } from '@/db/repositories/signed-documents'
 import { defineJobHandler } from '@/integrations/queue/handler'
 import { getPort } from '@/integrations/registry'
 import { runAsSystem } from '@/server/auth/context'
+import { enqueueNudge } from '@/server/conversation/nudge-job'
 import { WEBHOOK_JOB_TYPES, esignWebhookJobPayloadSchema } from '@/server/webhooks/jobs'
 
 function assertMoved(change: InstanceStatusChange, instanceId: string): void {
@@ -139,6 +140,7 @@ export const esignWebhookJob = defineJobHandler({
           actorUserId: null,
         })
         await applyDocumentReviewCleared(tx, agencyId, caregiverId, null)
+        await enqueueNudge(tx, agencyId, caregiverId, 'SIGNED', `envelope-signed:${envelope.id}`)
         await writeAuditEntry(tx, {
           agencyId,
           action: 'EDIT',
