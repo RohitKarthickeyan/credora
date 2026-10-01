@@ -5534,6 +5534,7 @@ export const AutoAcceptDecisionScalarFieldEnum = {
   agencyId: 'agencyId',
   uploadedDocumentId: 'uploadedDocumentId',
   staffReasons: 'staffReasons',
+  returnReason: 'returnReason',
   fullNameOutcome: 'fullNameOutcome',
   dateOfBirthOutcome: 'dateOfBirthOutcome',
   instanceStatusSet: 'instanceStatusSet',

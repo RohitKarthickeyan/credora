@@ -318,9 +318,10 @@ export type ClinicalJudgeReasons = Prisma.ClinicalJudgeReasonsModel
 /**
  * Model AutoAcceptDecision
  * @tier standard
- * The auto-accept decision for one document: accepted when staffReasons is empty.
- * instanceStatusSet is what it moved the requirement instance to, null when the instance was no
- * longer PENDING (ADR-101).
+ * The review decision for one document (ADR-164): returned to the caregiver when returnReason is
+ * set (a ReturnReason in src/domain/documents/review-outcome.ts), otherwise sent to staff with
+ * staffReasons, possibly none. instanceStatusSet is what it moved the requirement instance to,
+ * null when the instance was no longer PENDING (ADR-101).
  */
 export type AutoAcceptDecision = Prisma.AutoAcceptDecisionModel
 /**

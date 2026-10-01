@@ -1,3 +1,4 @@
+import { z } from 'zod'
 import type { IntakeReadBack, ReplyContext } from '@/domain/conversation/replies'
 import {
   type ConversationSnapshot,
@@ -8,6 +9,7 @@ import {
   type TextIntakeField,
   documentState,
 } from '@/domain/conversation/step'
+import { RETURN_REASONS } from '@/domain/documents/review-outcome'
 import type { Address } from '@/domain/validation/address'
 import { runInAuditedTransaction, writeAuditEntry } from '../audit'
 import { fromAddressColumns } from '../mapping/address'
@@ -71,7 +73,14 @@ export function findConversationSnapshot(
               where: { uploadedDocumentId: { not: null } },
               orderBy: { linkedAt: 'desc' },
               take: 1,
-              select: { uploadedDocument: { select: { staffDecision: { select: { decision: true } } } } },
+              select: {
+                uploadedDocument: {
+                  select: {
+                    staffDecision: { select: { decision: true } },
+                    autoAcceptDecision: { select: { returnReason: true } },
+                  },
+                },
+              },
             },
           },
         },
@@ -85,10 +94,11 @@ export function findConversationSnapshot(
       const instance = caregiver.requirementInstances.find((candidate) => candidate.templateKey === document)
       const evidenceKey = instance?.template.acceptedEvidence[0]?.evidenceKey
       if (instance === undefined || evidenceKey === undefined) return null
-      const decision = instance.evidence[0]?.uploadedDocument?.staffDecision?.decision
+      const upload = instance.evidence[0]?.uploadedDocument
+      const decision = upload?.staffDecision?.decision
       documents[document] = documentState({
         status: instance.status,
-        returnReason: null,
+        returnReason: z.enum(RETURN_REASONS).nullable().parse(upload?.autoAcceptDecision?.returnReason ?? null),
         rejectedByStaff: decision !== undefined && RETURNED_BY_STAFF.has(decision),
       })
       documentInstances[document] = { instanceId: instance.id, evidenceKey }

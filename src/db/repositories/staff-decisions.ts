@@ -29,7 +29,7 @@ export async function findDecisionTarget(
       id: true,
       uploadedAt: true,
       caregiver: { select: { id: true, stage: true } },
-      autoAcceptDecision: { select: { instanceStatusSet: true } },
+      autoAcceptDecision: { select: { instanceStatusSet: true, returnReason: true } },
       staffDecision: { select: { id: true } },
       evidence: {
         where: { instanceId },
@@ -56,7 +56,7 @@ export async function findDecisionTarget(
     templateKey: instance.templateKey,
     stage: row.caregiver.stage,
     instanceStatus: instance.status,
-    flagged: row.autoAcceptDecision?.instanceStatusSet === 'EXCEPTION',
+    flagged: row.autoAcceptDecision?.instanceStatusSet === 'EXCEPTION' && row.autoAcceptDecision.returnReason === null,
     decided: row.staffDecision !== null,
     latestUpload: !instance.evidence.some(
       ({ uploadedDocument }) => uploadedDocument !== null && isLater(uploadedDocument, row),

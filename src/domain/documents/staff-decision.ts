@@ -24,7 +24,7 @@ export const queueDecisionInputSchema = z.object({
 export type DecisionTarget = {
   readonly stage: PipelineStage
   readonly instanceStatus: InstanceStatus
-  // Its AutoAcceptDecision set the instance to EXCEPTION.
+  // Its review sent it to staff and set the instance to EXCEPTION; a document returned to the caregiver is not (ADR-164).
   readonly flagged: boolean
   readonly decided: boolean
   // No later UPLOADED_DOCUMENT evidence on the instance.

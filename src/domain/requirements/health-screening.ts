@@ -24,7 +24,7 @@ export function healthScreeningItemOf(templateKey: string): MedicalScreeningItem
  * Review rules on a clinic document's validity, never its clinical outcome, so an accepted health
  * screening document waits IN_REVIEW for the supervisor's recorded result.
  */
-export function acceptedDocumentStatus(templateKey: string): 'SATISFIED' | 'IN_REVIEW' {
+function acceptedDocumentStatus(templateKey: string): 'SATISFIED' | 'IN_REVIEW' {
   return healthScreeningItemOf(templateKey) === null ? 'SATISFIED' : 'IN_REVIEW'
 }
 

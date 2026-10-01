@@ -1,4 +1,6 @@
-import type { AutoAcceptDecision, AutoAcceptOutcome } from '@/domain/documents/auto-accept'
+import { z } from 'zod'
+import type { AutoAcceptDecision } from '@/domain/documents/auto-accept'
+import { RETURN_REASONS, type ReviewOutcome } from '@/domain/documents/review-outcome'
 import type { IdentityFinding, IdentityMatch } from '@/domain/identity/match'
 import type { InstanceStatus } from '@/domain/requirements/instance-status'
 import { runInAuditedTransaction } from '../audit'
@@ -14,7 +16,7 @@ export function saveAutoAcceptDecision(
   agencyId: string,
   decision: {
     readonly uploadedDocumentId: string
-    readonly outcome: AutoAcceptOutcome
+    readonly outcome: ReviewOutcome
     readonly identity: IdentityMatch
     readonly instanceStatusSet: InstanceStatus | null
   },
@@ -26,6 +28,7 @@ export function saveAutoAcceptDecision(
         agencyId,
         uploadedDocumentId,
         staffReasons: outcome.kind === 'STAFF' ? [...outcome.reasons] : [],
+        returnReason: outcome.kind === 'RETURN' ? outcome.reason : null,
         fullNameOutcome: outcomeOf(identity, 'fullName'),
         dateOfBirthOutcome: outcomeOf(identity, 'dateOfBirth'),
         instanceStatusSet,
@@ -43,7 +46,10 @@ export function findAutoAcceptDecision(
     if (row === null) return null
     return {
       uploadedDocumentId,
-      outcome: row.staffReasons.length === 0 ? { kind: 'ACCEPT' } : { kind: 'STAFF', reasons: row.staffReasons },
+      outcome:
+        row.returnReason === null
+          ? { kind: 'STAFF', reasons: row.staffReasons }
+          : { kind: 'RETURN', reason: z.enum(RETURN_REASONS).parse(row.returnReason) },
       identity: { fullName: row.fullNameOutcome, dateOfBirth: row.dateOfBirthOutcome },
       instanceStatusSet: row.instanceStatusSet,
       decidedAt: row.decidedAt,

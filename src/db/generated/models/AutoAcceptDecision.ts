@@ -15,9 +15,10 @@ import type * as Prisma from "../internal/prismaNamespace"
 /**
  * Model AutoAcceptDecision
  * @tier standard
- * The auto-accept decision for one document: accepted when staffReasons is empty.
- * instanceStatusSet is what it moved the requirement instance to, null when the instance was no
- * longer PENDING (ADR-101).
+ * The review decision for one document (ADR-164): returned to the caregiver when returnReason is
+ * set (a ReturnReason in src/domain/documents/review-outcome.ts), otherwise sent to staff with
+ * staffReasons, possibly none. instanceStatusSet is what it moved the requirement instance to,
+ * null when the instance was no longer PENDING (ADR-101).
  */
 export type AutoAcceptDecisionModel = runtime.Types.Result.DefaultSelection<Prisma.$AutoAcceptDecisionPayload>
 
@@ -31,6 +32,7 @@ export type AutoAcceptDecisionMinAggregateOutputType = {
   id: string | null
   agencyId: string | null
   uploadedDocumentId: string | null
+  returnReason: string | null
   fullNameOutcome: $Enums.IdentityOutcome | null
   dateOfBirthOutcome: $Enums.IdentityOutcome | null
   instanceStatusSet: $Enums.InstanceStatus | null
@@ -41,6 +43,7 @@ export type AutoAcceptDecisionMaxAggregateOutputType = {
   id: string | null
   agencyId: string | null
   uploadedDocumentId: string | null
+  returnReason: string | null
   fullNameOutcome: $Enums.IdentityOutcome | null
   dateOfBirthOutcome: $Enums.IdentityOutcome | null
   instanceStatusSet: $Enums.InstanceStatus | null
@@ -52,6 +55,7 @@ export type AutoAcceptDecisionCountAggregateOutputType = {
   agencyId: number
   uploadedDocumentId: number
   staffReasons: number
+  returnReason: number
   fullNameOutcome: number
   dateOfBirthOutcome: number
   instanceStatusSet: number
@@ -64,6 +68,7 @@ export type AutoAcceptDecisionMinAggregateInputType = {
   id?: true
   agencyId?: true
   uploadedDocumentId?: true
+  returnReason?: true
   fullNameOutcome?: true
   dateOfBirthOutcome?: true
   instanceStatusSet?: true
@@ -74,6 +79,7 @@ export type AutoAcceptDecisionMaxAggregateInputType = {
   id?: true
   agencyId?: true
   uploadedDocumentId?: true
+  returnReason?: true
   fullNameOutcome?: true
   dateOfBirthOutcome?: true
   instanceStatusSet?: true
@@ -85,6 +91,7 @@ export type AutoAcceptDecisionCountAggregateInputType = {
   agencyId?: true
   uploadedDocumentId?: true
   staffReasons?: true
+  returnReason?: true
   fullNameOutcome?: true
   dateOfBirthOutcome?: true
   instanceStatusSet?: true
@@ -169,6 +176,7 @@ export type AutoAcceptDecisionGroupByOutputType = {
   agencyId: string
   uploadedDocumentId: string
   staffReasons: $Enums.AutoAcceptStaffReason[]
+  returnReason: string | null
   fullNameOutcome: $Enums.IdentityOutcome
   dateOfBirthOutcome: $Enums.IdentityOutcome
   instanceStatusSet: $Enums.InstanceStatus | null
@@ -201,6 +209,7 @@ export type AutoAcceptDecisionWhereInput = {
   agencyId?: Prisma.StringFilter<"AutoAcceptDecision"> | string
   uploadedDocumentId?: Prisma.StringFilter<"AutoAcceptDecision"> | string
   staffReasons?: Prisma.EnumAutoAcceptStaffReasonNullableListFilter<"AutoAcceptDecision">
+  returnReason?: Prisma.StringNullableFilter<"AutoAcceptDecision"> | string | null
   fullNameOutcome?: Prisma.EnumIdentityOutcomeFilter<"AutoAcceptDecision"> | $Enums.IdentityOutcome
   dateOfBirthOutcome?: Prisma.EnumIdentityOutcomeFilter<"AutoAcceptDecision"> | $Enums.IdentityOutcome
   instanceStatusSet?: Prisma.EnumInstanceStatusNullableFilter<"AutoAcceptDecision"> | $Enums.InstanceStatus | null
@@ -213,6 +222,7 @@ export type AutoAcceptDecisionOrderByWithRelationInput = {
   agencyId?: Prisma.SortOrder
   uploadedDocumentId?: Prisma.SortOrder
   staffReasons?: Prisma.SortOrder
+  returnReason?: Prisma.SortOrderInput | Prisma.SortOrder
   fullNameOutcome?: Prisma.SortOrder
   dateOfBirthOutcome?: Prisma.SortOrder
   instanceStatusSet?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -229,6 +239,7 @@ export type AutoAcceptDecisionWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.AutoAcceptDecisionWhereInput | Prisma.AutoAcceptDecisionWhereInput[]
   agencyId?: Prisma.StringFilter<"AutoAcceptDecision"> | string
   staffReasons?: Prisma.EnumAutoAcceptStaffReasonNullableListFilter<"AutoAcceptDecision">
+  returnReason?: Prisma.StringNullableFilter<"AutoAcceptDecision"> | string | null
   fullNameOutcome?: Prisma.EnumIdentityOutcomeFilter<"AutoAcceptDecision"> | $Enums.IdentityOutcome
   dateOfBirthOutcome?: Prisma.EnumIdentityOutcomeFilter<"AutoAcceptDecision"> | $Enums.IdentityOutcome
   instanceStatusSet?: Prisma.EnumInstanceStatusNullableFilter<"AutoAcceptDecision"> | $Enums.InstanceStatus | null
@@ -241,6 +252,7 @@ export type AutoAcceptDecisionOrderByWithAggregationInput = {
   agencyId?: Prisma.SortOrder
   uploadedDocumentId?: Prisma.SortOrder
   staffReasons?: Prisma.SortOrder
+  returnReason?: Prisma.SortOrderInput | Prisma.SortOrder
   fullNameOutcome?: Prisma.SortOrder
   dateOfBirthOutcome?: Prisma.SortOrder
   instanceStatusSet?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -258,6 +270,7 @@ export type AutoAcceptDecisionScalarWhereWithAggregatesInput = {
   agencyId?: Prisma.StringWithAggregatesFilter<"AutoAcceptDecision"> | string
   uploadedDocumentId?: Prisma.StringWithAggregatesFilter<"AutoAcceptDecision"> | string
   staffReasons?: Prisma.EnumAutoAcceptStaffReasonNullableListFilter<"AutoAcceptDecision">
+  returnReason?: Prisma.StringNullableWithAggregatesFilter<"AutoAcceptDecision"> | string | null
   fullNameOutcome?: Prisma.EnumIdentityOutcomeWithAggregatesFilter<"AutoAcceptDecision"> | $Enums.IdentityOutcome
   dateOfBirthOutcome?: Prisma.EnumIdentityOutcomeWithAggregatesFilter<"AutoAcceptDecision"> | $Enums.IdentityOutcome
   instanceStatusSet?: Prisma.EnumInstanceStatusNullableWithAggregatesFilter<"AutoAcceptDecision"> | $Enums.InstanceStatus | null
@@ -267,6 +280,7 @@ export type AutoAcceptDecisionScalarWhereWithAggregatesInput = {
 export type AutoAcceptDecisionCreateInput = {
   id?: string
   staffReasons?: Prisma.AutoAcceptDecisionCreatestaffReasonsInput | $Enums.AutoAcceptStaffReason[]
+  returnReason?: string | null
   fullNameOutcome: $Enums.IdentityOutcome
   dateOfBirthOutcome: $Enums.IdentityOutcome
   instanceStatusSet?: $Enums.InstanceStatus | null
@@ -279,6 +293,7 @@ export type AutoAcceptDecisionUncheckedCreateInput = {
   agencyId: string
   uploadedDocumentId: string
   staffReasons?: Prisma.AutoAcceptDecisionCreatestaffReasonsInput | $Enums.AutoAcceptStaffReason[]
+  returnReason?: string | null
   fullNameOutcome: $Enums.IdentityOutcome
   dateOfBirthOutcome: $Enums.IdentityOutcome
   instanceStatusSet?: $Enums.InstanceStatus | null
@@ -288,6 +303,7 @@ export type AutoAcceptDecisionUncheckedCreateInput = {
 export type AutoAcceptDecisionUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   staffReasons?: Prisma.AutoAcceptDecisionUpdatestaffReasonsInput | $Enums.AutoAcceptStaffReason[]
+  returnReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fullNameOutcome?: Prisma.EnumIdentityOutcomeFieldUpdateOperationsInput | $Enums.IdentityOutcome
   dateOfBirthOutcome?: Prisma.EnumIdentityOutcomeFieldUpdateOperationsInput | $Enums.IdentityOutcome
   instanceStatusSet?: Prisma.NullableEnumInstanceStatusFieldUpdateOperationsInput | $Enums.InstanceStatus | null
@@ -300,6 +316,7 @@ export type AutoAcceptDecisionUncheckedUpdateInput = {
   agencyId?: Prisma.StringFieldUpdateOperationsInput | string
   uploadedDocumentId?: Prisma.StringFieldUpdateOperationsInput | string
   staffReasons?: Prisma.AutoAcceptDecisionUpdatestaffReasonsInput | $Enums.AutoAcceptStaffReason[]
+  returnReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fullNameOutcome?: Prisma.EnumIdentityOutcomeFieldUpdateOperationsInput | $Enums.IdentityOutcome
   dateOfBirthOutcome?: Prisma.EnumIdentityOutcomeFieldUpdateOperationsInput | $Enums.IdentityOutcome
   instanceStatusSet?: Prisma.NullableEnumInstanceStatusFieldUpdateOperationsInput | $Enums.InstanceStatus | null
@@ -311,6 +328,7 @@ export type AutoAcceptDecisionCreateManyInput = {
   agencyId: string
   uploadedDocumentId: string
   staffReasons?: Prisma.AutoAcceptDecisionCreatestaffReasonsInput | $Enums.AutoAcceptStaffReason[]
+  returnReason?: string | null
   fullNameOutcome: $Enums.IdentityOutcome
   dateOfBirthOutcome: $Enums.IdentityOutcome
   instanceStatusSet?: $Enums.InstanceStatus | null
@@ -320,6 +338,7 @@ export type AutoAcceptDecisionCreateManyInput = {
 export type AutoAcceptDecisionUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   staffReasons?: Prisma.AutoAcceptDecisionUpdatestaffReasonsInput | $Enums.AutoAcceptStaffReason[]
+  returnReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fullNameOutcome?: Prisma.EnumIdentityOutcomeFieldUpdateOperationsInput | $Enums.IdentityOutcome
   dateOfBirthOutcome?: Prisma.EnumIdentityOutcomeFieldUpdateOperationsInput | $Enums.IdentityOutcome
   instanceStatusSet?: Prisma.NullableEnumInstanceStatusFieldUpdateOperationsInput | $Enums.InstanceStatus | null
@@ -331,6 +350,7 @@ export type AutoAcceptDecisionUncheckedUpdateManyInput = {
   agencyId?: Prisma.StringFieldUpdateOperationsInput | string
   uploadedDocumentId?: Prisma.StringFieldUpdateOperationsInput | string
   staffReasons?: Prisma.AutoAcceptDecisionUpdatestaffReasonsInput | $Enums.AutoAcceptStaffReason[]
+  returnReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fullNameOutcome?: Prisma.EnumIdentityOutcomeFieldUpdateOperationsInput | $Enums.IdentityOutcome
   dateOfBirthOutcome?: Prisma.EnumIdentityOutcomeFieldUpdateOperationsInput | $Enums.IdentityOutcome
   instanceStatusSet?: Prisma.NullableEnumInstanceStatusFieldUpdateOperationsInput | $Enums.InstanceStatus | null
@@ -360,6 +380,7 @@ export type AutoAcceptDecisionCountOrderByAggregateInput = {
   agencyId?: Prisma.SortOrder
   uploadedDocumentId?: Prisma.SortOrder
   staffReasons?: Prisma.SortOrder
+  returnReason?: Prisma.SortOrder
   fullNameOutcome?: Prisma.SortOrder
   dateOfBirthOutcome?: Prisma.SortOrder
   instanceStatusSet?: Prisma.SortOrder
@@ -370,6 +391,7 @@ export type AutoAcceptDecisionMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   agencyId?: Prisma.SortOrder
   uploadedDocumentId?: Prisma.SortOrder
+  returnReason?: Prisma.SortOrder
   fullNameOutcome?: Prisma.SortOrder
   dateOfBirthOutcome?: Prisma.SortOrder
   instanceStatusSet?: Prisma.SortOrder
@@ -380,6 +402,7 @@ export type AutoAcceptDecisionMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   agencyId?: Prisma.SortOrder
   uploadedDocumentId?: Prisma.SortOrder
+  returnReason?: Prisma.SortOrder
   fullNameOutcome?: Prisma.SortOrder
   dateOfBirthOutcome?: Prisma.SortOrder
   instanceStatusSet?: Prisma.SortOrder
@@ -438,6 +461,7 @@ export type NullableEnumInstanceStatusFieldUpdateOperationsInput = {
 export type AutoAcceptDecisionCreateWithoutUploadedDocumentInput = {
   id?: string
   staffReasons?: Prisma.AutoAcceptDecisionCreatestaffReasonsInput | $Enums.AutoAcceptStaffReason[]
+  returnReason?: string | null
   fullNameOutcome: $Enums.IdentityOutcome
   dateOfBirthOutcome: $Enums.IdentityOutcome
   instanceStatusSet?: $Enums.InstanceStatus | null
@@ -447,6 +471,7 @@ export type AutoAcceptDecisionCreateWithoutUploadedDocumentInput = {
 export type AutoAcceptDecisionUncheckedCreateWithoutUploadedDocumentInput = {
   id?: string
   staffReasons?: Prisma.AutoAcceptDecisionCreatestaffReasonsInput | $Enums.AutoAcceptStaffReason[]
+  returnReason?: string | null
   fullNameOutcome: $Enums.IdentityOutcome
   dateOfBirthOutcome: $Enums.IdentityOutcome
   instanceStatusSet?: $Enums.InstanceStatus | null
@@ -472,6 +497,7 @@ export type AutoAcceptDecisionUpdateToOneWithWhereWithoutUploadedDocumentInput =
 export type AutoAcceptDecisionUpdateWithoutUploadedDocumentInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   staffReasons?: Prisma.AutoAcceptDecisionUpdatestaffReasonsInput | $Enums.AutoAcceptStaffReason[]
+  returnReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fullNameOutcome?: Prisma.EnumIdentityOutcomeFieldUpdateOperationsInput | $Enums.IdentityOutcome
   dateOfBirthOutcome?: Prisma.EnumIdentityOutcomeFieldUpdateOperationsInput | $Enums.IdentityOutcome
   instanceStatusSet?: Prisma.NullableEnumInstanceStatusFieldUpdateOperationsInput | $Enums.InstanceStatus | null
@@ -481,6 +507,7 @@ export type AutoAcceptDecisionUpdateWithoutUploadedDocumentInput = {
 export type AutoAcceptDecisionUncheckedUpdateWithoutUploadedDocumentInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   staffReasons?: Prisma.AutoAcceptDecisionUpdatestaffReasonsInput | $Enums.AutoAcceptStaffReason[]
+  returnReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fullNameOutcome?: Prisma.EnumIdentityOutcomeFieldUpdateOperationsInput | $Enums.IdentityOutcome
   dateOfBirthOutcome?: Prisma.EnumIdentityOutcomeFieldUpdateOperationsInput | $Enums.IdentityOutcome
   instanceStatusSet?: Prisma.NullableEnumInstanceStatusFieldUpdateOperationsInput | $Enums.InstanceStatus | null
@@ -494,6 +521,7 @@ export type AutoAcceptDecisionSelect<ExtArgs extends runtime.Types.Extensions.In
   agencyId?: boolean
   uploadedDocumentId?: boolean
   staffReasons?: boolean
+  returnReason?: boolean
   fullNameOutcome?: boolean
   dateOfBirthOutcome?: boolean
   instanceStatusSet?: boolean
@@ -506,6 +534,7 @@ export type AutoAcceptDecisionSelectCreateManyAndReturn<ExtArgs extends runtime.
   agencyId?: boolean
   uploadedDocumentId?: boolean
   staffReasons?: boolean
+  returnReason?: boolean
   fullNameOutcome?: boolean
   dateOfBirthOutcome?: boolean
   instanceStatusSet?: boolean
@@ -518,6 +547,7 @@ export type AutoAcceptDecisionSelectUpdateManyAndReturn<ExtArgs extends runtime.
   agencyId?: boolean
   uploadedDocumentId?: boolean
   staffReasons?: boolean
+  returnReason?: boolean
   fullNameOutcome?: boolean
   dateOfBirthOutcome?: boolean
   instanceStatusSet?: boolean
@@ -530,13 +560,14 @@ export type AutoAcceptDecisionSelectScalar = {
   agencyId?: boolean
   uploadedDocumentId?: boolean
   staffReasons?: boolean
+  returnReason?: boolean
   fullNameOutcome?: boolean
   dateOfBirthOutcome?: boolean
   instanceStatusSet?: boolean
   decidedAt?: boolean
 }
 
-export type AutoAcceptDecisionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "agencyId" | "uploadedDocumentId" | "staffReasons" | "fullNameOutcome" | "dateOfBirthOutcome" | "instanceStatusSet" | "decidedAt", ExtArgs["result"]["autoAcceptDecision"]>
+export type AutoAcceptDecisionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "agencyId" | "uploadedDocumentId" | "staffReasons" | "returnReason" | "fullNameOutcome" | "dateOfBirthOutcome" | "instanceStatusSet" | "decidedAt", ExtArgs["result"]["autoAcceptDecision"]>
 export type AutoAcceptDecisionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   uploadedDocument?: boolean | Prisma.UploadedDocumentDefaultArgs<ExtArgs>
 }
@@ -557,6 +588,7 @@ export type $AutoAcceptDecisionPayload<ExtArgs extends runtime.Types.Extensions.
     agencyId: string
     uploadedDocumentId: string
     staffReasons: $Enums.AutoAcceptStaffReason[]
+    returnReason: string | null
     fullNameOutcome: $Enums.IdentityOutcome
     dateOfBirthOutcome: $Enums.IdentityOutcome
     instanceStatusSet: $Enums.InstanceStatus | null
@@ -989,6 +1021,7 @@ export interface AutoAcceptDecisionFieldRefs {
   readonly agencyId: Prisma.FieldRef<"AutoAcceptDecision", 'String'>
   readonly uploadedDocumentId: Prisma.FieldRef<"AutoAcceptDecision", 'String'>
   readonly staffReasons: Prisma.FieldRef<"AutoAcceptDecision", 'AutoAcceptStaffReason[]'>
+  readonly returnReason: Prisma.FieldRef<"AutoAcceptDecision", 'String'>
   readonly fullNameOutcome: Prisma.FieldRef<"AutoAcceptDecision", 'IdentityOutcome'>
   readonly dateOfBirthOutcome: Prisma.FieldRef<"AutoAcceptDecision", 'IdentityOutcome'>
   readonly instanceStatusSet: Prisma.FieldRef<"AutoAcceptDecision", 'InstanceStatus'>

@@ -11,6 +11,7 @@ import type {
   StalledSigning,
 } from '@/domain/documents/exception-queue'
 import type { JudgeStaffReason } from '@/domain/documents/judge-review'
+import type { ReturnReason } from '@/domain/documents/review-outcome'
 import {
   type CaregiverNoticeStatus,
   QUEUE_DECISIONS,
@@ -31,7 +32,7 @@ import { DecideException } from './decide-exception'
 const AUTO_ACCEPT_REASON_COPY: Record<AutoAcceptStaffReason, string> = {
   MANUAL_ONLY: 'The law assigns this check to a person.',
   EXTRACTION_NOT_CONFIDENT: 'The document was not read clearly enough.',
-  IDENTITY_NOT_MATCHED: 'Name or date of birth does not agree with intake.',
+  IDENTITY_NOT_MATCHED: 'Name or date of birth could not be confirmed against intake.',
   JUDGE_NOT_RUN: 'The judge step did not run.',
   JUDGE_NOT_PASSED: 'The judge step did not pass.',
 }
@@ -71,6 +72,13 @@ const SIGNING_STEP_COPY: Record<SigningStep, string> = {
 const RETURN_COPY: Record<ReturnDecision, string> = {
   REJECTED: 'A different document',
   REUPLOAD_REQUESTED: 'A clearer photo',
+}
+
+const AUTO_RETURN_COPY: Record<ReturnReason, string> = {
+  UNREADABLE: 'A clearer photo: the document could not be read',
+  EXPIRED: 'A current document: this one has expired',
+  NAME_NOT_FOUND: 'One showing their name: it was not found on this one',
+  DOB_DIFFERS: 'One with their date of birth: this one differs from intake',
 }
 
 const NOTICE_COPY: Record<CaregiverNoticeStatus, string> = {
@@ -113,6 +121,7 @@ function failureDetail(item: FlaggedDocument, reason: AutoAcceptStaffReason): st
 function WhatFailed({ item }: { item: FlaggedDocument }) {
   const { outcome } = item.autoAccept
   const reasons = outcome.kind === 'STAFF' ? outcome.reasons : []
+  if (reasons.length === 0) return <>All automatic checks passed.</>
   return (
     <ul className="flex flex-col gap-1">
       {reasons.map((reason) => {
@@ -163,8 +172,6 @@ const FLAGGED_COLUMNS: ReadonlyArray<Column<FlaggedDocument>> = [
   { key: 'judge', header: "Judge's reasoning", cell: (item) => <JudgeReasoningCell item={item} /> },
 ]
 
-type Returned = FlaggedDocument & { readonly returned: ReturnedToCaregiver }
-
 function RetryForm({ jobId }: { jobId: string }) {
   return (
     <form action={retryStoppedJobAction}>
@@ -176,7 +183,15 @@ function RetryForm({ jobId }: { jobId: string }) {
   )
 }
 
-function NoticeCell({ returned, canRetry }: { returned: ReturnedToCaregiver; canRetry: boolean }) {
+function askedFor(item: FlaggedDocument): string {
+  if (item.returned !== null) return RETURN_COPY[item.returned.decision]
+  const { outcome } = item.autoAccept
+  return outcome.kind === 'RETURN' ? AUTO_RETURN_COPY[outcome.reason] : ''
+}
+
+function NoticeCell({ returned, canRetry }: { returned: ReturnedToCaregiver | null; canRetry: boolean }) {
+  // Returned by the automatic checks: the caregiver is told by text, not by the email notice.
+  if (returned === null) return <>By text</>
   if (returned.stoppedNoticeJobId === null) return <>{NOTICE_COPY[returned.notice]}</>
   return (
     <span className="flex flex-wrap items-center gap-2">
@@ -213,8 +228,10 @@ export default async function ExceptionQueuePage() {
   const queue = await runAsPrincipal(principal, {}, () => getExceptionQueue({}))
   const canDecide = can(principal, 'exceptionQueue.decide')
   const canWaive = can(principal, 'requirement.waive')
-  const needsDecision = queue.flagged.filter((item) => item.returned === null)
-  const waiting = queue.flagged.filter((item): item is Returned => item.returned !== null)
+  // Only a document the checks sent to staff is decided; one they returned waits on the caregiver (ADR-164).
+  const awaitsStaff = (item: FlaggedDocument) => item.autoAccept.outcome.kind === 'STAFF' && item.returned === null
+  const needsDecision = queue.flagged.filter(awaitsStaff)
+  const waiting = queue.flagged.filter((item) => !awaitsStaff(item))
 
   const flaggedColumns: ReadonlyArray<Column<FlaggedDocument>> = canDecide
     ? [
@@ -235,18 +252,22 @@ export default async function ExceptionQueuePage() {
         },
       ]
     : FLAGGED_COLUMNS
-  const waitingColumns: ReadonlyArray<Column<Returned>> = [
+  const waitingColumns: ReadonlyArray<Column<FlaggedDocument>> = [
     { key: 'caregiver', header: 'Caregiver', cell: caregiverLink },
     { key: 'requirement', header: 'Requirement', cell: (item) => item.requirementName },
-    { key: 'returned', header: 'Returned', cell: (item) => DATE.format(item.returned.decidedAt) },
-    { key: 'askedFor', header: 'Asked for', cell: (item) => RETURN_COPY[item.returned.decision] },
-    { key: 'email', header: 'Email', cell: (item) => <NoticeCell returned={item.returned} canRetry={canDecide} /> },
+    {
+      key: 'returned',
+      header: 'Returned',
+      cell: (item) => DATE.format(item.returned?.decidedAt ?? item.flaggedAt),
+    },
+    { key: 'askedFor', header: 'Asked for', cell: askedFor },
+    { key: 'notice', header: 'Told', cell: (item) => <NoticeCell returned={item.returned} canRetry={canDecide} /> },
     ...(canWaive
       ? [
           {
             key: 'waive',
             header: 'Waive',
-            cell: (item: Returned) => (
+            cell: (item: FlaggedDocument) => (
               <DecideException
                 instanceId={item.instanceId}
                 uploadedDocumentId={item.uploadedDocumentId}
@@ -267,7 +288,7 @@ export default async function ExceptionQueuePage() {
     <>
       <PageHeader
         title="Exception queue"
-        description="Documents automatic review sent to staff, with what failed and the judge's reasoning."
+        description="Documents waiting on a staff decision or on the caregiver, with what failed and the judge's reasoning."
       />
       <div className="flex flex-col gap-8">
         <section aria-labelledby="flagged">
