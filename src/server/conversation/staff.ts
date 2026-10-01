@@ -4,31 +4,18 @@ import { runInAuditedTransaction } from '@/db/audit'
 import type { MessageRow } from '@/db/repositories/conversations'
 import {
   findConversation,
-  listConversations,
   listMessages,
   lockConversation,
   updateConversation,
 } from '@/db/repositories/conversations'
 import { redactSsn } from '@/domain/conversation/redact'
 import { MAX_UNCLEAR_REPLIES } from '@/domain/conversation/step'
-import type { PipelineStage } from '@/domain/pipeline/stage'
 import type { UseCase } from '@/server/auth/policy'
 import { defineUseCase } from '@/server/auth/policy'
 import { enqueueNudge } from './nudge-job'
 import { sendAgentText } from './send'
 
 const TRANSCRIPT_LIMIT = 200
-
-export type ConversationSummary = {
-  readonly caregiverId: string
-  readonly caregiverName: string
-  readonly stage: PipelineStage
-  readonly lastMessage: string
-  readonly lastMessageAt: Date
-  readonly paused: boolean
-  readonly handedOff: boolean
-  readonly needsReply: boolean
-}
 
 export const viewConversation: UseCase<
   { readonly caregiverId: string },
@@ -50,17 +37,6 @@ export const viewConversation: UseCase<
     messages: await listMessages(principal.agencyId, conversation.id, TRANSCRIPT_LIMIT),
   }
 })
-
-export const listConversationsForStaff: UseCase<Record<string, never>, readonly ConversationSummary[]> =
-  defineUseCase('conversation.manage', async ({ principal }) => {
-    const rows = await listConversations(principal.agencyId)
-    return rows.map(({ unclearCount, pausedAt, needsReplyAt, ...row }) => ({
-      ...row,
-      paused: pausedAt !== null,
-      handedOff: unclearCount >= MAX_UNCLEAR_REPLIES,
-      needsReply: needsReplyAt !== null,
-    }))
-  })
 
 export const setConversationPaused: UseCase<
   { readonly caregiverId: string; readonly paused: boolean },

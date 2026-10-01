@@ -9,7 +9,7 @@ launch requirements, not hardening to do later.
 | --- | --- | --- |
 | `CAREGIVER` | Own record only, including own medical answers | Any other caregiver |
 | `COORDINATOR` | All caregivers in the agency; pipeline, documents, exceptions | Medical detail, EEOC, unmasked SSN/bank without a logged reason |
-| `SUPERVISOR` | Clearance view; medical **results** needed for clearance (pass/fail + date) | Medical questionnaire detail, EEOC, payroll |
+| `SUPERVISOR` | Pipeline and the caregiver page (ADR-167), without the sensitive fields; medical **results** needed for clearance (pass/fail + date) | Medical questionnaire detail, EEOC, payroll, the masked SSN/bank fields |
 | `AGENCY_ADMIN` | Configuration, users, reports | Medical detail, EEOC individual rows |
 | `IMPLEMENTATION` | Configuration only — templates, field mapping. Every action audited | Caregiver records |
 

@@ -3469,3 +3469,25 @@ Alvita's staff, on Alvita's portal).
 
 **Consequence.** ADR-125's vendor ordering still holds for NY. `TB_TEST` is deliberately not a
 health-screening key, so a staff approval satisfies it.
+
+## ADR-167 — Clearance and conversations live on the caregiver page; supervisors see the pipeline  (2026-10-01, admin UI)
+
+**Decision.** The Clearance and Conversations tabs are removed. The clearance sheet (readiness,
+evidence, health-screening results, sign-off) is part of `/caregivers/[id]`, and the pipeline shows
+each caregiver's Needs reply, Handed off and Paused flags to roles with `conversation.manage`.
+`SUPERVISOR` gains `pipeline.view` and `caregiver.view`, and `ROLE_ACCESS.CAREGIVER_RECORD` widens
+to match; every other `CAREGIVER_RECORD` action keeps its own role list. The caregiver page shows
+the sensitive-field section only to `caregiverField.reveal` roles. The page writes one VIEW, through
+`getCaregiverDetail`; `getClearanceSheet` no longer writes its own.
+
+**Because.** The product owner found the two tabs redundant with opening a caregiver from the
+pipeline. A supervisor could reach sign-off only through the Clearance tab, so removing it meant
+giving them the pipeline and the caregiver page.
+
+**Rejected.** A Clearance tab kept for supervisors only (the owner preferred one screen for every
+role). Dropping the needs-reply list with nothing in its place (a waiting caregiver would go
+unnoticed).
+
+**Consequence.** Supervisors now see caregiver names, contact details, invite and e-signature status.
+They still cannot reveal or see masked fields, manage conversations, withdraw, or record checks.
+Supersedes OPEN-QUESTIONS 186 (the Clearance list's scope).

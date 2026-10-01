@@ -10,6 +10,11 @@ export type PipelineBoardRow = {
   readonly legalFirstName: string | null
   readonly legalLastName: string | null
   readonly instances: readonly BlockerCandidate[]
+  readonly conversation: {
+    readonly unclearCount: number
+    readonly pausedAt: Date | null
+    readonly needsReplyAt: Date | null
+  } | null
 }
 
 // IdentityRecord is sensitive-tier: only the two plaintext name columns are selected, never an
@@ -30,6 +35,7 @@ export async function findPipelineBoardRows(
         take: 1,
         select: { occurredAt: true },
       },
+      conversation: { select: { unclearCount: true, pausedAt: true, needsReplyAt: true } },
       requirementInstances: {
         select: {
           templateKey: true,
@@ -53,5 +59,6 @@ export async function findPipelineBoardRows(
       name: instance.template.name,
       blocksClearance: instance.template.blocksClearance,
     })),
+    conversation: row.conversation,
   }))
 }

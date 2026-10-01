@@ -1,7 +1,6 @@
 import type { EnvelopeStatus } from '@/domain/documents/envelope'
 import type { InviteStatus } from '@/domain/pipeline/invite'
 import type { PipelineStage } from '@/domain/pipeline/stage'
-import type { BlockerCandidate } from '@/domain/requirements/blocker'
 import type { AuditedTx } from '../audit'
 
 type CaregiverDetailRow = {
@@ -16,7 +15,6 @@ type CaregiverDetailRow = {
   readonly bankAccountLast4: string | null
   readonly mobilePhone: string | null
   readonly email: string | null
-  readonly instances: readonly BlockerCandidate[]
   readonly latestInvite: {
     readonly status: InviteStatus
     readonly reason: string | null
@@ -53,14 +51,6 @@ export async function findCaregiverDetail(
         take: 1,
         select: { occurredAt: true },
       },
-      requirementInstances: {
-        orderBy: { templateKey: 'asc' },
-        select: {
-          templateKey: true,
-          status: true,
-          template: { select: { name: true, blocksClearance: true } },
-        },
-      },
       invites: {
         orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
         take: 1,
@@ -87,12 +77,6 @@ export async function findCaregiverDetail(
     bankAccountLast4: row.payrollInputs?.bankAccountLast4 ?? null,
     mobilePhone: row.contact?.mobilePhone ?? null,
     email: row.contact?.email ?? null,
-    instances: row.requirementInstances.map((instance) => ({
-      templateKey: instance.templateKey,
-      status: instance.status,
-      name: instance.template.name,
-      blocksClearance: instance.template.blocksClearance,
-    })),
     latestInvite: row.invites[0] ?? null,
     latestEnvelope: row.envelopes[0] ?? null,
   }

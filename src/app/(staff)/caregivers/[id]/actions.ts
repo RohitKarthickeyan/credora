@@ -13,9 +13,14 @@ import type { ResendInviteResult } from '@/server/caregivers/resend-invite'
 import { resendInvite } from '@/server/caregivers/resend-invite'
 import { completeBackgroundCheck } from '@/server/verification/complete-background-check'
 import { revealSensitiveField } from '@/server/caregivers/reveal-sensitive-field'
+import { type SignOffResult, signOffClearance } from '@/server/clearance/sign-off'
 import { sendStaffText, setConversationPaused } from '@/server/conversation/staff'
 import type { VoidEnvelopeResult } from '@/server/forms/void-envelope'
 import { voidEnvelope } from '@/server/forms/void-envelope'
+import {
+  type RecordHealthScreeningResultResult,
+  recordHealthScreeningResult,
+} from '@/server/verification/health-screening'
 
 type ResendInviteState = { readonly error?: string; readonly sent?: true }
 export type CorrectEmailState = {
@@ -182,6 +187,53 @@ export async function completeBackgroundCheckAction(
 
   const result = await runAsPrincipal(principal, {}, () => completeBackgroundCheck({ caregiverId }))
   if (!result.ok) return { error: COMPLETE_CHECK_REFUSALS[result.reason] }
+
+  revalidatePath(`/caregivers/${caregiverId}`)
+  return {}
+}
+
+type SignOffState = { readonly error?: string }
+
+const SIGN_OFF_REFUSALS: Record<Extract<SignOffResult, { ok: false }>['reason'], string> = {
+  NO_REQUIREMENTS: 'No requirements are assigned to this caregiver yet.',
+  BLOCKING_OUTSTANDING: 'A blocking requirement is no longer satisfied. Reload to see which.',
+  NOT_IN_CLEARANCE:
+    'This caregiver is not waiting for sign-off. They may already have been signed off or withdrawn.',
+}
+
+export async function signOffClearanceAction(_previous: SignOffState, formData: FormData): Promise<SignOffState> {
+  const { principal } = await requireStaffSession()
+  const caregiverId = text(formData, 'caregiverId')
+
+  const result = await runAsPrincipal(principal, {}, () => signOffClearance({ caregiverId }))
+  if (!result.ok) return { error: SIGN_OFF_REFUSALS[result.reason] }
+
+  revalidatePath(`/caregivers/${caregiverId}`)
+  return {}
+}
+
+type RecordResultState = { readonly error?: string }
+
+const RESULT_REFUSALS: Record<Extract<RecordHealthScreeningResultResult, { ok: false }>['reason'], string> = {
+  NOT_AWAITING_RESULT: 'This requirement is not waiting for a result. Reload to see its status.',
+  CAREGIVER_WITHDRAWN: 'This caregiver has been withdrawn.',
+}
+
+export async function recordHealthScreeningResultAction(
+  _previous: RecordResultState,
+  formData: FormData,
+): Promise<RecordResultState> {
+  const { principal } = await requireStaffSession()
+  const caregiverId = text(formData, 'caregiverId')
+
+  const result = await runAsPrincipal(principal, {}, () =>
+    recordHealthScreeningResult({
+      instanceId: text(formData, 'instanceId'),
+      outcome: text(formData, 'outcome'),
+      resultedOn: text(formData, 'resultedOn'),
+    }),
+  )
+  if (!result.ok) return { error: RESULT_REFUSALS[result.reason] }
 
   revalidatePath(`/caregivers/${caregiverId}`)
   return {}

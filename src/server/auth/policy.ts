@@ -19,7 +19,8 @@ type ActionPolicy = {
 const ACTION_POLICIES = {
   'caregiver.viewOwn': { dataClass: 'OWN_RECORD', roles: ['CAREGIVER'], selfOnly: true },
   'caregiver.editOwn': { dataClass: 'OWN_RECORD', roles: ['CAREGIVER'], selfOnly: true },
-  'caregiver.view': { dataClass: 'CAREGIVER_RECORD', roles: ['COORDINATOR', 'AGENCY_ADMIN'] },
+  // The supervisor signs off from the caregiver page (ADR-167).
+  'caregiver.view': { dataClass: 'CAREGIVER_RECORD', roles: ['COORDINATOR', 'SUPERVISOR', 'AGENCY_ADMIN'] },
   'caregiverField.reveal': {
     dataClass: 'SENSITIVE_FIELD',
     roles: ['COORDINATOR', 'AGENCY_ADMIN'],
@@ -47,7 +48,7 @@ const ACTION_POLICIES = {
   },
   'user.manage': { dataClass: 'CONFIGURATION', roles: ['AGENCY_ADMIN'] },
   'issuerAllowlist.manage': { dataClass: 'CONFIGURATION', roles: ['AGENCY_ADMIN', 'IMPLEMENTATION'] },
-  'pipeline.view': { dataClass: 'CAREGIVER_RECORD', roles: ['COORDINATOR', 'AGENCY_ADMIN'] },
+  'pipeline.view': { dataClass: 'CAREGIVER_RECORD', roles: ['COORDINATOR', 'SUPERVISOR', 'AGENCY_ADMIN'] },
   'caregiver.invite': { dataClass: 'CAREGIVER_RECORD', roles: ['COORDINATOR', 'AGENCY_ADMIN'] },
   'caregiver.withdraw': { dataClass: 'CAREGIVER_RECORD', roles: ['COORDINATOR', 'AGENCY_ADMIN'] },
   'alayaCareMapping.manage': {

@@ -102,7 +102,7 @@ export default async function AlayaCarePreviewPage(props: PageProps<'/caregivers
       <PageHeader
         title="AlayaCare preview"
         description={preview.name ?? 'Name not yet provided'}
-        back={{ href: `/clearance/${id}`, label: 'Back to clearance' }}
+        back={{ href: `/caregivers/${id}`, label: 'Back to the caregiver' }}
       />
       <div className="flex flex-col gap-8">
         <p className="text-sm text-ink">

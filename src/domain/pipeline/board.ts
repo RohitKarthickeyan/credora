@@ -22,6 +22,11 @@ export type PipelineBoardEntry = {
   readonly stage: PipelineStage
   readonly daysInStage: number
   readonly blocker: CurrentBlocker | null
+  readonly conversation: {
+    readonly paused: boolean
+    readonly handedOff: boolean
+    readonly needsReply: boolean
+  } | null
 }
 
 export type PipelineBoardColumn = {

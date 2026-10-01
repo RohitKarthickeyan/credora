@@ -91,7 +91,7 @@ Offer accepted
   → app/(caregiver)/documents   upload → extraction port → domain/identity match → judge port
   → server/review.decide        auto-accept iff extraction + match + judge all pass
       ↳ else → exception queue (staff)
-  → app/(staff)/clearance       every requirement instance + status, supervisor signs off
+  → app/(staff)/caregivers/[id] every requirement instance + status, supervisor signs off
   → queue: sync.alayacare       mapped write, idempotent, logged
   → Active
 ```

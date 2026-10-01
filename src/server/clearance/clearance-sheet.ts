@@ -1,5 +1,5 @@
 import 'server-only'
-import { runInAuditedTransaction, writeAuditEntry } from '@/db/audit'
+import { runInAuditedTransaction } from '@/db/audit'
 import { findClearanceSheet } from '@/db/repositories/clearance'
 import { findSignedDocuments } from '@/db/repositories/signed-documents'
 import type { PipelineStage } from '@/domain/pipeline/stage'
@@ -36,22 +36,14 @@ type ClearanceSheet = {
 }
 
 // The agency is always the principal's, never the input's: can() is not an agency check (T-014).
-// One VIEW per open of a found record, none for an id that is not this agency's (ADR-094). Signed
-// copies are read after the transaction through the T-064 path, which uses the global client.
+// No audit entry: its one caller, the caregiver page, writes the open's VIEW through
+// getCaregiverDetail (ADR-094, ADR-167). Signed copies are read after the transaction through the
+// T-064 path, which uses the global client.
 export const getClearanceSheet: UseCase<{ readonly caregiverId: string }, ClearanceSheet | null> =
   defineUseCase('clearance.view', async ({ principal, input }) => {
-    const row = await runInAuditedTransaction(async (tx) => {
-      const sheet = await findClearanceSheet(tx, principal.agencyId, input.caregiverId)
-      if (sheet === null) return null
-
-      await writeAuditEntry(tx, {
-        agencyId: principal.agencyId,
-        action: 'VIEW',
-        entityType: 'CAREGIVER',
-        entityId: sheet.caregiverId,
-      })
-      return sheet
-    })
+    const row = await runInAuditedTransaction((tx) =>
+      findClearanceSheet(tx, principal.agencyId, input.caregiverId),
+    )
     if (row === null) return null
 
     // clearance.view includes the agency admin, who holds no medical result.

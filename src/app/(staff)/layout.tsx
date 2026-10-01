@@ -20,10 +20,8 @@ export default async function StaffLayout({ children }: LayoutProps<'/'>) {
           Credora
         </Link>
         {can(principal, 'pipeline.view') ? <NavLink href="/pipeline">Pipeline</NavLink> : null}
-        {can(principal, 'conversation.manage') ? <NavLink href="/conversations">Conversations</NavLink> : null}
         {can(principal, 'exceptionQueue.view') ? <NavLink href="/queue">Exceptions</NavLink> : null}
         {can(principal, 'manualCheck.list') ? <NavLink href="/checks">Staff checks</NavLink> : null}
-        {can(principal, 'clearance.view') ? <NavLink href="/clearance">Clearance</NavLink> : null}
         {can(principal, 'alayaCareSync.view') ? <NavLink href="/sync">AlayaCare conflicts</NavLink> : null}
         {can(principal, 'training.view') ? <NavLink href="/training">Training</NavLink> : null}
         {can(principal, 'weeklySample.view') ? <NavLink href="/sample">Weekly sample</NavLink> : null}

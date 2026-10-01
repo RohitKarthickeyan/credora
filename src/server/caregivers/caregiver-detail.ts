@@ -7,8 +7,6 @@ import { daysInStage } from '@/domain/pipeline/board'
 import type { InviteCancelReason, InviteStatus } from '@/domain/pipeline/invite'
 import { INVITE_CANCEL_REASONS } from '@/domain/pipeline/invite'
 import type { PipelineStage } from '@/domain/pipeline/stage'
-import type { BlockerCandidate, CurrentBlocker } from '@/domain/requirements/blocker'
-import { currentBlocker } from '@/domain/requirements/blocker'
 import type { UseCase } from '@/server/auth/policy'
 import { defineUseCase } from '@/server/auth/policy'
 
@@ -18,8 +16,6 @@ type CaregiverDetail = {
   readonly stage: PipelineStage
   readonly workState: string | null
   readonly daysInStage: number
-  readonly blocker: CurrentBlocker | null
-  readonly requirements: readonly BlockerCandidate[]
   readonly ssnLast4: string | null
   readonly bankAccountLast4: string | null
   readonly mobilePhone: string | null
@@ -59,8 +55,6 @@ export const getCaregiverDetail: UseCase<{ readonly caregiverId: string }, Careg
         stage: row.stage,
         workState: row.workState,
         daysInStage: daysInStage(row, new Date()),
-        blocker: currentBlocker(row.instances),
-        requirements: row.instances,
         ssnLast4: row.ssnLast4,
         bankAccountLast4: row.bankAccountLast4,
         mobilePhone: row.mobilePhone,

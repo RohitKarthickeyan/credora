@@ -164,7 +164,7 @@ Constraints that matter for this project:
 `DOCS/01-app/02-guides/server-actions.md`, `DOCS/01-app/03-api-reference/01-directives/use-server.md`
 
 ```ts
-// src/app/(staff)/clearance/actions.ts
+// src/app/(staff)/caregivers/[id]/actions.ts
 'use server'
 
 import { revalidatePath } from 'next/cache'

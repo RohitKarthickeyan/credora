@@ -19,15 +19,16 @@ const COLUMNS: ReadonlyArray<Column<PipelineBoardEntry>> = [
   {
     key: 'caregiver',
     header: 'Caregiver',
-    cell: (entry) => (
-      // No prefetch: rendering the record writes a VIEW audit entry nobody made (ADR-094).
-      <Link
-        href={`/caregivers/${entry.caregiverId}`}
-        prefetch={false}
-        className="font-medium text-brand-700 underline"
-      >
-        {entry.name ?? 'Name not yet provided'}
-      </Link>
+    cell: ({ caregiverId, name, conversation }) => (
+      <span className="flex flex-wrap items-center gap-2">
+        {/* No prefetch: rendering the record writes a VIEW audit entry nobody made (ADR-094). */}
+        <Link href={`/caregivers/${caregiverId}`} prefetch={false} className="font-medium text-brand-700 underline">
+          {name ?? 'Name not yet provided'}
+        </Link>
+        {conversation?.needsReply ? <StatusBadge tone="danger" label="Needs reply" glyph="alert" size="sm" /> : null}
+        {conversation?.handedOff ? <StatusBadge tone="danger" label="Handed off" glyph="alert" size="sm" /> : null}
+        {conversation?.paused ? <StatusBadge tone="warning" label="Paused" glyph="clock" size="sm" /> : null}
+      </span>
     ),
   },
   {
@@ -63,7 +64,7 @@ const WITHDRAW_COLUMN: Column<PipelineBoardEntry> = {
 
 export default async function PipelinePage() {
   const { principal } = await requireStaffSession()
-  // A 404 rather than a ForbiddenError: a supervisor is not told the page exists.
+  // A 404 rather than a ForbiddenError: a role without access is not told the page exists.
   if (!can(principal, 'pipeline.view')) notFound()
 
   const columns = await runAsPrincipal(principal, {}, () => getPipelineBoard({}))
