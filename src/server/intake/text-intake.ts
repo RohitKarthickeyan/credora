@@ -3,13 +3,14 @@ import { z } from 'zod'
 import { runInAuditedTransaction, writeAuditEntry } from '@/db/audit'
 import { readMessageSsn } from '@/db/mapping/message-ssn'
 import { createAttestation } from '@/db/repositories/attestations'
+import { findContactPreferences } from '@/db/repositories/contact-preferences'
 import { isEmailInUse } from '@/db/repositories/invites'
 import { applyPipelineTransition } from '@/db/repositories/pipeline-transitions'
 import {
-  type InstanceStatusChange,
   changeRequirementInstanceStatus,
   findRequirementInstances,
   linkEvidence,
+  requireStatusChanged,
 } from '@/db/repositories/requirement-instances'
 import { type TextIntakeWrite, writeTextIntakeField } from '@/db/repositories/text-intake'
 import type { TextIntakeField } from '@/domain/conversation/step'
@@ -79,7 +80,10 @@ export const saveTextIntakeField: UseCase<
       case 'email': {
         const parsed = emailSchema.safeParse(value)
         if (!parsed.success) return INVALID
-        if (await isEmailInUse(tx, agencyId, parsed.data)) return { ok: false, reason: 'EMAIL_IN_USE' }
+        const current = await findContactPreferences(tx, agencyId, caregiverId)
+        if (current?.email !== parsed.data && (await isEmailInUse(tx, agencyId, parsed.data))) {
+          return { ok: false, reason: 'EMAIL_IN_USE' }
+        }
         write = { field: 'email', value: parsed.data }
         break
       }
@@ -106,14 +110,6 @@ export const saveTextIntakeField: UseCase<
   }),
 )
 
-function requireChanged(change: InstanceStatusChange, instanceId: string): void {
-  if (!change.ok) {
-    throw new Error(
-      `Requirement instance ${instanceId} could not move ${change.from} → ${change.to} (${change.refusal}).`,
-    )
-  }
-}
-
 /** The caregiver's YES to the read-back: the text intake is attested, then the forms are sent. */
 export const confirmTextIntake: UseCase<
   { readonly caregiverId: string; readonly storage: StoragePort },
@@ -130,7 +126,7 @@ export const confirmTextIntake: UseCase<
   if (instance.status !== 'SATISFIED') {
     await runInAuditedTransaction(async (tx) => {
       if (instance.status === 'NOT_STARTED') {
-        requireChanged(await changeRequirementInstanceStatus(agencyId, instance.id, 'PENDING'), instance.id)
+        requireStatusChanged(await changeRequirementInstanceStatus(agencyId, instance.id, 'PENDING'), instance.id)
       }
       const attestation = await createAttestation(agencyId, caregiverId)
       const evidenceKey = intakeSubmittedEvidenceKey(key)
@@ -141,7 +137,7 @@ export const confirmTextIntake: UseCase<
       if (!link.ok) {
         throw new Error(`Requirement instance ${instance.id} does not accept ATTESTATION ${evidenceKey}.`)
       }
-      requireChanged(await changeRequirementInstanceStatus(agencyId, instance.id, 'SATISFIED'), instance.id)
+      requireStatusChanged(await changeRequirementInstanceStatus(agencyId, instance.id, 'SATISFIED'), instance.id)
       await writeAuditEntry(tx, {
         agencyId,
         action: 'EDIT',

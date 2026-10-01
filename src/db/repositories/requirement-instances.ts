@@ -39,6 +39,15 @@ export type InstanceStatusChange =
       readonly refusal: InstanceTransitionRefusal
     }
 
+/** For a caller that has just read the status: a refusal means a concurrent writer moved it. */
+export function requireStatusChanged(change: InstanceStatusChange, instanceId: string): void {
+  if (change.ok || (change.to === 'PENDING' && change.refusal === 'ALREADY_IN_STATUS')) return
+  throw new Error(
+    `Requirement instance ${instanceId} could not move ${change.from} → ${change.to} ` +
+      `(${change.refusal}); a concurrent writer changed it.`,
+  )
+}
+
 export type EvidenceSource =
   | { readonly kind: 'SIGNED_DOCUMENT'; readonly signedDocumentId: string }
   | { readonly kind: 'UPLOADED_DOCUMENT'; readonly uploadedDocumentId: string }

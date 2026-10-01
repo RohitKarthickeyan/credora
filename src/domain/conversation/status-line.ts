@@ -1,6 +1,5 @@
-import 'server-only'
-import { DOCUMENT_NAMES } from '@/domain/conversation/replies'
-import { type ConversationSnapshot, DEMO_DOCUMENTS, type DocumentState } from '@/domain/conversation/step'
+import { DOCUMENT_NAMES } from './replies'
+import { type ConversationSnapshot, DEMO_DOCUMENTS, type DocumentState } from './step'
 
 const DOCUMENT_STATUS: Record<DocumentState['kind'], string> = {
   MISSING: 'not sent yet',
@@ -10,7 +9,9 @@ const DOCUMENT_STATUS: Record<DocumentState['kind'], string> = {
 }
 
 /** The caregiver's progress, one sentence per stage, for the agent to answer status questions. */
-export function statusLine(snapshot: ConversationSnapshot): string {
+export function statusLine(
+  snapshot: Pick<ConversationSnapshot, 'stage' | 'missingFields' | 'documents'>,
+): string {
   const { stage } = snapshot
   const inIntake = stage === 'INVITED' || stage === 'INTAKE'
   const details = !inIntake

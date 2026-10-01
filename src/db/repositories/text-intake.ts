@@ -42,5 +42,11 @@ export async function writeTextIntakeField(
     const data = identityColumns(write)
     await tx.identityRecord.upsert({ where, create: { ...data, ...scope }, update: data })
   }
-  await writeAuditEntry(tx, { agencyId, action: 'EDIT', entityType: 'CAREGIVER', entityId: caregiverId })
+  await writeAuditEntry(tx, {
+    agencyId,
+    action: 'EDIT',
+    entityType: 'CAREGIVER',
+    entityId: caregiverId,
+    fieldName: write.field,
+  })
 }

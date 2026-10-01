@@ -3,10 +3,10 @@ import { runInAuditedTransaction, writeAuditEntry } from '@/db/audit'
 import { createAttestation } from '@/db/repositories/attestations'
 import { applyPipelineTransition } from '@/db/repositories/pipeline-transitions'
 import {
-  type InstanceStatusChange,
   changeRequirementInstanceStatus,
   findRequirementInstances,
   linkEvidence,
+  requireStatusChanged,
 } from '@/db/repositories/requirement-instances'
 import type { LoadedSection, SectionSaveResult } from '@/domain/forms/binding'
 import type { FormSection } from '@/domain/forms/definition'
@@ -123,14 +123,6 @@ const missingOf = (missing: Readonly<Record<string, SectionMissing>>, section: F
   return found
 }
 
-function requireChanged(change: InstanceStatusChange, instanceId: string): void {
-  if (change.ok || (change.to === 'PENDING' && change.refusal === 'ALREADY_IN_STATUS')) return
-  throw new Error(
-    `Requirement instance ${instanceId} could not move ${change.from} → ${change.to} ` +
-      `(${change.refusal}); a concurrent writer changed it.`,
-  )
-}
-
 export const viewIntakeOverview: UseCase<{ readonly caregiverId: string }, IntakeProgress> = defineUseCase(
   'caregiver.viewOwn',
   async ({ principal, input }) => {
@@ -211,7 +203,7 @@ export const saveIntakeStep: UseCase<
     for (const move of moves) {
       const from = instances.find((candidate) => candidate.id === move.instanceId)?.status
       if (move.to === 'PENDING' || from === 'NOT_STARTED') {
-        requireChanged(await changeRequirementInstanceStatus(agencyId, move.instanceId, 'PENDING'), move.instanceId)
+        requireStatusChanged(await changeRequirementInstanceStatus(agencyId, move.instanceId, 'PENDING'), move.instanceId)
       }
       if (move.to === 'PENDING') continue
 
@@ -224,7 +216,7 @@ export const saveIntakeStep: UseCase<
       if (!link.ok) {
         throw new Error(`Requirement instance ${move.instanceId} does not accept ATTESTATION ${evidenceKey}.`)
       }
-      requireChanged(await changeRequirementInstanceStatus(agencyId, move.instanceId, 'SATISFIED'), move.instanceId)
+      requireStatusChanged(await changeRequirementInstanceStatus(agencyId, move.instanceId, 'SATISFIED'), move.instanceId)
       await writeAuditEntry(tx, {
         agencyId,
         action: 'EDIT',

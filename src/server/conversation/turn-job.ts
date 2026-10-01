@@ -6,9 +6,10 @@ import { type ConversationSnapshotView, findConversationSnapshot } from '@/db/re
 import {
   type ConversationMessage as Message,
   type ConversationRow,
+  findConversation,
   findMessage,
+  hasEarlierUnfinishedTurn,
   listMessages,
-  lockConversation,
   updateConversation,
 } from '@/db/repositories/conversations'
 import { caregiverPrincipalFrom } from '@/domain/auth/caregiver-principal'
@@ -16,6 +17,7 @@ import { type AgentEvent, eventKindsFor } from '@/domain/conversation/events'
 import { passesOutputCheck } from '@/domain/conversation/output-check'
 import { SSN_PLACEHOLDER } from '@/domain/conversation/redact'
 import { FAILURE_REPLY, HANDOFF_REPLY, WRONG_TIME_FOR_PHOTO, promptFor } from '@/domain/conversation/replies'
+import { statusLine } from '@/domain/conversation/status-line'
 import { type ConversationStep, nextStep, stepKey } from '@/domain/conversation/step'
 import { defineJobHandler } from '@/integrations/queue/handler'
 import { buildIdempotencyKey } from '@/integrations/queue/idempotency'
@@ -24,7 +26,6 @@ import { env } from '@/lib/env'
 import { runAsPrincipal, runAsSystem } from '@/server/auth/context'
 import { uploadOwnDocument } from '@/server/documents/uploads'
 import { confirmTextIntake, saveTextIntakeField } from '@/server/intake/text-intake'
-import { statusLine } from './context'
 import { CONVERSATION_TURN_JOB_TYPE, CONVERSATION_TURN_MAX_ATTEMPTS } from './receive'
 import { sendAgentText } from './send'
 
@@ -96,7 +97,6 @@ async function apply(event: AgentEvent, step: ConversationStep, message: Message
       return saved.ok ? SAVED : UNCLEAR
     }
     case 'correct': {
-      if (event.field === 'ssn' && !message.hasSsn) return UNCLEAR
       const saved = await saveTextIntakeField({
         caregiverId,
         field: event.field,
@@ -232,23 +232,25 @@ export const conversationTurnJob = defineJobHandler({
     runAsSystem(async () => {
       const message = await findMessage(agencyId, messageId)
       if (message === null || message.direction !== 'INBOUND') return OK
+      // Turns of one caregiver run in message order. The final attempt goes ahead regardless, so a
+      // stuck earlier turn costs a stale step rather than an unanswered text.
+      const finalAttempt = attempt >= CONVERSATION_TURN_MAX_ATTEMPTS
+      if (!finalAttempt && (await hasEarlierUnfinishedTurn(agencyId, messageId, CONVERSATION_TURN_JOB_TYPE))) {
+        return { status: 'retry', reason: 'earlier turn pending', retryAfterMs: 1000 }
+      }
       const { caregiverId, conversationId } = message
+      const conversation = await findConversation(agencyId, caregiverId)
+      const view = await findConversationSnapshot(agencyId, caregiverId)
+      if (conversation === null || view === null) return OK
 
-      const locked = await runInAuditedTransaction(async (tx) => {
-        const conversation = await lockConversation(tx, agencyId, caregiverId)
-        const view = await findConversationSnapshot(agencyId, caregiverId)
-        return conversation === null || view === null ? null : { conversation, view }
-      })
-      if (locked === null) return OK
-
-      const reply = await replyTo(agencyId, message, locked.conversation, locked.view, attempt)
+      const reply = await replyTo(agencyId, message, conversation, view, attempt)
       if (reply === null) return OK
 
       await sendAgentText({
         agencyId,
         caregiverId,
         conversationId,
-        phone: locked.conversation.phone,
+        phone: conversation.phone,
         body: reply,
         author: 'AGENT',
         idempotencyKey: buildIdempotencyKey('conversation.reply', [messageId]),

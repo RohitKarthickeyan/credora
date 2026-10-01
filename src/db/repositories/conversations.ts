@@ -225,6 +225,34 @@ export async function findMessage(
   return { ...toMessageRow(message), conversationId, caregiverId: conversation.caregiverId }
 }
 
+/**
+ * Whether an earlier inbound message of the same conversation still has a turn job queued or
+ * running. The turn job's payload is `{ messageId }`.
+ */
+export async function hasEarlierUnfinishedTurn(
+  agencyId: string,
+  messageId: string,
+  turnJobType: string,
+): Promise<boolean> {
+  const rows = await prisma.$queryRaw<{ blocked: boolean }[]>`
+    SELECT EXISTS (
+      SELECT 1
+      FROM core."Message" message
+      JOIN core."Message" earlier
+        ON earlier."agencyId" = message."agencyId" AND earlier."conversationId" = message."conversationId"
+      JOIN core."Job" job
+        ON job."agencyId" = earlier."agencyId" AND job.payload->>'messageId' = earlier.id
+      WHERE message."agencyId" = ${agencyId}
+        AND message.id = ${messageId}
+        AND earlier.direction = 'INBOUND'
+        AND (earlier."createdAt", earlier.id) < (message."createdAt", message.id)
+        AND job.type = ${turnJobType}
+        AND job.state IN ('PENDING', 'RUNNING')
+    ) AS blocked
+  `
+  return rows[0]?.blocked ?? false
+}
+
 /** More than one live caregiver on a number is ambiguous, so no match (as the email lookup). */
 export async function findLiveCaregiverByPhone(
   agencyId: string,
