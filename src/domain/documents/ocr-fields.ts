@@ -14,6 +14,7 @@ type KnownIdentity = { readonly legalName: PersonName; readonly dateOfBirth: str
 const DATE = /\d{4}-\d{2}-\d{2}|\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b|[A-Za-z]+\.? \d{1,2},? \d{4}/g
 
 const DATE_LABELS: readonly [FoundField['name'], RegExp][] = [
+  ['dateOfBirth', /\b(dob|birth|born)/i],
   ['expiryDate', /\bexp/i],
   ['issueDate', /\b(iss|issued|date of test|read|administered)/i],
   ['completionDate', /\b(complet|awarded)/i],

@@ -25,6 +25,10 @@ it('reports no name when the caregiver is not on the document', () => {
   expect(fields).toContainEqual({ name: 'completionDate', value: '2023-09-15', confidence: 0.95 })
 })
 
+it('reads a labelled date of birth that differs from intake as the date of birth', () => {
+  expect(findKnownFields([line('DOB 03/13/1990')], known)).toEqual([{ name: 'dateOfBirth', value: '1990-03-13', confidence: 0.95 }])
+})
+
 it('takes the known name from a line with other words on it', () => {
   const fields = findKnownFields([line('This certifies that Maria Santos has completed')], known)
   expect(fields).toContainEqual({ name: 'fullName', value: 'Maria Santos', confidence: 0.95 })
