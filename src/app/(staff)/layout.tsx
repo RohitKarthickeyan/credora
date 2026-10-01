@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { can } from '@/server/auth/policy'
 import { requireStaffSession } from '@/server/auth/session'
+import { NavLink } from '@/ui/nav-link'
 import { SubmitButton } from '@/ui/submit-button'
 import { signOut } from '../login/actions'
 
@@ -13,29 +14,25 @@ export default async function StaffLayout({ children }: LayoutProps<'/'>) {
     <div className="lg:flex">
       <nav
         aria-label="Staff"
-        className="flex flex-col gap-4 border-b border-border-strong px-4 py-4 lg:w-64 lg:border-b-0 lg:border-r"
+        className="flex flex-col gap-1 border-b border-border-strong px-4 py-4 lg:sticky lg:top-0 lg:h-screen lg:w-64 lg:shrink-0 lg:overflow-y-auto lg:border-b-0 lg:border-r"
       >
-        <Link href="/" className="text-lg font-semibold text-ink">
+        <Link href="/" className="mb-3 px-3 text-lg font-semibold text-ink">
           Credora
         </Link>
-        {can(principal, 'pipeline.view') ? (
-          <Link href="/pipeline" className="text-sm font-medium text-ink">
-            Pipeline
-          </Link>
-        ) : null}
-        {can(principal, 'conversation.manage') ? <Link href="/conversations" className="text-sm font-medium text-ink">Conversations</Link> : null}
-        {can(principal, 'exceptionQueue.view') ? <Link href="/queue" className="text-sm font-medium text-ink">Exceptions</Link> : null}
-        {can(principal, 'manualCheck.list') ? <Link href="/checks" className="text-sm font-medium text-ink">Staff checks</Link> : null}
-        {can(principal, 'clearance.view') ? <Link href="/clearance" className="text-sm font-medium text-ink">Clearance</Link> : null}
-        {can(principal, 'alayaCareSync.view') ? <Link href="/sync" className="text-sm font-medium text-ink">AlayaCare conflicts</Link> : null}
-        {can(principal, 'training.view') ? <Link href="/training" className="text-sm font-medium text-ink">Training</Link> : null}
-        {can(principal, 'weeklySample.view') ? <Link href="/sample" className="text-sm font-medium text-ink">Weekly sample</Link> : null}
-        {can(principal, 'user.manage') ? <Link href="/admin/users" className="text-sm font-medium text-ink">Users</Link> : null}
-        {can(principal, 'requirementTemplate.manage') ? <Link href="/admin/requirements" className="text-sm font-medium text-ink">Requirements</Link> : null}
-        {can(principal, 'eeocReport.view') ? <Link href="/reports/eeoc" prefetch={false} className="text-sm font-medium text-ink">EEOC report</Link> : null}
-        {can(principal, 'successMetrics.view') ? <Link href="/reports/metrics" className="text-sm font-medium text-ink">Success metrics</Link> : null}
-        <p className="text-sm text-ink-muted">Signed in as {fullName}</p>
-        <form action={signOut}>
+        {can(principal, 'pipeline.view') ? <NavLink href="/pipeline">Pipeline</NavLink> : null}
+        {can(principal, 'conversation.manage') ? <NavLink href="/conversations">Conversations</NavLink> : null}
+        {can(principal, 'exceptionQueue.view') ? <NavLink href="/queue">Exceptions</NavLink> : null}
+        {can(principal, 'manualCheck.list') ? <NavLink href="/checks">Staff checks</NavLink> : null}
+        {can(principal, 'clearance.view') ? <NavLink href="/clearance">Clearance</NavLink> : null}
+        {can(principal, 'alayaCareSync.view') ? <NavLink href="/sync">AlayaCare conflicts</NavLink> : null}
+        {can(principal, 'training.view') ? <NavLink href="/training">Training</NavLink> : null}
+        {can(principal, 'weeklySample.view') ? <NavLink href="/sample">Weekly sample</NavLink> : null}
+        {can(principal, 'user.manage') ? <NavLink href="/admin/users">Users</NavLink> : null}
+        {can(principal, 'requirementTemplate.manage') ? <NavLink href="/admin/requirements">Requirements</NavLink> : null}
+        {can(principal, 'eeocReport.view') ? <NavLink href="/reports/eeoc" prefetch={false}>EEOC report</NavLink> : null}
+        {can(principal, 'successMetrics.view') ? <NavLink href="/reports/metrics">Success metrics</NavLink> : null}
+        <p className="mt-4 px-3 text-sm text-ink-muted">Signed in as {fullName}</p>
+        <form action={signOut} className="px-3">
           <SubmitButton variant="secondary">Sign out</SubmitButton>
         </form>
       </nav>
