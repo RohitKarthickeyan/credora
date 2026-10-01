@@ -1,4 +1,5 @@
 import type { ReturnReason } from '../documents/review-outcome'
+import type { StaffDecision } from '../documents/staff-decision'
 import type { PipelineStage } from '../pipeline/stage'
 import type { InstanceStatus } from '../requirements/instance-status'
 
@@ -8,7 +9,7 @@ export type TextIntakeField = (typeof TEXT_INTAKE_FIELDS)[number]
 export const DEMO_DOCUMENTS = ['AIDE_CERTIFICATION', 'TB_TEST', 'PHOTO_ID'] as const
 export type DemoDocument = (typeof DEMO_DOCUMENTS)[number]
 
-export type DocumentReturnReason = ReturnReason | 'STAFF_REJECTED'
+export type DocumentReturnReason = ReturnReason | 'STAFF_WRONG_DOCUMENT' | 'STAFF_UNCLEAR_PHOTO'
 
 export type DocumentState =
   | { readonly kind: 'MISSING' }
@@ -59,7 +60,7 @@ export function nextStep(snapshot: ConversationSnapshot): ConversationStep {
 export function documentState(input: {
   readonly status: InstanceStatus
   readonly returnReason: ReturnReason | null
-  readonly rejectedByStaff: boolean
+  readonly staffDecision: StaffDecision | null
 }): DocumentState {
   switch (input.status) {
     case 'SATISFIED':
@@ -70,7 +71,8 @@ export function documentState(input: {
       return { kind: 'MISSING' }
     case 'EXCEPTION':
       if (input.returnReason !== null) return { kind: 'RETURNED', reason: input.returnReason }
-      if (input.rejectedByStaff) return { kind: 'RETURNED', reason: 'STAFF_REJECTED' }
+      if (input.staffDecision === 'REJECTED') return { kind: 'RETURNED', reason: 'STAFF_WRONG_DOCUMENT' }
+      if (input.staffDecision === 'REUPLOAD_REQUESTED') return { kind: 'RETURNED', reason: 'STAFF_UNCLEAR_PHOTO' }
       return { kind: 'UPLOADED' }
     case 'PENDING':
     case 'IN_REVIEW':

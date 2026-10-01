@@ -23,8 +23,6 @@ export type ConversationSnapshotView = {
   readonly documentInstances: Readonly<Record<DemoDocument, DocumentInstance>>
 }
 
-const RETURNED_BY_STAFF = new Set(['REJECTED', 'REUPLOAD_REQUESTED'])
-
 const NO_IDENTITY = { legalFirstName: null, legalLastName: null, dateOfBirth: null, sex: null, ssnLast4: null }
 const NO_CONTACT = { email: null, line1: null, line2: null, city: null, state: null, zip: null }
 
@@ -95,11 +93,10 @@ export function findConversationSnapshot(
       const evidenceKey = instance?.template.acceptedEvidence[0]?.evidenceKey
       if (instance === undefined || evidenceKey === undefined) return null
       const upload = instance.evidence[0]?.uploadedDocument
-      const decision = upload?.staffDecision?.decision
       documents[document] = documentState({
         status: instance.status,
         returnReason: z.enum(RETURN_REASONS).nullable().parse(upload?.autoAcceptDecision?.returnReason ?? null),
-        rejectedByStaff: decision !== undefined && RETURNED_BY_STAFF.has(decision),
+        staffDecision: upload?.staffDecision?.decision ?? null,
       })
       documentInstances[document] = { instanceId: instance.id, evidenceKey }
     }

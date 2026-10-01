@@ -35,12 +35,13 @@ const FIELD_PROMPTS: Record<TextIntakeField, string> = {
   ssn: "What's your Social Security number? It's stored encrypted and only the last four digits are ever shown.",
 }
 
-const RETURN_REASONS: Record<DocumentReturnReason, string> = {
-  UNREADABLE: "we couldn't read it. Please send a clearer photo in good light, with the whole document in frame",
-  EXPIRED: "it has expired. Please send a current one",
-  NAME_NOT_FOUND: "we couldn't find your name on it. Please send one issued in your legal name",
-  DOB_DIFFERS: "the date of birth on it doesn't match yours. Please check it's your document",
-  STAFF_REJECTED: 'our team could not accept it. Please send a new photo',
+const RETURN_REASONS: Record<DocumentReturnReason, (document: string) => string> = {
+  UNREADABLE: () => "we couldn't read it. Please send a clearer photo in good light, with the whole document in frame",
+  EXPIRED: () => 'it has expired. Please send a current one',
+  NAME_NOT_FOUND: () => "we couldn't find your name on it. Please send one issued in your legal name",
+  DOB_DIFFERS: () => "the date of birth on it doesn't match yours. Please check it's your document",
+  STAFF_WRONG_DOCUMENT: (document) => `our team says this isn't the right document. Please send a photo of your ${document}`,
+  STAFF_UNCLEAR_PHOTO: () => "our team couldn't read it clearly. Please send a clearer photo",
 }
 
 export const HANDOFF_REPLY = "Thanks. I've passed this to the team and someone will follow up with you soon."
@@ -53,7 +54,7 @@ export function promptFor(step: ConversationStep, context: ReplyContext): string
       return FIELD_PROMPTS[step.field]
     case 'CONFIRM_INTAKE': {
       const r = context.readBack
-      if (r === null) return 'Please reply YES to confirm your details.'
+      if (r === null) throw new Error('CONFIRM_INTAKE is reached only once every intake field is present.')
       return [
         "Here's what I have:",
         `Name: ${r.legalName}`,
@@ -72,9 +73,9 @@ export function promptFor(step: ConversationStep, context: ReplyContext): string
     case 'REQUEST_DOCUMENT':
       return `Please send a photo of your ${DOCUMENT_NAMES[step.document]}.`
     case 'FIX_DOCUMENT':
-      return `About your ${DOCUMENT_NAMES[step.document]}: ${RETURN_REASONS[step.reason]}.`
+      return `About your ${DOCUMENT_NAMES[step.document]}: ${RETURN_REASONS[step.reason](DOCUMENT_NAMES[step.document])}.`
     case 'AWAIT_REVIEW':
-      return "Thanks, you've sent everything we need. Our team is reviewing it and I'll text you with any news."
+      return "You've sent everything we need. Our team is reviewing it and I'll text you with any news."
     case 'CLEARED':
       return `You're cleared to work with ${context.agencyName}! The team will be in touch about your first shift.`
     case 'HANDED_OFF':

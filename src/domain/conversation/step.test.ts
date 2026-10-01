@@ -42,11 +42,12 @@ describe('nextStep', () => {
 })
 
 describe('documentState', () => {
-  it('reads a returned or rejected upload as returned, and a staff-bound one as uploaded', () => {
-    expect(documentState({ status: 'EXCEPTION', returnReason: 'UNREADABLE', rejectedByStaff: false })).toEqual({ kind: 'RETURNED', reason: 'UNREADABLE' })
-    expect(documentState({ status: 'EXCEPTION', returnReason: null, rejectedByStaff: true })).toEqual({ kind: 'RETURNED', reason: 'STAFF_REJECTED' })
-    expect(documentState({ status: 'EXCEPTION', returnReason: null, rejectedByStaff: false })).toEqual({ kind: 'UPLOADED' })
-    expect(documentState({ status: 'NOT_STARTED', returnReason: null, rejectedByStaff: false })).toEqual({ kind: 'MISSING' })
-    expect(documentState({ status: 'SATISFIED', returnReason: null, rejectedByStaff: false })).toEqual({ kind: 'APPROVED' })
+  it('reads a returned or staff-returned upload as returned, and a staff-bound one as uploaded', () => {
+    expect(documentState({ status: 'EXCEPTION', returnReason: 'UNREADABLE', staffDecision: null })).toEqual({ kind: 'RETURNED', reason: 'UNREADABLE' })
+    expect(documentState({ status: 'EXCEPTION', returnReason: null, staffDecision: 'REJECTED' })).toEqual({ kind: 'RETURNED', reason: 'STAFF_WRONG_DOCUMENT' })
+    expect(documentState({ status: 'EXCEPTION', returnReason: null, staffDecision: 'REUPLOAD_REQUESTED' })).toEqual({ kind: 'RETURNED', reason: 'STAFF_UNCLEAR_PHOTO' })
+    expect(documentState({ status: 'EXCEPTION', returnReason: null, staffDecision: null })).toEqual({ kind: 'UPLOADED' })
+    expect(documentState({ status: 'NOT_STARTED', returnReason: null, staffDecision: null })).toEqual({ kind: 'MISSING' })
+    expect(documentState({ status: 'SATISFIED', returnReason: null, staffDecision: 'ACCEPTED' })).toEqual({ kind: 'APPROVED' })
   })
 })
