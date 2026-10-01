@@ -43,6 +43,7 @@ export type ConversationMinAggregateOutputType = {
   unclearCount: number | null
   pausedAt: Date | null
   optedOutAt: Date | null
+  needsReplyAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -56,6 +57,7 @@ export type ConversationMaxAggregateOutputType = {
   unclearCount: number | null
   pausedAt: Date | null
   optedOutAt: Date | null
+  needsReplyAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -69,6 +71,7 @@ export type ConversationCountAggregateOutputType = {
   unclearCount: number
   pausedAt: number
   optedOutAt: number
+  needsReplyAt: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -92,6 +95,7 @@ export type ConversationMinAggregateInputType = {
   unclearCount?: true
   pausedAt?: true
   optedOutAt?: true
+  needsReplyAt?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -105,6 +109,7 @@ export type ConversationMaxAggregateInputType = {
   unclearCount?: true
   pausedAt?: true
   optedOutAt?: true
+  needsReplyAt?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -118,6 +123,7 @@ export type ConversationCountAggregateInputType = {
   unclearCount?: true
   pausedAt?: true
   optedOutAt?: true
+  needsReplyAt?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -218,6 +224,7 @@ export type ConversationGroupByOutputType = {
   unclearCount: number
   pausedAt: Date | null
   optedOutAt: Date | null
+  needsReplyAt: Date | null
   createdAt: Date
   updatedAt: Date
   _count: ConversationCountAggregateOutputType | null
@@ -254,6 +261,7 @@ export type ConversationWhereInput = {
   unclearCount?: Prisma.IntFilter<"Conversation"> | number
   pausedAt?: Prisma.DateTimeNullableFilter<"Conversation"> | Date | string | null
   optedOutAt?: Prisma.DateTimeNullableFilter<"Conversation"> | Date | string | null
+  needsReplyAt?: Prisma.DateTimeNullableFilter<"Conversation"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Conversation"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Conversation"> | Date | string
   caregiver?: Prisma.XOR<Prisma.CaregiverScalarRelationFilter, Prisma.CaregiverWhereInput>
@@ -269,6 +277,7 @@ export type ConversationOrderByWithRelationInput = {
   unclearCount?: Prisma.SortOrder
   pausedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   optedOutAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  needsReplyAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   caregiver?: Prisma.CaregiverOrderByWithRelationInput
@@ -289,6 +298,7 @@ export type ConversationWhereUniqueInput = Prisma.AtLeast<{
   unclearCount?: Prisma.IntFilter<"Conversation"> | number
   pausedAt?: Prisma.DateTimeNullableFilter<"Conversation"> | Date | string | null
   optedOutAt?: Prisma.DateTimeNullableFilter<"Conversation"> | Date | string | null
+  needsReplyAt?: Prisma.DateTimeNullableFilter<"Conversation"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Conversation"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Conversation"> | Date | string
   caregiver?: Prisma.XOR<Prisma.CaregiverScalarRelationFilter, Prisma.CaregiverWhereInput>
@@ -304,6 +314,7 @@ export type ConversationOrderByWithAggregationInput = {
   unclearCount?: Prisma.SortOrder
   pausedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   optedOutAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  needsReplyAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.ConversationCountOrderByAggregateInput
@@ -325,6 +336,7 @@ export type ConversationScalarWhereWithAggregatesInput = {
   unclearCount?: Prisma.IntWithAggregatesFilter<"Conversation"> | number
   pausedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Conversation"> | Date | string | null
   optedOutAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Conversation"> | Date | string | null
+  needsReplyAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Conversation"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Conversation"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Conversation"> | Date | string
 }
@@ -336,6 +348,7 @@ export type ConversationCreateInput = {
   unclearCount?: number
   pausedAt?: Date | string | null
   optedOutAt?: Date | string | null
+  needsReplyAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   caregiver: Prisma.CaregiverCreateNestedOneWithoutConversationInput
@@ -351,6 +364,7 @@ export type ConversationUncheckedCreateInput = {
   unclearCount?: number
   pausedAt?: Date | string | null
   optedOutAt?: Date | string | null
+  needsReplyAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutConversationInput
@@ -363,6 +377,7 @@ export type ConversationUpdateInput = {
   unclearCount?: Prisma.IntFieldUpdateOperationsInput | number
   pausedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   optedOutAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  needsReplyAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   caregiver?: Prisma.CaregiverUpdateOneRequiredWithoutConversationNestedInput
@@ -378,6 +393,7 @@ export type ConversationUncheckedUpdateInput = {
   unclearCount?: Prisma.IntFieldUpdateOperationsInput | number
   pausedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   optedOutAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  needsReplyAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   messages?: Prisma.MessageUncheckedUpdateManyWithoutConversationNestedInput
@@ -392,6 +408,7 @@ export type ConversationCreateManyInput = {
   unclearCount?: number
   pausedAt?: Date | string | null
   optedOutAt?: Date | string | null
+  needsReplyAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -403,6 +420,7 @@ export type ConversationUpdateManyMutationInput = {
   unclearCount?: Prisma.IntFieldUpdateOperationsInput | number
   pausedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   optedOutAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  needsReplyAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -416,6 +434,7 @@ export type ConversationUncheckedUpdateManyInput = {
   unclearCount?: Prisma.IntFieldUpdateOperationsInput | number
   pausedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   optedOutAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  needsReplyAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -444,6 +463,7 @@ export type ConversationCountOrderByAggregateInput = {
   unclearCount?: Prisma.SortOrder
   pausedAt?: Prisma.SortOrder
   optedOutAt?: Prisma.SortOrder
+  needsReplyAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -461,6 +481,7 @@ export type ConversationMaxOrderByAggregateInput = {
   unclearCount?: Prisma.SortOrder
   pausedAt?: Prisma.SortOrder
   optedOutAt?: Prisma.SortOrder
+  needsReplyAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -474,6 +495,7 @@ export type ConversationMinOrderByAggregateInput = {
   unclearCount?: Prisma.SortOrder
   pausedAt?: Prisma.SortOrder
   optedOutAt?: Prisma.SortOrder
+  needsReplyAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -540,6 +562,7 @@ export type ConversationCreateWithoutCaregiverInput = {
   unclearCount?: number
   pausedAt?: Date | string | null
   optedOutAt?: Date | string | null
+  needsReplyAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   messages?: Prisma.MessageCreateNestedManyWithoutConversationInput
@@ -552,6 +575,7 @@ export type ConversationUncheckedCreateWithoutCaregiverInput = {
   unclearCount?: number
   pausedAt?: Date | string | null
   optedOutAt?: Date | string | null
+  needsReplyAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutConversationInput
@@ -580,6 +604,7 @@ export type ConversationUpdateWithoutCaregiverInput = {
   unclearCount?: Prisma.IntFieldUpdateOperationsInput | number
   pausedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   optedOutAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  needsReplyAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   messages?: Prisma.MessageUpdateManyWithoutConversationNestedInput
@@ -592,6 +617,7 @@ export type ConversationUncheckedUpdateWithoutCaregiverInput = {
   unclearCount?: Prisma.IntFieldUpdateOperationsInput | number
   pausedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   optedOutAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  needsReplyAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   messages?: Prisma.MessageUncheckedUpdateManyWithoutConversationNestedInput
@@ -604,6 +630,7 @@ export type ConversationCreateWithoutMessagesInput = {
   unclearCount?: number
   pausedAt?: Date | string | null
   optedOutAt?: Date | string | null
+  needsReplyAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   caregiver: Prisma.CaregiverCreateNestedOneWithoutConversationInput
@@ -618,6 +645,7 @@ export type ConversationUncheckedCreateWithoutMessagesInput = {
   unclearCount?: number
   pausedAt?: Date | string | null
   optedOutAt?: Date | string | null
+  needsReplyAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -645,6 +673,7 @@ export type ConversationUpdateWithoutMessagesInput = {
   unclearCount?: Prisma.IntFieldUpdateOperationsInput | number
   pausedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   optedOutAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  needsReplyAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   caregiver?: Prisma.CaregiverUpdateOneRequiredWithoutConversationNestedInput
@@ -659,6 +688,7 @@ export type ConversationUncheckedUpdateWithoutMessagesInput = {
   unclearCount?: Prisma.IntFieldUpdateOperationsInput | number
   pausedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   optedOutAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  needsReplyAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -703,6 +733,7 @@ export type ConversationSelect<ExtArgs extends runtime.Types.Extensions.Internal
   unclearCount?: boolean
   pausedAt?: boolean
   optedOutAt?: boolean
+  needsReplyAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   caregiver?: boolean | Prisma.CaregiverDefaultArgs<ExtArgs>
@@ -719,6 +750,7 @@ export type ConversationSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   unclearCount?: boolean
   pausedAt?: boolean
   optedOutAt?: boolean
+  needsReplyAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   caregiver?: boolean | Prisma.CaregiverDefaultArgs<ExtArgs>
@@ -733,6 +765,7 @@ export type ConversationSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   unclearCount?: boolean
   pausedAt?: boolean
   optedOutAt?: boolean
+  needsReplyAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   caregiver?: boolean | Prisma.CaregiverDefaultArgs<ExtArgs>
@@ -747,11 +780,12 @@ export type ConversationSelectScalar = {
   unclearCount?: boolean
   pausedAt?: boolean
   optedOutAt?: boolean
+  needsReplyAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type ConversationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "agencyId" | "caregiverId" | "phone" | "awaitingStep" | "unclearCount" | "pausedAt" | "optedOutAt" | "createdAt" | "updatedAt", ExtArgs["result"]["conversation"]>
+export type ConversationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "agencyId" | "caregiverId" | "phone" | "awaitingStep" | "unclearCount" | "pausedAt" | "optedOutAt" | "needsReplyAt" | "createdAt" | "updatedAt", ExtArgs["result"]["conversation"]>
 export type ConversationInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   caregiver?: boolean | Prisma.CaregiverDefaultArgs<ExtArgs>
   messages?: boolean | Prisma.Conversation$messagesArgs<ExtArgs>
@@ -779,6 +813,7 @@ export type $ConversationPayload<ExtArgs extends runtime.Types.Extensions.Intern
     unclearCount: number
     pausedAt: Date | null
     optedOutAt: Date | null
+    needsReplyAt: Date | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["conversation"]>
@@ -1214,6 +1249,7 @@ export interface ConversationFieldRefs {
   readonly unclearCount: Prisma.FieldRef<"Conversation", 'Int'>
   readonly pausedAt: Prisma.FieldRef<"Conversation", 'DateTime'>
   readonly optedOutAt: Prisma.FieldRef<"Conversation", 'DateTime'>
+  readonly needsReplyAt: Prisma.FieldRef<"Conversation", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"Conversation", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Conversation", 'DateTime'>
 }

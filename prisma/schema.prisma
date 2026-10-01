@@ -1293,6 +1293,7 @@ model Conversation {
   unclearCount Int       @default(0)
   pausedAt     DateTime?
   optedOutAt   DateTime?
+  needsReplyAt DateTime?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 

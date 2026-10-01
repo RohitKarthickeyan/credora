@@ -38,7 +38,8 @@ export async function enqueueNudge(
 
 /**
  * A text the caregiver did not ask for: a notice of something that happened (invite, signature,
- * approval) and the prompt for wherever they now are. Skipped when there is nothing new to say.
+ * approval) and the prompt for wherever they now are, unless they were already asked it. Skipped
+ * when there is nothing new to say.
  */
 export const conversationNudgeJob = defineJobHandler({
   type: CONVERSATION_NUDGE_JOB_TYPE,
@@ -57,9 +58,13 @@ export const conversationNudgeJob = defineJobHandler({
       if (step.kind === 'STOPPED' || step.kind === 'HANDED_OFF') return { status: 'ok' }
       // The link arrives after the step is first reached, so a step with a link is a new state to tell about.
       const key = step.kind === 'AWAIT_SIGNATURE' && view.context.signingUrl !== null ? LINK_READY_KEY : stepKey(step)
-      if (notice === null && key === conversation.awaitingStep) return { status: 'ok' }
+      const alreadyAsked = key === conversation.awaitingStep
+      if (notice === null && alreadyAsked) return { status: 'ok' }
 
-      const parts = [notice === null ? null : noticeFor(notice, view.context), promptFor(step, view.context)]
+      const parts = [
+        notice === null ? null : noticeFor(notice, view.context),
+        alreadyAsked ? null : promptFor(step, view.context),
+      ]
       await sendAgentText({
         agencyId,
         caregiverId,

@@ -5305,6 +5305,7 @@ export const ConversationScalarFieldEnum = {
   unclearCount: 'unclearCount',
   pausedAt: 'pausedAt',
   optedOutAt: 'optedOutAt',
+  needsReplyAt: 'needsReplyAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

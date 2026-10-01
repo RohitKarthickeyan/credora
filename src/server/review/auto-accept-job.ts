@@ -19,8 +19,8 @@ export const AUTO_ACCEPT_DOCUMENT_JOB_TYPE = 'review.autoAcceptDocument'
 /**
  * Decides one document once, and never accepts it (ADR-164): returned to the caregiver or sent to
  * staff, the instance moves PENDING → IN_REVIEW → EXCEPTION in one transaction, because there is
- * no PENDING → EXCEPTION edge and IN_REVIEW refuses uploads. A return texts the caregiver the
- * reason. An instance no longer PENDING is left alone and the decision still recorded
+ * no PENDING → EXCEPTION edge and IN_REVIEW refuses uploads. Either way the caregiver is texted what
+ * comes next: the return's reason, or the next request. An instance no longer PENDING is left alone and the decision still recorded
  * (OPEN-QUESTIONS 164). A WITHDRAWN caregiver ends the job before intake is read (ADR-079).
  */
 export const autoAcceptDocumentJob = defineJobHandler({
@@ -50,9 +50,7 @@ export const autoAcceptDocumentJob = defineJobHandler({
           instanceStatusSet = 'EXCEPTION'
         }
         await saveAutoAcceptDecision(agencyId, { uploadedDocumentId, outcome, identity, instanceStatusSet })
-        if (outcome.kind === 'RETURN') {
-          await enqueueNudge(tx, agencyId, caregiverId, null, `returned:${uploadedDocumentId}`)
-        }
+        await enqueueNudge(tx, agencyId, caregiverId, null, `reviewed:${uploadedDocumentId}`)
         await writeAuditEntry(tx, {
           agencyId,
           action: 'EDIT',

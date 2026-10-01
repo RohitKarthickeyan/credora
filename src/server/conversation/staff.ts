@@ -9,16 +9,15 @@ import {
   lockConversation,
   updateConversation,
 } from '@/db/repositories/conversations'
-import { enqueueJobInTransaction } from '@/db/repositories/jobs'
+import { redactSsn } from '@/domain/conversation/redact'
+import { MAX_UNCLEAR_REPLIES } from '@/domain/conversation/step'
 import type { PipelineStage } from '@/domain/pipeline/stage'
-import { buildIdempotencyKey } from '@/integrations/queue/idempotency'
 import type { UseCase } from '@/server/auth/policy'
 import { defineUseCase } from '@/server/auth/policy'
+import { enqueueNudge } from './nudge-job'
 import { sendAgentText } from './send'
-import { CONVERSATION_NUDGE_JOB_TYPE } from './nudge-type'
 
 const TRANSCRIPT_LIMIT = 200
-const HANDOFF_UNCLEAR_COUNT = 3
 
 export type ConversationSummary = {
   readonly caregiverId: string
@@ -28,6 +27,7 @@ export type ConversationSummary = {
   readonly lastMessageAt: Date
   readonly paused: boolean
   readonly handedOff: boolean
+  readonly needsReply: boolean
 }
 
 export const viewConversation: UseCase<
@@ -36,6 +36,7 @@ export const viewConversation: UseCase<
     readonly conversationId: string
     readonly paused: boolean
     readonly handedOff: boolean
+    readonly needsReply: boolean
     readonly messages: readonly MessageRow[]
   } | null
 > = defineUseCase('conversation.manage', async ({ principal, input }) => {
@@ -44,7 +45,8 @@ export const viewConversation: UseCase<
   return {
     conversationId: conversation.id,
     paused: conversation.pausedAt !== null,
-    handedOff: conversation.unclearCount >= HANDOFF_UNCLEAR_COUNT,
+    handedOff: conversation.unclearCount >= MAX_UNCLEAR_REPLIES,
+    needsReply: conversation.needsReplyAt !== null,
     messages: await listMessages(principal.agencyId, conversation.id, TRANSCRIPT_LIMIT),
   }
 })
@@ -52,10 +54,11 @@ export const viewConversation: UseCase<
 export const listConversationsForStaff: UseCase<Record<string, never>, readonly ConversationSummary[]> =
   defineUseCase('conversation.manage', async ({ principal }) => {
     const rows = await listConversations(principal.agencyId)
-    return rows.map(({ unclearCount, pausedAt, ...row }) => ({
+    return rows.map(({ unclearCount, pausedAt, needsReplyAt, ...row }) => ({
       ...row,
       paused: pausedAt !== null,
-      handedOff: unclearCount >= HANDOFF_UNCLEAR_COUNT,
+      handedOff: unclearCount >= MAX_UNCLEAR_REPLIES,
+      needsReply: needsReplyAt !== null,
     }))
   })
 
@@ -71,30 +74,29 @@ export const setConversationPaused: UseCase<
       await updateConversation(tx, agencyId, conversation.id, { pausedAt: new Date() })
       return
     }
-    await updateConversation(tx, agencyId, conversation.id, { pausedAt: null, unclearCount: 0 })
-    await enqueueJobInTransaction(tx, {
-      agencyId,
-      type: CONVERSATION_NUDGE_JOB_TYPE,
-      payload: { caregiverId: input.caregiverId, notice: null },
-      idempotencyKey: buildIdempotencyKey(CONVERSATION_NUDGE_JOB_TYPE, [conversation.id, randomUUID()]),
-    })
+    await updateConversation(tx, agencyId, conversation.id, { pausedAt: null, unclearCount: 0, awaitingStep: null })
+    await enqueueNudge(tx, agencyId, input.caregiverId, null, `resume:${randomUUID()}`)
   }),
 )
 
 export const sendStaffText: UseCase<
   { readonly caregiverId: string; readonly body: string; readonly idempotencyKey: string },
-  void
+  { readonly ok: true } | { readonly ok: false; readonly reason: 'CONTAINS_SSN' }
 > = defineUseCase('conversation.manage', async ({ principal, input }) => {
-    const body = input.body.trim()
-    const conversation = await findConversation(principal.agencyId, input.caregiverId)
-    if (conversation === null || body === '') return
-    await sendAgentText({
-      agencyId: principal.agencyId,
-      caregiverId: input.caregiverId,
-      conversationId: conversation.id,
-      phone: conversation.phone,
-      body,
-      author: 'STAFF',
-      idempotencyKey: input.idempotencyKey,
-    })
+  const { agencyId } = principal
+  const body = input.body.trim()
+  if (redactSsn(body).ssn !== null) return { ok: false, reason: 'CONTAINS_SSN' }
+  const conversation = await findConversation(agencyId, input.caregiverId)
+  if (conversation === null || body === '') return { ok: true }
+  await sendAgentText({
+    agencyId,
+    caregiverId: input.caregiverId,
+    conversationId: conversation.id,
+    phone: conversation.phone,
+    body,
+    author: 'STAFF',
+    idempotencyKey: input.idempotencyKey,
   })
+  await runInAuditedTransaction((tx) => updateConversation(tx, agencyId, conversation.id, { needsReplyAt: null }))
+  return { ok: true }
+})

@@ -11,6 +11,7 @@ export type ConversationRow = {
   readonly unclearCount: number
   readonly pausedAt: Date | null
   readonly optedOutAt: Date | null
+  readonly needsReplyAt: Date | null
 }
 
 export type MessageRow = {
@@ -33,6 +34,7 @@ const CONVERSATION_SELECT = {
   unclearCount: true,
   pausedAt: true,
   optedOutAt: true,
+  needsReplyAt: true,
 } as const
 
 const MESSAGE_SELECT = {
@@ -58,7 +60,7 @@ function toMessageRow(row: {
   return { ...rest, hasSsn: ssnEnc !== null }
 }
 
-export type ConversationListRow = {
+type ConversationListRow = {
   readonly caregiverId: string
   readonly caregiverName: string
   readonly stage: PipelineStage
@@ -66,6 +68,7 @@ export type ConversationListRow = {
   readonly lastMessageAt: Date
   readonly unclearCount: number
   readonly pausedAt: Date | null
+  readonly needsReplyAt: Date | null
 }
 
 export function ensureConversation(
@@ -95,6 +98,7 @@ const lockedConversationSchema = z.object({
   unclearCount: z.number().int(),
   pausedAt: z.date().nullable(),
   optedOutAt: z.date().nullable(),
+  needsReplyAt: z.date().nullable(),
 })
 
 /** Serialises the turns of one conversation: a second turn waits for this transaction. */
@@ -104,7 +108,7 @@ export async function lockConversation(
   caregiverId: string,
 ): Promise<ConversationRow | null> {
   const rows = await tx.$queryRaw`
-    SELECT id, "caregiverId", phone, "awaitingStep", "unclearCount", "pausedAt", "optedOutAt"
+    SELECT id, "caregiverId", phone, "awaitingStep", "unclearCount", "pausedAt", "optedOutAt", "needsReplyAt"
     FROM core."Conversation"
     WHERE "agencyId" = ${agencyId} AND "caregiverId" = ${caregiverId}
     FOR UPDATE
@@ -121,6 +125,7 @@ export async function updateConversation(
     readonly unclearCount?: number
     readonly pausedAt?: Date | null
     readonly optedOutAt?: Date | null
+    readonly needsReplyAt?: Date | null
   },
 ): Promise<void> {
   await tx.conversation.update({ where: { agencyId_id: { agencyId, id: conversationId } }, data: patch })
@@ -184,6 +189,7 @@ export async function listConversations(agencyId: string): Promise<readonly Conv
       caregiverId: true,
       unclearCount: true,
       pausedAt: true,
+      needsReplyAt: true,
       caregiver: {
         select: {
           stage: true,

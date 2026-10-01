@@ -134,6 +134,7 @@ export default async function CaregiverPage(props: PageProps<'/caregivers/[id]'>
               caregiverId={detail.caregiverId}
               paused={conversation.paused}
               handedOff={conversation.handedOff}
+              needsReply={conversation.needsReply}
               messages={conversation.messages.map((message) => ({
                 id: message.id,
                 fromCaregiver: message.direction === 'INBOUND',

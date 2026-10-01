@@ -49,6 +49,7 @@ const COLUMNS: ReadonlyArray<Column<ConversationSummary>> = [
       <span className="flex flex-wrap gap-2">
         {row.paused ? <StatusBadge tone="warning" label="Paused" glyph="clock" size="sm" /> : null}
         {row.handedOff ? <StatusBadge tone="danger" label="Handed off" glyph="alert" size="sm" /> : null}
+        {row.needsReply ? <StatusBadge tone="danger" label="Needs reply" glyph="alert" size="sm" /> : null}
       </span>
     ),
   },

@@ -44,7 +44,7 @@ it from your profile or start every command below with `env -u OPENAI_API_KEY`.
 
 ```bash
 docker compose up -d --wait postgres
-docker compose up -d docuseal            # http://localhost:3001
+docker compose up -d docuseal            # http://localhost:3001, bound to this machine only
 docker compose up -d --build ocr         # first build downloads PaddleOCR models: 5-10 minutes
 npm run db:migrate
 npm run db:seed                          # Alvita agency, staff accounts, DEMO requirement set
@@ -171,8 +171,9 @@ Times are from the 2026-09-30 rehearsal: a text reply takes 4-10 s, a photo 25-3
    updates as you text.
 3. **Intake.** Answer as a caregiver would; it takes any wording. Show off:
    - a free-form date: `i was born march 3rd 1991`;
-   - a question at any step: `how long does the whole process take?` (answered from the FAQ;
-     anything not in the FAQ is passed to staff);
+   - a question at any step: `how long does the whole process take?` (answered from the FAQ, then
+     the pending question is asked again; anything not in the FAQ is passed to staff and the
+     conversation shows **Needs reply**, as it does when the caregiver texts `HELP`);
    - sex (`female`), email, home address in one line, SSN (`078-05-1120` style; the transcript stores
      `[SSN]`, never the number);
    - a correction at the read-back: `actually my birthday is march 13 1991 not the 3rd`. The agent
@@ -181,12 +182,14 @@ Times are from the 2026-09-30 rehearsal: a text reply takes 4-10 s, a photo 25-3
    documents, submit. Within ~10 s the phone gets "Thanks for signing!" and the request for the HHA
    certificate; the pipeline stage moves to Document review.
 5. **Documents, with one return.** Attach photos with the phone's paperclip:
-   - first the **wrong** document (§ 4). About 30 s later: "About your HHA certificate: we couldn't
+   - each photo is answered at once with "Got it, I'm checking it now."; what comes next follows
+     the check, 25-35 s later;
+   - first the **wrong** document (§ 4). After the check: "About your HHA certificate: we couldn't
      find your name on it. Please send one issued in your legal name." The queue lists it under
      **Waiting on the caregiver**;
    - then the right HHA certificate, the TB result and the driver's license, in that order, each
-     answered "Got it, thanks" and the next request. After the third: "you've sent everything we
-     need".
+     followed after its check by the next request. After the third: "You've sent everything we
+     need". A text such as `thanks` while waiting gets no reply.
 6. **Approve.** In `/queue`, under **Needs a decision**, choose **Accept the document** for each of
    the three. The phone gets "Good news: your ... was approved." for each, and the caregiver moves to
    Verification.
@@ -195,7 +198,8 @@ Times are from the 2026-09-30 rehearsal: a text reply takes 4-10 s, a photo 25-3
    is sent to AlayaCare.
 8. **Show** the Pipeline board (the caregiver under Ready for AlayaCare) and **Conversations**
    (the full thread). On the caregiver page, **Pause agent** lets staff take over and **Send**
-   texts as staff.
+   texts as staff (sending clears **Needs reply**; a Social Security number is refused);
+   **Resume agent** texts the caregiver the current request again.
 
 ## 4. The photos
 

@@ -21,11 +21,13 @@ export function Conversation({
   caregiverId,
   paused,
   handedOff,
+  needsReply,
   messages,
 }: {
   caregiverId: string
   paused: boolean
   handedOff: boolean
+  needsReply: boolean
   messages: readonly TranscriptMessage[]
 }) {
   const router = useRouter()
@@ -51,6 +53,7 @@ export function Conversation({
       <div className="flex flex-wrap items-center gap-3">
         {paused ? <StatusBadge tone="warning" label="Paused" glyph="clock" size="sm" /> : null}
         {handedOff ? <StatusBadge tone="danger" label="Handed off" glyph="alert" size="sm" /> : null}
+        {needsReply ? <StatusBadge tone="danger" label="Needs reply" glyph="alert" size="sm" /> : null}
         <form action={pauseAction}>
           <input type="hidden" name="caregiverId" value={caregiverId} />
           <input type="hidden" name="paused" value={String(!paused)} />

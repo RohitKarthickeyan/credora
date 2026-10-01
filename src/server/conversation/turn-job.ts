@@ -32,17 +32,21 @@ import { sendAgentText } from './send'
 const OK = { status: 'ok' } as const
 const HISTORY_LENGTH = 8
 const UNCLEAR_PREFIX = "Sorry, I didn't catch that. "
-const PHOTO_RECEIVED = 'Got it, thanks.'
+const PHOTO_RECEIVED = "Got it, I'm checking it now."
 const OPTED_OUT_REPLY = "You won't get more texts from us. Reply START to resume."
 
 type Applied =
   | { readonly kind: 'saved' }
   | { readonly kind: 'unclear' }
   | { readonly kind: 'handoff' }
-  | { readonly kind: 'answered'; readonly answer: string }
+  | { readonly kind: 'answered'; readonly answer: string; readonly needsReply: boolean }
 
 const SAVED: Applied = { kind: 'saved' }
 const UNCLEAR: Applied = { kind: 'unclear' }
+
+// Steps that ask the caregiver for nothing: a text the agent cannot place there ("ok", "thanks!")
+// is an acknowledgement, so it gets no reply and does not count toward a handoff.
+const NO_INPUT_STEPS: ReadonlySet<ConversationStep['kind']> = new Set(['AWAIT_SIGNATURE', 'AWAIT_REVIEW', 'CLEARED'])
 
 function allowedOrigins(): string[] {
   return [env.APP_URL, env.DOCUSEAL_URL].filter((origin) => origin !== undefined)
@@ -111,10 +115,9 @@ async function apply(event: AgentEvent, step: ConversationStep, message: Message
     }
     case 'question': {
       const { answer } = event
-      return {
-        kind: 'answered',
-        answer: answer !== null && passesOutputCheck(answer, allowedOrigins()) ? answer : HANDOFF_REPLY,
-      }
+      return answer !== null && passesOutputCheck(answer, allowedOrigins())
+        ? { kind: 'answered', answer, needsReply: false }
+        : { kind: 'answered', answer: HANDOFF_REPLY, needsReply: true }
     }
     case 'unclear':
       return UNCLEAR
@@ -126,27 +129,26 @@ async function receivePhoto(
   message: Message,
   storageKey: string,
   step: ConversationStep,
-  documentInstances: ConversationSnapshotView['documentInstances'],
-): Promise<string | null> {
+  view: ConversationSnapshotView,
+): Promise<string> {
   if (step.kind !== 'REQUEST_DOCUMENT' && step.kind !== 'FIX_DOCUMENT') return WRONG_TIME_FOR_PHOTO
   const { caregiverId } = message
   const storage = getPort('storage')
   const stored = await storage.read(agencyId, storageKey)
-  const { instanceId, evidenceKey } = documentInstances[step.document]
+  const { instanceId, evidenceKey } = view.documentInstances[step.document]
   const uploaded =
     stored !== null &&
     (await asCaregiver(agencyId, caregiverId, () =>
       uploadOwnDocument({ caregiverId, instanceId, evidenceKey, bytes: stored.bytes, storage }),
     )).ok
+  if (!uploaded) return promptFor(step, view.context)
 
-  const fresh = await findConversationSnapshot(agencyId, caregiverId)
-  if (fresh === null) return null
-  const next = nextStep(fresh.snapshot)
+  // The check's nudge texts what comes next (the next request, or the fix), so whatever step it
+  // reaches, even this same one returned again, must read as new.
   await runInAuditedTransaction((tx) =>
-    updateConversation(tx, agencyId, message.conversationId, { awaitingStep: stepKey(next), unclearCount: 0 }),
+    updateConversation(tx, agencyId, message.conversationId, { awaitingStep: null, unclearCount: 0 }),
   )
-  const prompt = promptFor(next, fresh.context)
-  return uploaded ? `${PHOTO_RECEIVED} ${prompt}` : prompt
+  return PHOTO_RECEIVED
 }
 
 async function takeTurn(
@@ -171,6 +173,7 @@ async function takeTurn(
   }
 
   const applied = await asCaregiver(agencyId, caregiverId, () => apply(event, step, message))
+  if (applied.kind === 'unclear' && NO_INPUT_STEPS.has(step.kind)) return null
   const unclearCount = applied.kind === 'unclear' ? conversation.unclearCount + 1 : 0
   const handedOff = applied.kind === 'handoff'
   const fresh = await findConversationSnapshot(agencyId, caregiverId)
@@ -181,10 +184,15 @@ async function takeTurn(
       awaitingStep: stepKey(next),
       unclearCount,
       ...(handedOff ? { pausedAt: new Date() } : {}),
+      ...(applied.kind === 'answered' && applied.needsReply ? { needsReplyAt: new Date() } : {}),
     }),
   )
 
-  if (applied.kind === 'answered') return applied.answer
+  if (applied.kind === 'answered') {
+    return next.kind === 'HANDED_OFF' || next.kind === 'STOPPED'
+      ? applied.answer
+      : `${applied.answer}\n\n${promptFor(next, fresh.context)}`
+  }
   if (next.kind === 'HANDED_OFF') return HANDOFF_REPLY
   const nextPrompt = promptFor(next, fresh.context)
   return applied.kind === 'unclear' ? `${UNCLEAR_PREFIX}${nextPrompt}` : nextPrompt
@@ -205,6 +213,12 @@ async function replyTo(
     )
     return OPTED_OUT_REPLY
   }
+  if (command === 'HELP') {
+    await runInAuditedTransaction((tx) =>
+      updateConversation(tx, agencyId, conversationId, { needsReplyAt: new Date() }),
+    )
+    return HANDOFF_REPLY
+  }
   if (command === 'START' && view.snapshot.optedOut) {
     await runInAuditedTransaction((tx) => updateConversation(tx, agencyId, conversationId, { optedOutAt: null }))
     return promptFor(nextStep({ ...view.snapshot, optedOut: false }), view.context)
@@ -213,7 +227,7 @@ async function replyTo(
   const step = nextStep(view.snapshot)
   if (step.kind === 'STOPPED' || step.kind === 'HANDED_OFF') return null
   if (message.mediaStorageKey !== null) {
-    return receivePhoto(agencyId, message, message.mediaStorageKey, step, view.documentInstances)
+    return receivePhoto(agencyId, message, message.mediaStorageKey, step, view)
   }
   const status = statusLine(view.snapshot)
   return takeTurn(agencyId, message, conversation, step, status, promptFor(step, view.context), attempt)

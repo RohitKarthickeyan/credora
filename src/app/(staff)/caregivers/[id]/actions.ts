@@ -167,7 +167,8 @@ export async function sendStaffTextAction(
   })
   if (!parsed.success) return { error: 'Enter a message of up to 1600 characters.' }
 
-  await runAsPrincipal(principal, {}, () => sendStaffText(parsed.data))
+  const result = await runAsPrincipal(principal, {}, () => sendStaffText(parsed.data))
+  if (!result.ok) return { error: "Don't send a Social Security number by text." }
   revalidatePath(`/caregivers/${parsed.data.caregiverId}`)
   return { sent: true }
 }
