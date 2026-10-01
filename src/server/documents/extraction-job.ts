@@ -3,15 +3,31 @@ import { z } from 'zod'
 import { runInAuditedTransaction, writeAuditEntry } from '@/db/audit'
 import { findCaregiverForSession } from '@/db/repositories/caregiver-sign-in'
 import { findDocumentToExtract, saveExtraction } from '@/db/repositories/extractions'
+import { findIntakeIdentity } from '@/db/repositories/intake-identity'
 import { enqueueJobInTransaction } from '@/db/repositories/jobs'
+import { findKnownFields } from '@/domain/documents/ocr-fields'
 import { defineJobHandler } from '@/integrations/queue/handler'
 import { buildIdempotencyKey } from '@/integrations/queue/idempotency'
+import type { ExtractionResult } from '@/integrations/ports/extraction'
 import { getPort } from '@/integrations/registry'
 import { runAsSystem } from '@/server/auth/context'
 import { AUTO_ACCEPT_DOCUMENT_JOB_TYPE } from '@/server/review/auto-accept-job'
 import { JUDGE_DOCUMENT_JOB_TYPE } from '@/server/review/judge'
 
 export const EXTRACT_DOCUMENT_JOB_TYPE = 'documents.extract'
+
+// An OCR adapter returns text alone; its fields are found by looking for what intake says.
+async function withKnownFields(
+  agencyId: string,
+  caregiverId: string,
+  result: ExtractionResult,
+): Promise<ExtractionResult> {
+  if (result.fields.length > 0 || result.text === '') return result
+  const { legalName, dateOfBirth } = await findIntakeIdentity(agencyId, caregiverId)
+  if (legalName === null) return result
+  const lines = result.text.split('\n').map((text) => ({ text, confidence: result.confidence }))
+  return { ...result, fields: [...findKnownFields(lines, { legalName, dateOfBirth })] }
+}
 
 /**
  * Reads one uploaded document once. An already-extracted or deleted document ends the job, so a
@@ -29,11 +45,12 @@ export const extractDocumentJob = defineJobHandler({
       const caregiver = await findCaregiverForSession(agencyId, document.caregiverId)
       if (caregiver === null || caregiver.stage === 'WITHDRAWN') return { status: 'ok' }
 
-      const result = await getPort('extraction').extract({
+      const extracted = await getPort('extraction').extract({
         agencyId,
         caregiverId: document.caregiverId,
         storageKey: document.storageKey,
       })
+      const result = await withKnownFields(agencyId, document.caregiverId, extracted)
 
       await runInAuditedTransaction(async (tx) => {
         await saveExtraction(agencyId, uploadedDocumentId, result)

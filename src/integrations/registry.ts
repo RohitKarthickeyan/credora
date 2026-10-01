@@ -6,8 +6,10 @@ import { createMockBackgroundCheck } from '@/integrations/adapters/backgroundChe
 import { createDocusealEsign } from '@/integrations/adapters/esign/docuseal'
 import { createMockEsign } from '@/integrations/adapters/esign/mock'
 import { createMockExtraction } from '@/integrations/adapters/extraction/mock'
+import { createPaddleOcrExtraction } from '@/integrations/adapters/extraction/paddleocr'
 import { createClaudeJudge } from '@/integrations/adapters/judge/claude'
 import { createMockJudge } from '@/integrations/adapters/judge/mock'
+import { createOpenAIJudge } from '@/integrations/adapters/judge/openai'
 import { createMockMessaging } from '@/integrations/adapters/messaging/mock'
 import { createLocalDiskStorage } from '@/integrations/adapters/storage/local'
 import { createMockTraining } from '@/integrations/adapters/training/mock'
@@ -36,12 +38,15 @@ const slots: { [N in PortName]: PortSlot<N> } = {
   extraction: {
     variable: 'EXTRACTION_ADAPTER',
     selected: env.EXTRACTION_ADAPTER,
-    adapters: { mock: () => createMockExtraction({ storage: getPort('storage') }) },
+    adapters: {
+      mock: () => createMockExtraction({ storage: getPort('storage') }),
+      paddleocr: () => createPaddleOcrExtraction({ storage: getPort('storage') }),
+    },
   },
   judge: {
     variable: 'JUDGE_ADAPTER',
     selected: env.JUDGE_ADAPTER,
-    adapters: { mock: () => createMockJudge(), claude: () => createClaudeJudge() },
+    adapters: { mock: () => createMockJudge(), claude: () => createClaudeJudge(), openai: () => createOpenAIJudge() },
   },
   backgroundCheck: {
     variable: 'BGCHECK_ADAPTER',

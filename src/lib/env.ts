@@ -24,6 +24,8 @@ const envSchema = z.object({
   // Not z.httpUrl(): it demands a dotted domain, so it rejects http://localhost:4010 itself.
   ALAYACARE_BASE_URL: z.url({ protocol: /^https?$/ }).default('http://localhost:4010'),
   TRAINING_ADAPTER: z.string().min(1).default('mock'),
+  // The PaddleOCR service (`docker compose up -d ocr`), read when EXTRACTION_ADAPTER=paddleocr.
+  OCR_URL: z.url({ protocol: /^https?$/ }).default('http://localhost:8866'),
   STORAGE_ADAPTER: z.string().min(1).default('local'),
   AGENT_ADAPTER: z.string().min(1).default('mock'),
   // Checked by the judge's `claude` factory, not by a refine here, so no adapter name lives in

@@ -27,6 +27,13 @@ services:
     volumes:
       - credora-docuseal:/data
 
+  ocr:
+    build: ./services/ocr
+    container_name: credora-ocr
+    restart: unless-stopped
+    ports:
+      - "8866:8866"
+
 volumes:
   credora-pgdata:
   credora-docuseal:

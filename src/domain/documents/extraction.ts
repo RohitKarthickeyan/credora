@@ -74,7 +74,7 @@ function monthNumber(name: string): number | null {
 
 // Numeric dates are read month first (OPEN-QUESTIONS 135). A two-digit year is 20YY except on a date of
 // birth, where it is ambiguous by a century and so unreadable (OPEN-QUESTIONS 134).
-function date(text: string, twoDigitYearAllowed: boolean): string | null {
+export function parseDocumentDate(text: string, twoDigitYearAllowed: boolean): string | null {
   if (ISO_DATE.test(text)) return z.iso.date().safeParse(text).success ? text : null
 
   const numeric = NUMERIC_DATE.exec(text)
@@ -136,13 +136,13 @@ function trainingMinutes(text: string): number | null {
 
 const RULES: { [K in keyof FieldValues]: (text: string) => FieldValues[K] | null } = {
   fullName: personName,
-  dateOfBirth: (text) => date(text, false),
+  dateOfBirth: (text) => parseDocumentDate(text, false),
   address: (text) => text,
   documentNumber,
   issuer: (text) => text,
-  issueDate: (text) => date(text, true),
-  expiryDate: (text) => date(text, true),
-  completionDate: (text) => date(text, true),
+  issueDate: (text) => parseDocumentDate(text, true),
+  expiryDate: (text) => parseDocumentDate(text, true),
+  completionDate: (text) => parseDocumentDate(text, true),
   trainingMinutes,
 }
 

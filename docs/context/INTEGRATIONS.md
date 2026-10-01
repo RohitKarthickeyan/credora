@@ -28,8 +28,8 @@ not a rewrite. We hold no credentials for any of them, so every port ships a det
 | --- | --- | --- | --- |
 | `messaging` | an email provider (e.g. SendGrid) | Email for staff; text for caregivers through `sendText` (ADR-162). The mock returns sent; the conversation stores each `Message`, and the dev web phone at `/dev/phone/[caregiverId]` shows them. Email writes to a `SentMessage` table; `/dev/outbox` renders them, and sign-in codes are readable there in dev. | `MESSAGING_ADAPTER` |
 | `esign` | DocuSeal, self-hosted (`docuseal` in `docker-compose.yml`, `ESIGN_ADAPTER=docuseal`) | Creates an envelope, exposes a local signing page, stamps a signature into the PDF with pdf-lib, fires the webhook back into our own route. The DocuSeal adapter uploads the PDFs as one template, sends no email, and returns DocuSeal's signing link; see its header for where the free edition differs from the API docs. | `ESIGN_ADAPTER`, `DOCUSEAL_*` |
-| `extraction` | Textract / Document AI | Reads the bytes through the storage port and selects a fixture by **SHA-256 of the content**, returning the recorded fields with confidences. Unknown content returns low confidence → exception. | `EXTRACTION_ADAPTER` |
-| `judge` | Claude (see `AGENTIC-TASKS.md`) | Rule-based: applies the same published criteria deterministically, returns verdict + confidence + reasons. | `JUDGE_ADAPTER` |
+| `extraction` | PaddleOCR, self-hosted (`ocr` in `docker-compose.yml`, `services/ocr/`, `EXTRACTION_ADAPTER=paddleocr`) | Reads the bytes through the storage port and selects a fixture by **SHA-256 of the content**, returning the recorded fields with confidences. Unknown content returns low confidence → exception. The PaddleOCR adapter returns text and mean line confidence with no fields; the extraction job then finds the name, date of birth and labelled dates by looking for what intake says (`findKnownFields`, `src/domain/documents/ocr-fields.ts`). | `EXTRACTION_ADAPTER`, `OCR_URL` |
+| `judge` | OpenAI `gpt-5-mini` (`JUDGE_ADAPTER=openai`, ADR-165); the `claude` adapter stays available (see `AGENTIC-TASKS.md`) | Rule-based: applies the same published criteria deterministically, returns verdict + confidence + reasons. | `JUDGE_ADAPTER` |
 | `backgroundCheck` | agency's existing vendor | State machine `ORDERED → PENDING → CLEAR \| CONSIDER`, advanced by a dev control, never by a timer. Order state is JSON files under `STORAGE_ROOT/_mock-background-check/`, shared by the web app and the worker; the dev control is `/dev/background-check`. | `BGCHECK_ADAPTER` |
 | `alayacare` | AlayaCare API | A real local HTTP server (`mock-servers/alayacare`) speaking the subset of AlayaCare's published employee API that the adapter calls (ADR-160): employees, profile attributes, skills, employee skills, attachments. Not an in-process stub — the sync engine must exercise real HTTP, retries, and retry safety. | `ALAYACARE_ADAPTER`, `ALAYACARE_BASE_URL` |
 | `training` | agency training platform | Reads a CSV fixture as the "scheduled file" import; also serves an API shape. | `TRAINING_ADAPTER` |
@@ -97,8 +97,9 @@ SESSION_SECRET
 APP_URL
 MESSAGING_ADAPTER=mock
 ESIGN_ADAPTER=mock            | docuseal
-EXTRACTION_ADAPTER=mock
-JUDGE_ADAPTER=mock            | claude
+EXTRACTION_ADAPTER=mock       | paddleocr
+OCR_URL=http://localhost:8866
+JUDGE_ADAPTER=mock            | openai | claude
 BGCHECK_ADAPTER=mock
 ALAYACARE_ADAPTER=mock        | export
 ALAYACARE_BASE_URL=http://localhost:4010
@@ -107,7 +108,7 @@ STORAGE_ADAPTER=local
 STORAGE_ROOT=./storage
 ANTHROPIC_API_KEY             only when JUDGE_ADAPTER=claude
 AGENT_ADAPTER=mock            | openai
-OPENAI_API_KEY                only when AGENT_ADAPTER=openai
+OPENAI_API_KEY                only when AGENT_ADAPTER=openai or JUDGE_ADAPTER=openai
 DOCUSEAL_URL, DOCUSEAL_API_KEY, DOCUSEAL_WEBHOOK_SECRET,
 DOCUSEAL_ADMIN_EMAIL, DOCUSEAL_ADMIN_PASSWORD   only when ESIGN_ADAPTER=docuseal
 ```
